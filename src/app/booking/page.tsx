@@ -1,252 +1,139 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { Fragment, useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-interface BookingRow {
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface Product {
   id: number
-  row_order: number
-  row_type: 'data' | 'section' | 'summary'
-  section_label: string
-  left_code: string
-  left_name: string
-  left_spec: string
-  left_qty: string | null
-  left_unit: string
-  left_price: string | null
-  left_amount: string | null
-  right_code: string
-  right_name: string
-  right_qty: string | null
-  right_unit: string
-  right_price: string | null
-  right_amount: string | null
-  note: string
+  section_order: number
+  section_name: string
+  is_vat_included: boolean
+  subgroup_order: number
+  subgroup_name: string
+  product_name: string
+  unit_price: number
+  is_free: boolean
+  sort_order: number
+  current_qty: number
 }
 
-type PendingEdits = Record<string, Record<string, string>>
+type SectionRow =
+  | { type: 'subgroup'; name: string }
+  | { type: 'product'; product: Product }
 
-// ---------------------------------------------------------------------------
-// Column definitions — widths must match image proportions (px)
-// Total ≈ 907 px
-// ---------------------------------------------------------------------------
-const COLS: Array<{
-  key: keyof BookingRow
-  label: string
-  width: number
-  align: 'left' | 'center' | 'right'
-  inputType: 'text' | 'number'
-  panel: 'left' | 'right'
-}> = [
-  // Left panel
-  { key: 'left_code',   label: 'รหัส',       width: 50,  align: 'left',   inputType: 'text',   panel: 'left'  },
-  { key: 'left_name',   label: 'ชื่อรายการ', width: 125, align: 'left',   inputType: 'text',   panel: 'left'  },
-  { key: 'left_spec',   label: 'ขนาด',       width: 70,  align: 'left',   inputType: 'text',   panel: 'left'  },
-  { key: 'left_qty',    label: 'จำนวนสั่ง',  width: 52,  align: 'right',  inputType: 'number', panel: 'left'  },
-  { key: 'left_unit',   label: 'หน่วย',      width: 36,  align: 'center', inputType: 'text',   panel: 'left'  },
-  { key: 'left_price',  label: 'ราคา/หน่วย', width: 68,  align: 'right',  inputType: 'number', panel: 'left'  },
-  { key: 'left_amount', label: 'จำนวนเงิน',  width: 68,  align: 'right',  inputType: 'number', panel: 'left'  },
-  // Right panel
-  { key: 'right_code',   label: 'รหัส',      width: 48,  align: 'left',   inputType: 'text',   panel: 'right' },
-  { key: 'right_name',   label: 'รายการ',    width: 108, align: 'left',   inputType: 'text',   panel: 'right' },
-  { key: 'right_qty',    label: 'จำนวน',     width: 48,  align: 'right',  inputType: 'number', panel: 'right' },
-  { key: 'right_unit',   label: 'หน่วย',     width: 32,  align: 'center', inputType: 'text',   panel: 'right' },
-  { key: 'right_price',  label: 'ราคา',      width: 62,  align: 'right',  inputType: 'number', panel: 'right' },
-  { key: 'right_amount', label: 'จำนวนเงิน', width: 62,  align: 'right',  inputType: 'number', panel: 'right' },
-  { key: 'note',         label: 'หมายเหตุ',  width: 52,  align: 'left',   inputType: 'text',   panel: 'right' },
-]
+interface Section {
+  order: number
+  name: string
+  is_vat_included: boolean
+  rows: SectionRow[]
+}
 
-// Row number column width
-const ROW_NUM_W = 26
-const TABLE_WIDTH = ROW_NUM_W + COLS.reduce((s, c) => s + c.width, 0)
+// ── Column widths (px) ───────────────────────────────────────────────────────
 
-// ---------------------------------------------------------------------------
-// Draft helpers
-// ---------------------------------------------------------------------------
+const COL_NAME  = 82   // ชื่อสินค้า
+const COL_PRICE = 54   // ราคา/หน่วย
+const COL_QTY   = 44   // จำนวน
+const COL_TOTAL = 62   // รวม
+const ROW_NUM_W = 24
+// Total: 24 + 6 × (82+54+44+62) = 24 + 6 × 242 = 24 + 1452 = 1476
+const TABLE_W = ROW_NUM_W + 6 * (COL_NAME + COL_PRICE + COL_QTY + COL_TOTAL)
+
+// ── Draft helpers ─────────────────────────────────────────────────────────────
+
 const DRAFT_KEY = 'cf_draft_booking'
 
-function loadDraft(): PendingEdits {
+function loadDraft(): Record<number, number> {
   try {
     const raw = localStorage.getItem(DRAFT_KEY)
     return raw ? JSON.parse(raw) : {}
   } catch { return {} }
 }
 
-function saveDraft(edits: PendingEdits) {
+function saveDraft(edits: Record<number, number>) {
   localStorage.setItem(DRAFT_KEY, JSON.stringify(edits))
 }
 
-// ---------------------------------------------------------------------------
-// Overflow detection hook per cell
-// ---------------------------------------------------------------------------
-function useOverflow() {
-  const [overflows, setOverflows] = useState<Set<string>>(new Set())
+// ── Build section rows (insert sub-group headers) ─────────────────────────────
 
-  const check = useCallback((id: number, field: string, el: HTMLInputElement | null) => {
-    if (!el) return
-    const key = `${id}-${field}`
-    const isOver = el.scrollWidth > el.clientWidth
-    setOverflows((prev) => {
-      const has = prev.has(key)
-      if (isOver === has) return prev
-      const next = new Set(prev)
-      isOver ? next.add(key) : next.delete(key)
-      return next
-    })
-  }, [])
-
-  return { overflows, check }
+function buildSections(products: Product[]): Section[] {
+  const map = new Map<number, Section>()
+  for (const p of products) {
+    if (!map.has(p.section_order)) {
+      map.set(p.section_order, {
+        order: p.section_order,
+        name: p.section_name,
+        is_vat_included: p.is_vat_included,
+        rows: [],
+      })
+    }
+    const sec = map.get(p.section_order)!
+    // Insert sub-group header when the subgroup name changes (skip sections without sub-groups)
+    if (p.subgroup_order > 0) {
+      const prev = [...sec.rows].reverse().find(r => r.type === 'subgroup') as { type: 'subgroup'; name: string } | undefined
+      if (!prev || prev.name !== p.subgroup_name) {
+        sec.rows.push({ type: 'subgroup', name: p.subgroup_name })
+      }
+    }
+    sec.rows.push({ type: 'product', product: p })
+  }
+  return Array.from(map.values()).sort((a, b) => a.order - b.order)
 }
 
-// ---------------------------------------------------------------------------
-// Number formatting
-// ---------------------------------------------------------------------------
-function fmtNum(val: string | null): string {
-  if (val === null || val === '') return ''
-  const n = parseFloat(val)
-  return isNaN(n) ? val : n.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+// ── Number formatting ─────────────────────────────────────────────────────────
+
+function fmt2(n: number): string {
+  if (!n) return ''
+  return n.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-// ---------------------------------------------------------------------------
-// EditableCell
-// ---------------------------------------------------------------------------
-function EditableCell({
-  rowId,
-  field,
-  dbValue,
-  pendingValue,
-  inputType,
-  align,
-  width,
-  hasPending,
-  onChange,
-  overflows,
-  checkOverflow,
-  readOnly,
-}: {
-  rowId: number
-  field: string
-  dbValue: string | null
-  pendingValue: string | undefined
-  inputType: 'text' | 'number'
-  align: 'left' | 'center' | 'right'
-  width: number
-  hasPending: boolean
-  onChange: (id: number, field: string, value: string) => void
-  overflows: Set<string>
-  checkOverflow: (id: number, field: string, el: HTMLInputElement | null) => void
-  readOnly?: boolean
-}) {
-  const inputRef = useRef<HTMLInputElement>(null)
-  const cellKey = `${rowId}-${field}`
-  const isOver = overflows.has(cellKey)
+// ── Main Component ────────────────────────────────────────────────────────────
 
-  const displayValue = hasPending ? (pendingValue ?? '') : (dbValue ?? '')
-
-  // Re-check overflow whenever displayValue changes
-  useEffect(() => {
-    checkOverflow(rowId, field, inputRef.current)
-  }, [displayValue, rowId, field, checkOverflow])
-
-  return (
-    <td
-      className="relative border-r border-gray-200 last:border-r-0 p-0"
-      style={{ width, minWidth: width, maxWidth: width }}
-    >
-      <input
-        ref={inputRef}
-        type={inputType}
-        step={inputType === 'number' ? '0.01' : undefined}
-        defaultValue={displayValue}
-        key={`${cellKey}-${displayValue}`}
-        readOnly={readOnly}
-        onChange={(e) => {
-          onChange(rowId, field, e.target.value)
-          checkOverflow(rowId, field, e.currentTarget)
-        }}
-        className={`
-          w-full h-full px-1 py-0.5 text-xs leading-5 bg-transparent
-          focus:outline-none focus:ring-1 focus:ring-inset focus:ring-green-400
-          ${align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'}
-          ${hasPending ? 'bg-yellow-50 font-medium' : ''}
-          ${isOver ? 'border border-red-400 bg-red-50' : ''}
-          ${readOnly ? 'cursor-default text-gray-500' : ''}
-        `}
-        style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-        title={isOver ? `⚠ ข้อความยาวเกินช่อง: "${displayValue}"` : undefined}
-      />
-      {isOver && (
-        <span
-          className="absolute top-0 right-0 bg-red-500 text-white text-[9px] font-bold leading-none px-0.5 py-px rounded-bl pointer-events-none"
-          title={`ข้อความยาวเกินช่อง`}
-        >
-          !
-        </span>
-      )}
-    </td>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Main page
-// ---------------------------------------------------------------------------
 export default function BookingPage() {
-  const [rows, setRows] = useState<BookingRow[]>([])
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [saveMsg, setSaveMsg] = useState<string | null>(null)
-  const [pending, setPending] = useState<PendingEdits>({})
-  const { overflows, check: checkOverflow } = useOverflow()
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [saving, setSaving]     = useState(false)
+  const [saveMsg, setSaveMsg]   = useState<string | null>(null)
+  const [pending, setPending]   = useState<Record<number, number>>({})
 
-  // Load draft from localStorage on mount
-  useEffect(() => {
-    setPending(loadDraft())
-  }, [])
+  useEffect(() => { setPending(loadDraft()) }, [])
 
-  // Fetch rows from DB
   useEffect(() => {
-    setLoading(true)
     fetch('/api/booking')
-      .then((r) => r.json())
-      .then((data) => { setRows(data); setLoading(false) })
+      .then(r => r.json())
+      .then((data: Product[]) => { setProducts(data); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
 
-  const handleChange = useCallback((id: number, field: string, value: string) => {
-    setPending((prev) => {
-      const updated: PendingEdits = {
-        ...prev,
-        [id]: { ...prev[id], [field]: value },
-      }
-      saveDraft(updated)
-      return updated
+  const handleQtyChange = useCallback((id: number, val: string) => {
+    const qty = parseFloat(val) || 0
+    setPending(prev => {
+      const next = { ...prev, [id]: qty }
+      saveDraft(next)
+      return next
     })
   }, [])
 
   const pendingCount = Object.keys(pending).length
 
   const handleSave = async () => {
-    if (pendingCount === 0) return
+    if (!pendingCount) return
     setSaving(true)
     setSaveMsg(null)
     try {
-      const body = Object.entries(pending).map(([id, fields]) => ({ id: Number(id), ...fields }))
+      const body = Object.entries(pending).map(([id, current_qty]) => ({ id: Number(id), current_qty }))
       const res = await fetch('/api/booking', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-      if (!res.ok) throw new Error('save failed')
-
+      if (!res.ok) throw new Error()
       setPending({})
       localStorage.removeItem(DRAFT_KEY)
-      setSaveMsg(`บันทึกสำเร็จ ${pendingCount} แถว`)
-
-      const fresh = await fetch('/api/booking').then((r) => r.json())
-      setRows(fresh)
+      setSaveMsg(`บันทึกสำเร็จ ${pendingCount} รายการ`)
+      const fresh: Product[] = await fetch('/api/booking').then(r => r.json())
+      setProducts(fresh)
     } catch {
       setSaveMsg('เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
@@ -255,48 +142,55 @@ export default function BookingPage() {
     }
   }
 
-  const handleDiscard = () => {
-    setPending({})
-    localStorage.removeItem(DRAFT_KEY)
-  }
+  // ── Derived state ──────────────────────────────────────────────────────────
 
-  // Count data rows (not section/summary)
-  let dataRowIdx = 0
+  const sections = buildSections(products)
+  const maxRows  = sections.length ? Math.max(...sections.map(s => s.rows.length)) : 0
+
+  // Summary totals
+  let grayTotal = 0, orangeTotal = 0
+  for (const sec of sections) {
+    for (const row of sec.rows) {
+      if (row.type !== 'product' || row.product.is_free) continue
+      const qty = pending[row.product.id] !== undefined ? pending[row.product.id] : (row.product.current_qty ?? 0)
+      const val = row.product.unit_price * qty
+      if (sec.is_vat_included) grayTotal += val
+      else orangeTotal += val
+    }
+  }
+  const noVatTotal   = grayTotal + orangeTotal
+  const withVatTotal = grayTotal + orangeTotal * 1.07
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* ── Header ─────────────────────────────────────────────── */}
+
+      {/* ── Header ────────────────────────────────────────────────────────── */}
       <header className="bg-green-800 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            className="text-green-200 hover:text-white text-sm transition-colors"
-          >
+          <Link href="/" className="text-green-200 hover:text-white text-sm transition-colors">
             ← กลับหน้าหลัก
           </Link>
           <div>
             <h1 className="text-xl font-bold">ใบจอง</h1>
-            <p className="text-green-200 text-xs mt-0.5">แก้ไขได้ทุกช่อง · Auto-save ใน browser</p>
+            <p className="text-green-200 text-xs mt-0.5">แก้ไขจำนวนได้ · Auto-save ใน browser</p>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           {saveMsg && (
-            <span
-              className={`text-sm px-3 py-1 rounded-full ${
-                saveMsg.includes('สำเร็จ') ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-              }`}
-            >
+            <span className={`text-sm px-3 py-1 rounded-full text-white ${saveMsg.includes('สำเร็จ') ? 'bg-green-500' : 'bg-red-500'}`}>
               {saveMsg}
             </span>
           )}
           {pendingCount > 0 && (
             <>
               <span className="text-yellow-300 text-sm">
-                ✎ แก้ไขค้างอยู่ {pendingCount} แถว (auto-saved)
+                ✎ แก้ไขค้างอยู่ {pendingCount} รายการ (auto-saved)
               </span>
               <button
-                onClick={handleDiscard}
+                onClick={() => { setPending({}); localStorage.removeItem(DRAFT_KEY) }}
                 className="px-3 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white transition-colors"
               >
                 ยกเลิก
@@ -313,218 +207,201 @@ export default function BookingPage() {
         </div>
       </header>
 
-      {/* ── Status bar ─────────────────────────────────────────── */}
-      <div className="bg-white border-b border-gray-200 px-6 py-1.5 text-xs text-gray-500 flex items-center gap-4">
-        {loading ? 'กำลังโหลด...' : `${rows.filter((r) => r.row_type === 'data').length} แถวข้อมูล`}
-        {pendingCount > 0 && (
-          <span className="text-yellow-600 font-medium">
-            — มีการแก้ไขที่ยังไม่บันทึกลง DB (auto-saved ใน browser แล้ว)
-          </span>
-        )}
-        {overflows.size > 0 && (
-          <span className="text-red-500 font-medium">
-            ⚠ {overflows.size} ช่องมีข้อความยาวเกิน (ตารางไม่ขยาย)
-          </span>
-        )}
-      </div>
-
-      {/* ── Table ──────────────────────────────────────────────── */}
+      {/* ── Main ──────────────────────────────────────────────────────────── */}
       <main className="p-4 overflow-x-auto">
         {loading ? (
           <div className="flex items-center justify-center h-40 text-gray-400">กำลังโหลดข้อมูล...</div>
         ) : (
-          <div
-            className="inline-block rounded-lg border border-gray-300 shadow-sm overflow-hidden"
-            style={{ width: TABLE_WIDTH }}
-          >
-            <table
-              className="text-xs border-collapse"
-              style={{ tableLayout: 'fixed', width: TABLE_WIDTH }}
-            >
-              {/* ── colgroup — locks every column width ── */}
-              <colgroup>
-                <col style={{ width: ROW_NUM_W }} />
-                {COLS.map((c) => (
-                  <col key={c.key} style={{ width: c.width }} />
-                ))}
-              </colgroup>
+          <>
+            {/* ── Table ───────────────────────────────────────────────────── */}
+            <div className="inline-block rounded shadow overflow-hidden border border-gray-400">
+              <table
+                className="text-xs border-collapse"
+                style={{ tableLayout: 'fixed', width: TABLE_W }}
+              >
+                {/* colgroup — locks all column widths */}
+                <colgroup>
+                  <col style={{ width: ROW_NUM_W }} />
+                  {sections.flatMap(sec => [
+                    <col key={`${sec.order}-cn`} style={{ width: COL_NAME }} />,
+                    <col key={`${sec.order}-cp`} style={{ width: COL_PRICE }} />,
+                    <col key={`${sec.order}-cq`} style={{ width: COL_QTY }} />,
+                    <col key={`${sec.order}-ct`} style={{ width: COL_TOTAL }} />,
+                  ])}
+                </colgroup>
 
-              {/* ── thead ── */}
-              <thead>
-                {/* Panel label row */}
-                <tr className="bg-green-900 text-white">
-                  <th
-                    className="border-r border-green-700 text-center text-[10px]"
-                    style={{ width: ROW_NUM_W }}
-                  />
-                  <th
-                    colSpan={7}
-                    className="px-2 py-1 text-center font-bold tracking-wide border-r border-green-700"
-                  >
-                    รายการฝั่งซ้าย
-                  </th>
-                  <th
-                    colSpan={7}
-                    className="px-2 py-1 text-center font-bold tracking-wide"
-                  >
-                    รายการฝั่งขวา
-                  </th>
-                </tr>
-                {/* Column header row */}
-                <tr className="bg-green-700 text-white">
-                  <th
-                    className="border-r border-green-600 text-center text-[10px] py-1"
-                    style={{ width: ROW_NUM_W }}
-                  >
-                    ที่
-                  </th>
-                  {COLS.map((col, i) => (
+                {/* ── thead ── */}
+                <thead>
+                  {/* Section name row */}
+                  <tr>
                     <th
-                      key={col.key}
-                      className={`
-                        px-1 py-1 font-semibold text-[10px] leading-tight whitespace-nowrap
-                        border-r border-green-600 last:border-r-0
-                        ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'}
-                        ${i === 6 ? 'border-r-2 border-green-400' : ''}
-                      `}
-                      style={{ width: col.width }}
+                      className="border border-gray-500 bg-green-900 text-white text-center py-1 text-[10px]"
+                      style={{ width: ROW_NUM_W }}
                     >
-                      {col.label}
+                      ที่
                     </th>
-                  ))}
-                </tr>
-              </thead>
-
-              {/* ── tbody ── */}
-              <tbody>
-                {rows.map((row) => {
-                  const rowPending = pending[row.id] ?? {}
-                  const hasAnyPending = Object.keys(rowPending).length > 0
-
-                  // ── Section header row ──
-                  if (row.row_type === 'section') {
-                    const label = rowPending['section_label'] ?? row.section_label
-                    return (
-                      <tr key={row.id} className="bg-amber-400">
-                        <td
-                          className="text-center text-[10px] text-amber-900 border-r border-amber-500 py-0.5"
-                          style={{ width: ROW_NUM_W }}
-                        />
-                        <td colSpan={COLS.length} className="p-0">
-                          <input
-                            type="text"
-                            defaultValue={label}
-                            key={`sec-${row.id}-${label}`}
-                            onChange={(e) => handleChange(row.id, 'section_label', e.target.value)}
-                            className="w-full bg-transparent px-2 py-0.5 font-bold text-amber-900 text-xs focus:outline-none focus:ring-1 focus:ring-inset focus:ring-amber-600"
-                            placeholder="ชื่อหมวด..."
-                          />
-                        </td>
-                      </tr>
-                    )
-                  }
-
-                  // ── Summary row ──
-                  if (row.row_type === 'summary') {
-                    const label = rowPending['section_label'] ?? row.section_label
-                    return (
-                      <tr key={row.id} className="bg-green-100 font-semibold border-t border-green-300">
-                        <td
-                          className="text-center text-[10px] border-r border-green-300 py-0.5"
-                          style={{ width: ROW_NUM_W }}
-                        />
-                        {/* Label spanning left panel name+spec */}
-                        <td colSpan={3} className="px-2 py-0.5 text-xs text-green-900 font-bold">
-                          {label}
-                        </td>
-                        {/* Left qty / unit / price / amount */}
-                        {(['left_qty','left_unit','left_price','left_amount'] as const).map((field) => {
-                          const col = COLS.find((c) => c.key === field)!
-                          return (
-                            <EditableCell
-                              key={field}
-                              rowId={row.id}
-                              field={field}
-                              dbValue={row[field] as string | null}
-                              pendingValue={rowPending[field]}
-                              inputType={col.inputType}
-                              align={col.align}
-                              width={col.width}
-                              hasPending={field in rowPending}
-                              onChange={handleChange}
-                              overflows={overflows}
-                              checkOverflow={checkOverflow}
-                            />
-                          )
-                        })}
-                        {/* Right panel cells */}
-                        {(['right_code','right_name','right_qty','right_unit','right_price','right_amount','note'] as const).map((field) => {
-                          const col = COLS.find((c) => c.key === field)!
-                          return (
-                            <EditableCell
-                              key={field}
-                              rowId={row.id}
-                              field={field}
-                              dbValue={row[field] as string | null}
-                              pendingValue={rowPending[field]}
-                              inputType={col.inputType}
-                              align={col.align}
-                              width={col.width}
-                              hasPending={field in rowPending}
-                              onChange={handleChange}
-                              overflows={overflows}
-                              checkOverflow={checkOverflow}
-                            />
-                          )
-                        })}
-                      </tr>
-                    )
-                  }
-
-                  // ── Data row ──
-                  dataRowIdx++
-                  const idx = dataRowIdx
-
-                  return (
-                    <tr
-                      key={row.id}
-                      className={`
-                        ${idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                        ${hasAnyPending ? 'ring-1 ring-inset ring-yellow-400' : ''}
-                        hover:bg-yellow-50 transition-colors
-                      `}
-                    >
-                      {/* Row number */}
-                      <td
-                        className="text-center text-[10px] text-gray-400 border-r border-gray-200 py-0.5 select-none"
-                        style={{ width: ROW_NUM_W }}
+                    {sections.map(sec => (
+                      <th
+                        key={sec.order}
+                        colSpan={4}
+                        className={`border border-gray-500 px-1 py-1 text-center text-[11px] font-bold text-white ${
+                          sec.is_vat_included ? 'bg-gray-600' : 'bg-orange-500'
+                        }`}
                       >
-                        {idx}
+                        {sec.name}
+                        {sec.is_vat_included && (
+                          <span className="ml-1 text-[9px] font-normal opacity-70">(รวม VAT)</span>
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+
+                  {/* Sub-column header row */}
+                  <tr className="bg-green-800 text-white text-[9px]">
+                    <th className="border border-gray-500 py-0.5 text-center">#</th>
+                    {sections.flatMap(sec => [
+                      <th key={`${sec.order}-hn`} className="border border-gray-500 px-1 py-0.5 text-left font-medium">ชื่อสินค้า</th>,
+                      <th key={`${sec.order}-hp`} className="border border-gray-500 px-1 py-0.5 text-right font-medium">ราคา/หน่วย</th>,
+                      <th key={`${sec.order}-hq`} className="border border-gray-500 px-1 py-0.5 text-right font-medium">จำนวน</th>,
+                      <th key={`${sec.order}-ht`} className="border border-gray-500 px-1 py-0.5 text-right font-medium">รวม</th>,
+                    ])}
+                  </tr>
+                </thead>
+
+                {/* ── tbody ── */}
+                <tbody>
+                  {Array.from({ length: maxRows }, (_, rowIdx) => (
+                    <tr key={rowIdx} className="hover:bg-yellow-50/30 transition-colors">
+                      {/* Row number */}
+                      <td className="border border-gray-300 text-center text-[9px] text-gray-400 py-0.5 select-none">
+                        {rowIdx + 1}
                       </td>
 
-                      {/* All editable columns */}
-                      {COLS.map((col) => (
-                        <EditableCell
-                          key={col.key}
-                          rowId={row.id}
-                          field={col.key}
-                          dbValue={row[col.key] as string | null}
-                          pendingValue={rowPending[col.key]}
-                          inputType={col.inputType}
-                          align={col.align}
-                          width={col.width}
-                          hasPending={col.key in rowPending}
-                          onChange={handleChange}
-                          overflows={overflows}
-                          checkOverflow={checkOverflow}
-                        />
-                      ))}
+                      {/* Section cells — flatMap returns array of tds */}
+                      {sections.flatMap((sec, si) => {
+                        const cell = sec.rows[rowIdx] ?? null
+
+                        // ── Empty (this section has fewer rows) ──
+                        if (!cell) return [
+                          <td key={`${si}-en`} className="border border-gray-200 bg-gray-50" />,
+                          <td key={`${si}-ep`} className="border border-gray-200 bg-gray-50" />,
+                          <td key={`${si}-eq`} className="border border-gray-200 bg-gray-50" />,
+                          <td key={`${si}-et`} className="border border-gray-200 bg-gray-50" />,
+                        ]
+
+                        // ── Sub-group header ──
+                        if (cell.type === 'subgroup') return [
+                          <td
+                            key={`${si}-sg`}
+                            colSpan={4}
+                            className="border border-orange-300 bg-orange-200 px-2 py-px text-[9px] font-bold text-orange-900"
+                          >
+                            {cell.name}
+                          </td>,
+                        ]
+
+                        // ── Product row ──
+                        const { product: p } = cell
+                        const dbQty      = p.current_qty ?? 0
+                        const qty        = pending[p.id] !== undefined ? pending[p.id] : dbQty
+                        const total      = qty * p.unit_price
+                        const hasPending = pending[p.id] !== undefined
+
+                        // Background colors per VAT type / free status
+                        let nameBg: string
+                        if (p.is_free)          nameBg = 'bg-red-900 text-white'
+                        else if (sec.is_vat_included) nameBg = 'bg-gray-100 text-gray-800'
+                        else                    nameBg = 'bg-white text-gray-800'
+
+                        const pendingRing = hasPending && !p.is_free ? 'ring-1 ring-inset ring-yellow-400' : ''
+
+                        // Qty td background (separate from other cells so input bg can differ)
+                        let qtyBg: string
+                        if (p.is_free)               qtyBg = 'bg-red-900'
+                        else if (hasPending)          qtyBg = 'bg-yellow-50'
+                        else if (sec.is_vat_included) qtyBg = 'bg-gray-100'
+                        else                         qtyBg = 'bg-white'
+
+                        return [
+                          // ชื่อสินค้า
+                          <td
+                            key={`${si}-pn`}
+                            className={`border border-gray-300 px-1 py-px ${nameBg} ${pendingRing}`}
+                            style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}
+                            title={p.product_name}
+                          >
+                            {p.product_name}
+                          </td>,
+
+                          // ราคา/หน่วย
+                          <td
+                            key={`${si}-pp`}
+                            className={`border border-gray-300 px-1 py-px text-right ${nameBg}`}
+                          >
+                            {p.is_free
+                              ? <span className="italic opacity-70">ฟรี</span>
+                              : p.unit_price.toLocaleString('th-TH', { minimumFractionDigits: 2 })
+                            }
+                          </td>,
+
+                          // จำนวน (editable)
+                          <td
+                            key={`${si}-pq`}
+                            className={`border border-gray-300 p-0 ${qtyBg}`}
+                          >
+                            {!p.is_free && (
+                              <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                defaultValue={dbQty || ''}
+                                key={`qty-${p.id}-${dbQty}`}
+                                onChange={e => handleQtyChange(p.id, e.target.value)}
+                                className={`w-full px-1 py-px text-[10px] text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-inset focus:ring-green-500 ${hasPending ? 'font-semibold' : ''}`}
+                              />
+                            )}
+                          </td>,
+
+                          // รวม (calculated, read-only)
+                          <td
+                            key={`${si}-pt`}
+                            className={`border border-gray-300 px-1 py-px text-right ${nameBg}`}
+                          >
+                            {!p.is_free && total > 0 ? fmt2(total) : ''}
+                          </td>,
+                        ]
+                      })}
                     </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* ── Summary boxes ─────────────────────────────────────────────── */}
+            <div className="mt-4 flex gap-4" style={{ maxWidth: TABLE_W }}>
+              {/* Orange — No VAT */}
+              <div className="flex-1 rounded-lg border-2 border-orange-400 bg-orange-50 p-4">
+                <div className="text-sm font-bold text-orange-700 mb-1">🟠 ไม่มีใบกำกับภาษี</div>
+                <div className="text-2xl font-bold text-orange-900">
+                  {noVatTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
+                </div>
+                <div className="text-[11px] text-orange-600 mt-1">
+                  ราคาสินค้าทุกรายการรวมกัน — ไม่บวก VAT เพิ่ม
+                </div>
+              </div>
+
+              {/* Gray — With VAT */}
+              <div className="flex-1 rounded-lg border-2 border-gray-400 bg-gray-100 p-4">
+                <div className="text-sm font-bold text-gray-700 mb-1">🔘 มีใบกำกับภาษี</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  {withVatTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
+                </div>
+                <div className="text-[11px] text-gray-600 mt-1">
+                  กล่อง = ราคาเดิม (VAT รวมแล้ว) · สินค้าอื่น × 1.07
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </main>
     </div>
