@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import DataTable from '@/components/DataTable'
 
 type Tab = 'sell' | 'buy' | 'products' | 'inventory' | 'targets'
@@ -197,8 +198,14 @@ export default function Home() {
           <p className="text-green-200 text-xs mt-0.5">ข้อมูลจาก Railway PostgreSQL</p>
         </div>
 
-        {/* ปุ่มบันทึก */}
+        {/* ปุ่มบันทึก + ปุ่มใบจอง */}
         <div className="flex items-center gap-3">
+          <Link
+            href="/booking"
+            className="px-4 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white font-medium transition-colors border border-white/30"
+          >
+            📋 ใบจอง
+          </Link>
           {saveMsg && (
             <span className={`text-sm px-3 py-1 rounded-full ${saveMsg.includes('สำเร็จ') ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
               {saveMsg}
