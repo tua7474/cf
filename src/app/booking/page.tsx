@@ -232,30 +232,6 @@ export default function BookingPage() {
 
                 {/* ── thead ── */}
                 <thead>
-                  {/* Section name row */}
-                  <tr>
-                    <th
-                      className="border border-gray-500 bg-green-900 text-white text-center py-1 text-[10px]"
-                      style={{ width: ROW_NUM_W }}
-                    >
-                      ที่
-                    </th>
-                    {sections.map(sec => (
-                      <th
-                        key={sec.order}
-                        colSpan={4}
-                        className={`border border-gray-500 px-1 py-1 text-center text-[11px] font-bold text-white ${
-                          sec.is_vat_included ? 'bg-gray-600' : 'bg-orange-500'
-                        }`}
-                      >
-                        {sec.name}
-                        {sec.is_vat_included && (
-                          <span className="ml-1 text-[9px] font-normal opacity-70">(รวม VAT)</span>
-                        )}
-                      </th>
-                    ))}
-                  </tr>
-
                   {/* Sub-column header row */}
                   <tr className="bg-green-800 text-white text-[9px]">
                     <th className="border border-gray-500 py-0.5 text-center">#</th>
@@ -308,19 +284,20 @@ export default function BookingPage() {
                         const hasPending = pending[p.id] !== undefined
 
                         // Background colors per VAT type / free status
+                        // Gray = VAT included (Section 1), Orange = non-VAT (Sections 2-6)
                         let nameBg: string
-                        if (p.is_free)          nameBg = 'bg-red-900 text-white'
-                        else if (sec.is_vat_included) nameBg = 'bg-gray-100 text-gray-800'
-                        else                    nameBg = 'bg-white text-gray-800'
+                        if (p.is_free)                nameBg = 'bg-red-900 text-white'
+                        else if (sec.is_vat_included)  nameBg = 'bg-gray-200 text-gray-800'
+                        else                           nameBg = 'bg-orange-50 text-gray-800'
 
                         const pendingRing = hasPending && !p.is_free ? 'ring-1 ring-inset ring-yellow-400' : ''
 
-                        // Qty td background (separate from other cells so input bg can differ)
+                        // Qty td background
                         let qtyBg: string
-                        if (p.is_free)               qtyBg = 'bg-red-900'
-                        else if (hasPending)          qtyBg = 'bg-yellow-50'
-                        else if (sec.is_vat_included) qtyBg = 'bg-gray-100'
-                        else                         qtyBg = 'bg-white'
+                        if (p.is_free)                qtyBg = 'bg-red-900'
+                        else if (hasPending)           qtyBg = 'bg-yellow-50'
+                        else if (sec.is_vat_included)  qtyBg = 'bg-gray-200'
+                        else                          qtyBg = 'bg-orange-50'
 
                         return [
                           // ชื่อสินค้า
