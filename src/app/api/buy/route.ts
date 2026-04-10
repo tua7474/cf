@@ -19,3 +19,21 @@ export async function GET() {
   `)
   return NextResponse.json(rows)
 }
+
+export async function PATCH(request: Request) {
+  const changes: { id: number; price: number }[] = await request.json()
+  const client = await pool.connect()
+  try {
+    await client.query('BEGIN')
+    for (const { id, price } of changes) {
+      await client.query('UPDATE transactions_buy SET price = $1 WHERE id = $2', [price, id])
+    }
+    await client.query('COMMIT')
+    return NextResponse.json({ ok: true, updated: changes.length })
+  } catch (e) {
+    await client.query('ROLLBACK')
+    return NextResponse.json({ error: String(e) }, { status: 500 })
+  } finally {
+    client.release()
+  }
+}

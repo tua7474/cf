@@ -5,12 +5,16 @@ interface Column {
   label: string
   type?: 'number' | 'currency' | 'percent' | 'date' | 'text'
   align?: 'left' | 'right' | 'center'
+  editable?: boolean
 }
 
 interface DataTableProps {
   columns: Column[]
   rows: Record<string, unknown>[]
   summary?: Record<string, number>
+  pendingEdits?: Record<string, Record<string, number>>
+  onCellEdit?: (rowKey: string, colKey: string, value: number) => void
+  rowKeyField?: string
 }
 
 function fmt(value: unknown, type?: string): string {
@@ -34,7 +38,7 @@ function fmt(value: unknown, type?: string): string {
   return String(value)
 }
 
-export default function DataTable({ columns, rows, summary }: DataTableProps) {
+export default function DataTable({ columns, rows, summary, pendingEdits = {}, onCellEdit, rowKeyField = 'id' }: DataTableProps) {
   return (
     <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
       <table className="min-w-full text-sm">
@@ -45,7 +49,7 @@ export default function DataTable({ columns, rows, summary }: DataTableProps) {
                 key={col.key}
                 className={`px-3 py-2 font-semibold whitespace-nowrap border-r border-green-600 last:border-r-0 ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'}`}
               >
-                {col.label}
+                {col.label}{col.editable && <span className="ml-1 text-green-200 text-xs">✎</span>}
               </th>
             ))}
           </tr>
@@ -56,18 +60,45 @@ export default function DataTable({ columns, rows, summary }: DataTableProps) {
               <td colSpan={columns.length} className="text-center py-8 text-gray-400">ไม่มีข้อมูล</td>
             </tr>
           ) : (
-            rows.map((row, i) => (
-              <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                {columns.map((col) => (
-                  <td
-                    key={col.key}
-                    className={`px-3 py-1.5 border-r border-gray-100 last:border-r-0 ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'} ${col.type === 'currency' && parseFloat(String(row[col.key])) < 0 ? 'text-red-600' : ''}`}
-                  >
-                    {fmt(row[col.key], col.type)}
-                  </td>
-                ))}
-              </tr>
-            ))
+            rows.map((row, i) => {
+              const rowKey = String(row[rowKeyField])
+              const rowEdits = pendingEdits[rowKey] ?? {}
+              return (
+                <tr key={i} className={`${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} ${Object.keys(rowEdits).length > 0 ? 'ring-1 ring-inset ring-yellow-400' : ''}`}>
+                  {columns.map((col) => {
+                    const hasPending = col.key in rowEdits
+                    const displayValue = hasPending ? rowEdits[col.key] : row[col.key]
+
+                    if (col.editable && onCellEdit) {
+                      return (
+                        <td key={col.key} className="px-1 py-0.5 border-r border-gray-100 last:border-r-0">
+                          <input
+                            type="number"
+                            step="0.01"
+                            defaultValue={parseFloat(String(displayValue)) || 0}
+                            key={`${rowKey}-${col.key}-${hasPending ? rowEdits[col.key] : row[col.key]}`}
+                            onChange={(e) => {
+                              const v = parseFloat(e.target.value)
+                              if (!isNaN(v)) onCellEdit(rowKey, col.key, v)
+                            }}
+                            className={`w-full text-right px-2 py-1 rounded border text-sm focus:outline-none focus:ring-2 focus:ring-green-400 ${hasPending ? 'border-yellow-400 bg-yellow-50 font-medium' : 'border-gray-200 bg-white'}`}
+                          />
+                        </td>
+                      )
+                    }
+
+                    return (
+                      <td
+                        key={col.key}
+                        className={`px-3 py-1.5 border-r border-gray-100 last:border-r-0 ${col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'} ${col.type === 'currency' && parseFloat(String(displayValue)) < 0 ? 'text-red-600' : ''}`}
+                      >
+                        {fmt(displayValue, col.type)}
+                      </td>
+                    )
+                  })}
+                </tr>
+              )
+            })
           )}
         </tbody>
         {summary && (
