@@ -1,65 +1,138 @@
-import Image from "next/image";
+'use client'
+
+import { useState, useEffect } from 'react'
+import DataTable from '@/components/DataTable'
+
+type Tab = 'sell' | 'buy' | 'products' | 'inventory' | 'targets'
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: 'sell',      label: '💰 Transaction ขาย' },
+  { key: 'buy',       label: '💸 Transaction ซื้อ' },
+  { key: 'products',  label: '📦 สินค้า' },
+  { key: 'inventory', label: '📊 คงเหลือ' },
+  { key: 'targets',   label: '🎯 เป้าหมาย' },
+]
+
+const COLUMNS = {
+  sell: [
+    { key: 'date',             label: 'วันที่',           type: 'date' as const },
+    { key: 'product_name',     label: 'ชื่อสินค้า' },
+    { key: 'price',            label: 'ราคา',            type: 'currency' as const, align: 'right' as const },
+    { key: 'unit',             label: 'หน่วย',           align: 'center' as const },
+    { key: 'quantity_sold',    label: 'จำนวนที่ขาย',    type: 'number' as const,   align: 'right' as const },
+    { key: 'total_value',      label: 'มูลค่ารวม',      type: 'currency' as const, align: 'right' as const },
+    { key: 'avg_cost_total',   label: 'ต้นทุนเฉลี่ยรวม', type: 'currency' as const, align: 'right' as const },
+    { key: 'gross_profit',     label: 'กำไรขั้นต้น',   type: 'currency' as const, align: 'right' as const },
+    { key: 'gross_profit_pct', label: '%กำไร',          type: 'percent' as const,  align: 'right' as const },
+    { key: 'year_month',       label: 'ปี-เดือน',       align: 'center' as const },
+    { key: 'product_group',    label: 'กลุ่มสินค้า' },
+    { key: 'note',             label: 'หมายเหตุ' },
+  ],
+  buy: [
+    { key: 'date',             label: 'วันที่',          type: 'date' as const },
+    { key: 'product_name',     label: 'ชื่อสินค้า' },
+    { key: 'price',            label: 'ราคา',           type: 'currency' as const, align: 'right' as const },
+    { key: 'unit',             label: 'หน่วย',          align: 'center' as const },
+    { key: 'actual_quantity',  label: 'ตัดได้จริง',    type: 'number' as const,   align: 'right' as const },
+    { key: 'other_costs',      label: 'ต้นทุนอื่นๆ',   type: 'currency' as const, align: 'right' as const },
+    { key: 'total_value',      label: 'มูลค่ารวม',     type: 'currency' as const, align: 'right' as const },
+    { key: 'year_month',       label: 'ปี-เดือน',      align: 'center' as const },
+    { key: 'ordered_qty',      label: 'สั่งมา',        type: 'number' as const,   align: 'right' as const },
+  ],
+  products: [
+    { key: 'product_name',  label: 'ชื่อสินค้า' },
+    { key: 'buy_price',     label: 'ราคาซื้อ',      type: 'currency' as const, align: 'right' as const },
+    { key: 'sell_price',    label: 'ราคาขาย',      type: 'currency' as const, align: 'right' as const },
+    { key: 'unit',          label: 'หน่วยนับ',     align: 'center' as const },
+    { key: 'min_quantity',  label: 'ขั้นต่ำ',      type: 'number' as const,   align: 'right' as const },
+    { key: 'product_group', label: 'กลุ่มสินค้า' },
+    { key: 'status',        label: 'Status',       align: 'center' as const },
+  ],
+  inventory: [
+    { key: 'product_name',   label: 'ชื่อสินค้า' },
+    { key: 'product_group',  label: 'กลุ่มสินค้า' },
+    { key: 'unit',           label: 'หน่วย',          align: 'center' as const },
+    { key: 'total_bought',   label: 'ซื้อทั้งหมด',   type: 'number' as const,   align: 'right' as const },
+    { key: 'total_sold',     label: 'ขายทั้งหมด',   type: 'number' as const,   align: 'right' as const },
+    { key: 'stock_qty',      label: 'คงเหลือ',       type: 'number' as const,   align: 'right' as const },
+    { key: 'avg_cost',       label: 'ต้นทุนเฉลี่ย', type: 'currency' as const, align: 'right' as const },
+    { key: 'stock_value',    label: 'มูลค่าคงเหลือ', type: 'currency' as const, align: 'right' as const },
+    { key: 'sell_price',     label: 'ราคาขาย',      type: 'currency' as const, align: 'right' as const },
+    { key: 'min_quantity',   label: 'ขั้นต่ำ',       type: 'number' as const,   align: 'right' as const },
+    { key: 'status',         label: 'Status',        align: 'center' as const },
+  ],
+  targets: [
+    { key: 'year_month',      label: 'ปี-เดือน',         align: 'center' as const },
+    { key: 'target',          label: 'เป้าหมาย',         type: 'currency' as const, align: 'right' as const },
+    { key: 'actual',          label: 'ยอดขายจริง',       type: 'currency' as const, align: 'right' as const },
+    { key: 'achievement_pct', label: '% บรรลุเป้า',      type: 'percent' as const,  align: 'right' as const },
+  ],
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type RowData = Record<string, any>
 
 export default function Home() {
+  const [tab, setTab] = useState<Tab>('sell')
+  const [data, setData] = useState<Record<Tab, RowData[]>>({ sell: [], buy: [], products: [], inventory: [], targets: [] })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    setLoading(true)
+    fetch(`/api/${tab}`)
+      .then((r) => r.json())
+      .then((rows) => {
+        setData((prev) => ({ ...prev, [tab]: rows }))
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [tab])
+
+  const rows = data[tab]
+  const cols = COLUMNS[tab]
+
+  const summary: Record<string, number> = {}
+  const numericCols = cols.filter((c) => c.type === 'currency' || c.type === 'number')
+  numericCols.forEach((col) => {
+    summary[col.key] = rows.reduce((sum, row) => sum + (parseFloat(row[col.key]) || 0), 0)
+  })
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="min-h-screen bg-gray-100">
+      <header className="bg-green-800 text-white px-6 py-4 shadow">
+        <h1 className="text-xl font-bold">กระดาษฝอยไทย — ระบบจัดการข้อมูล</h1>
+        <p className="text-green-200 text-xs mt-0.5">ข้อมูลจาก Railway PostgreSQL</p>
+      </header>
+
+      <div className="bg-white border-b border-gray-200 px-4 flex gap-0 shadow-sm">
+        {TABS.map((t) => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              tab === t.key
+                ? 'border-green-600 text-green-700 bg-green-50'
+                : 'border-transparent text-gray-600 hover:text-green-700 hover:bg-gray-50'
+            }`}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <main className="p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-sm text-gray-500">
+            {loading ? 'กำลังโหลด...' : `${rows.length} รายการ`}
+          </span>
         </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center h-40 text-gray-400">กำลังโหลดข้อมูล...</div>
+        ) : (
+          <DataTable columns={cols} rows={rows} summary={summary} />
+        )}
       </main>
     </div>
-  );
+  )
 }
