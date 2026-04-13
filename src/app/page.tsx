@@ -201,6 +201,12 @@ export default function Home() {
         {/* ปุ่มบันทึก + ปุ่มใบจอง */}
         <div className="flex items-center gap-3">
           <Link
+            href="/catalog"
+            className="px-4 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white font-medium transition-colors border border-white/30"
+          >
+            🏷 แก้ไขราคา
+          </Link>
+          <Link
             href="/booking"
             className="px-4 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white font-medium transition-colors border border-white/30"
           >
