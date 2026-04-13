@@ -15,6 +15,7 @@ interface DataTableProps {
   pendingEdits?: Record<string, Record<string, number>>
   onCellEdit?: (rowKey: string, colKey: string, value: number) => void
   rowKeyField?: string
+  groupByField?: string
 }
 
 function fmt(value: unknown, type?: string): string {
@@ -38,7 +39,25 @@ function fmt(value: unknown, type?: string): string {
   return String(value)
 }
 
-export default function DataTable({ columns, rows, summary, pendingEdits = {}, onCellEdit, rowKeyField = 'id' }: DataTableProps) {
+export default function DataTable({ columns, rows, summary, pendingEdits = {}, onCellEdit, rowKeyField = 'id', groupByField }: DataTableProps) {
+  // Build flattened list with optional group header entries
+  type Entry = { type: 'group'; label: string } | { type: 'row'; row: Record<string, unknown>; idx: number }
+  const entries: Entry[] = []
+  if (groupByField) {
+    let lastGroup = ''
+    let dataIdx = 0
+    for (const row of rows) {
+      const g = String(row[groupByField] ?? '')
+      if (g !== lastGroup) {
+        entries.push({ type: 'group', label: g })
+        lastGroup = g
+      }
+      entries.push({ type: 'row', row, idx: dataIdx++ })
+    }
+  } else {
+    rows.forEach((row, idx) => entries.push({ type: 'row', row, idx }))
+  }
+
   return (
     <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
       <table className="min-w-full text-sm">
@@ -55,16 +74,26 @@ export default function DataTable({ columns, rows, summary, pendingEdits = {}, o
           </tr>
         </thead>
         <tbody>
-          {rows.length === 0 ? (
+          {entries.length === 0 ? (
             <tr>
               <td colSpan={columns.length} className="text-center py-8 text-gray-400">ไม่มีข้อมูล</td>
             </tr>
           ) : (
-            rows.map((row, i) => {
+            entries.map((entry, ei) => {
+              if (entry.type === 'group') {
+                return (
+                  <tr key={`g-${ei}`} className="bg-gray-600 text-white">
+                    <td colSpan={columns.length} className="px-3 py-1.5 font-bold text-sm tracking-wide">
+                      {entry.label}
+                    </td>
+                  </tr>
+                )
+              }
+              const { row, idx: i } = entry
               const rowKey = String(row[rowKeyField])
               const rowEdits = pendingEdits[rowKey] ?? {}
               return (
-                <tr key={i} className={`${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} ${Object.keys(rowEdits).length > 0 ? 'ring-1 ring-inset ring-yellow-400' : ''}`}>
+                <tr key={`r-${rowKey}`} className={`${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} ${Object.keys(rowEdits).length > 0 ? 'ring-1 ring-inset ring-yellow-400' : ''}`}>
                   {columns.map((col) => {
                     const hasPending = col.key in rowEdits
                     const displayValue = hasPending ? rowEdits[col.key] : row[col.key]

@@ -43,13 +43,12 @@ const COLUMNS = {
     { key: 'ordered_qty',      label: 'สั่งมา',          type: 'number' as const,   align: 'right' as const },
   ],
   products: [
-    { key: 'product_name',  label: 'ชื่อสินค้า' },
-    { key: 'buy_price',     label: 'ราคาซื้อ',  type: 'currency' as const, align: 'right' as const, editable: true },
-    { key: 'sell_price',    label: 'ราคาขาย',  type: 'currency' as const, align: 'right' as const, editable: true },
-    { key: 'unit',          label: 'หน่วยนับ', align: 'center' as const },
-    { key: 'min_quantity',  label: 'ขั้นต่ำ',  type: 'number' as const,   align: 'right' as const },
-    { key: 'product_group', label: 'กลุ่มสินค้า' },
-    { key: 'status',        label: 'Status',   align: 'center' as const },
+    { key: 'group_name',   label: 'กลุ่มสินค้า' },
+    { key: 'product_name', label: 'ชื่อสินค้า' },
+    { key: 'price',        label: 'ราคาสินค้า', type: 'currency' as const, align: 'right' as const, editable: true },
+    { key: 'cost',         label: 'ต้นทุน',     type: 'currency' as const, align: 'right' as const, editable: true },
+    { key: 'quantity',     label: 'จำนวน',      type: 'number'   as const, align: 'right' as const, editable: true },
+    { key: 'updated_at',   label: 'แก้ไขล่าสุด', align: 'center' as const },
   ],
   inventory: [
     { key: 'product_name',   label: 'ชื่อสินค้า' },
@@ -73,7 +72,12 @@ const COLUMNS = {
 }
 
 const ROW_KEY: Record<Tab, string> = {
-  sell: 'id', buy: 'id', products: 'product_name', inventory: 'product_name', targets: 'year_month',
+  sell: 'id', buy: 'id', products: 'id', inventory: 'product_name', targets: 'year_month',
+}
+
+// Map tab → actual API endpoint (products tab uses catalog API)
+const TAB_API: Record<Tab, string> = {
+  sell: 'sell', buy: 'buy', products: 'catalog', inventory: 'inventory', targets: 'targets',
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -109,7 +113,7 @@ export default function Home() {
 
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/${tab}`)
+    fetch(`/api/${TAB_API[tab]}`)
       .then((r) => r.json())
       .then((rows) => {
         setData((prev) => ({ ...prev, [tab]: rows }))
@@ -143,15 +147,13 @@ export default function Home() {
       const edits = allPending[tab]
       let body: unknown
 
-      if (tab === 'sell' || tab === 'buy') {
+      if (tab === 'sell' || tab === 'buy' || tab === 'products') {
         body = Object.entries(edits).map(([id, cols]) => ({ id: Number(id), ...cols }))
-      } else if (tab === 'products') {
-        body = Object.entries(edits).map(([product_name, cols]) => ({ product_name, ...cols }))
       } else if (tab === 'targets') {
         body = Object.entries(edits).map(([year_month, cols]) => ({ year_month, ...cols }))
       }
 
-      const res = await fetch(`/api/${tab}`, {
+      const res = await fetch(`/api/${TAB_API[tab]}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -280,6 +282,7 @@ export default function Home() {
             pendingEdits={pending}
             onCellEdit={handleCellEdit}
             rowKeyField={ROW_KEY[tab]}
+            groupByField={tab === 'products' ? 'group_name' : undefined}
           />
         )}
       </main>
