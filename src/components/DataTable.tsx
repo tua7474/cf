@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 interface Column {
   key: string
   label: string
@@ -12,10 +14,11 @@ interface DataTableProps {
   columns: Column[]
   rows: Record<string, unknown>[]
   summary?: Record<string, number>
-  pendingEdits?: Record<string, Record<string, number>>
-  onCellEdit?: (rowKey: string, colKey: string, value: number) => void
+  pendingEdits?: Record<string, Record<string, string | number>>
+  onCellEdit?: (rowKey: string, colKey: string, value: string | number) => void
   rowKeyField?: string
   groupByField?: string
+  onAddRow?: (data: Record<string, string | number>) => void
 }
 
 function fmt(value: unknown, type?: string): string {
@@ -39,7 +42,17 @@ function fmt(value: unknown, type?: string): string {
   return String(value)
 }
 
-export default function DataTable({ columns, rows, summary, pendingEdits = {}, onCellEdit, rowKeyField = 'id', groupByField }: DataTableProps) {
+// CSS classes for hiding number input spinners
+const NO_SPIN = '[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+
+export default function DataTable({
+  columns, rows, summary,
+  pendingEdits = {}, onCellEdit,
+  rowKeyField = 'id', groupByField,
+  onAddRow,
+}: DataTableProps) {
+  const [newRow, setNewRow] = useState<Record<string, string>>({})
+
   // Build flattened list with optional group header entries
   type Entry = { type: 'group'; label: string } | { type: 'row'; row: Record<string, unknown>; idx: number }
   const entries: Entry[] = []
@@ -58,6 +71,20 @@ export default function DataTable({ columns, rows, summary, pendingEdits = {}, o
     rows.forEach((row, idx) => entries.push({ type: 'row', row, idx }))
   }
 
+  function handleAdd() {
+    if (!onAddRow) return
+    const data: Record<string, string | number> = {}
+    for (const col of columns) {
+      const showInput = col.editable || col.key === groupByField
+      if (!showInput) continue
+      const raw = newRow[col.key] ?? ''
+      const isNumeric = col.type === 'currency' || col.type === 'number'
+      data[col.key] = isNumeric ? (parseFloat(raw) || 0) : raw
+    }
+    onAddRow(data)
+    setNewRow({})
+  }
+
   return (
     <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
       <table className="min-w-full text-sm">
@@ -74,6 +101,43 @@ export default function DataTable({ columns, rows, summary, pendingEdits = {}, o
           </tr>
         </thead>
         <tbody>
+          {/* ── Add new row ──────────────────────────────────────────────── */}
+          {onAddRow && (
+            <tr className="bg-blue-50 border-b-2 border-blue-300">
+              {columns.map((col, ci) => {
+                const showInput = col.editable || col.key === groupByField
+                const isNumeric = col.type === 'currency' || col.type === 'number'
+                const isLast = ci === columns.length - 1
+
+                return (
+                  <td key={col.key} className="px-1 py-1 border-r border-gray-200 last:border-r-0">
+                    <div className="flex items-center gap-1">
+                      {showInput && (
+                        <input
+                          type={isNumeric ? 'number' : 'text'}
+                          step={isNumeric ? '0.01' : undefined}
+                          placeholder={col.label}
+                          value={newRow[col.key] ?? ''}
+                          onChange={e => setNewRow(prev => ({ ...prev, [col.key]: e.target.value }))}
+                          className={`w-full px-2 py-1 text-sm rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 ${isNumeric ? `text-right ${NO_SPIN}` : ''}`}
+                        />
+                      )}
+                      {isLast && (
+                        <button
+                          onClick={handleAdd}
+                          className="shrink-0 px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded whitespace-nowrap transition-colors"
+                        >
+                          + เพิ่ม
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                )
+              })}
+            </tr>
+          )}
+
+          {/* ── Data rows ────────────────────────────────────────────────── */}
           {entries.length === 0 ? (
             <tr>
               <td colSpan={columns.length} className="text-center py-8 text-gray-400">ไม่มีข้อมูล</td>
@@ -89,28 +153,46 @@ export default function DataTable({ columns, rows, summary, pendingEdits = {}, o
                   </tr>
                 )
               }
+
               const { row, idx: i } = entry
               const rowKey = String(row[rowKeyField])
               const rowEdits = pendingEdits[rowKey] ?? {}
+              const hasPendingRow = Object.keys(rowEdits).length > 0
+
               return (
-                <tr key={`r-${rowKey}`} className={`${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} ${Object.keys(rowEdits).length > 0 ? 'ring-1 ring-inset ring-yellow-400' : ''}`}>
+                <tr key={`r-${rowKey}`} className={`${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} ${hasPendingRow ? 'ring-1 ring-inset ring-yellow-400' : ''}`}>
                   {columns.map((col) => {
                     const hasPending = col.key in rowEdits
                     const displayValue = hasPending ? rowEdits[col.key] : row[col.key]
+                    const isNumeric = col.type === 'currency' || col.type === 'number'
 
                     if (col.editable && onCellEdit) {
+                      if (isNumeric) {
+                        return (
+                          <td key={col.key} className="px-1 py-0.5 border-r border-gray-100 last:border-r-0">
+                            <input
+                              type="number"
+                              step="0.01"
+                              defaultValue={parseFloat(String(displayValue)) || 0}
+                              key={`${rowKey}-${col.key}-${hasPending ? rowEdits[col.key] : row[col.key]}`}
+                              onChange={(e) => {
+                                const v = parseFloat(e.target.value)
+                                if (!isNaN(v)) onCellEdit(rowKey, col.key, v)
+                              }}
+                              className={`w-full text-right px-2 py-1 rounded border text-sm focus:outline-none focus:ring-2 focus:ring-green-400 ${NO_SPIN} ${hasPending ? 'border-yellow-400 bg-yellow-50 font-medium' : 'border-gray-200 bg-white'}`}
+                            />
+                          </td>
+                        )
+                      }
+                      // Text editable
                       return (
                         <td key={col.key} className="px-1 py-0.5 border-r border-gray-100 last:border-r-0">
                           <input
-                            type="number"
-                            step="0.01"
-                            defaultValue={parseFloat(String(displayValue)) || 0}
+                            type="text"
+                            defaultValue={String(displayValue ?? '')}
                             key={`${rowKey}-${col.key}-${hasPending ? rowEdits[col.key] : row[col.key]}`}
-                            onChange={(e) => {
-                              const v = parseFloat(e.target.value)
-                              if (!isNaN(v)) onCellEdit(rowKey, col.key, v)
-                            }}
-                            className={`w-full text-right px-2 py-1 rounded border text-sm focus:outline-none focus:ring-2 focus:ring-green-400 ${hasPending ? 'border-yellow-400 bg-yellow-50 font-medium' : 'border-gray-200 bg-white'}`}
+                            onChange={(e) => onCellEdit(rowKey, col.key, e.target.value)}
+                            className={`w-full px-2 py-1 rounded border text-sm focus:outline-none focus:ring-2 focus:ring-green-400 ${hasPending ? 'border-yellow-400 bg-yellow-50 font-medium' : 'border-gray-200 bg-white'}`}
                           />
                         </td>
                       )

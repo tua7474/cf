@@ -6,7 +6,7 @@ import DataTable from '@/components/DataTable'
 
 type Tab = 'sell' | 'buy' | 'products' | 'inventory' | 'targets'
 // pendingEdits: { [rowKey]: { [colKey]: newValue } }
-type PendingEdits = Record<string, Record<string, number>>
+type PendingEdits = Record<string, Record<string, string | number>>
 
 const TABS: { key: Tab; label: string }[] = [
   { key: 'sell',      label: '💰 Transaction ขาย' },
@@ -43,8 +43,8 @@ const COLUMNS = {
     { key: 'ordered_qty',      label: 'สั่งมา',          type: 'number' as const,   align: 'right' as const },
   ],
   products: [
-    { key: 'group_name',   label: 'กลุ่มสินค้า' },
-    { key: 'product_name', label: 'ชื่อสินค้า' },
+    { key: 'group_name',   label: 'กลุ่มสินค้า', editable: true },
+    { key: 'product_name', label: 'ชื่อสินค้า',  editable: true },
     { key: 'price',        label: 'ราคาสินค้า', type: 'currency' as const, align: 'right' as const, editable: true },
     { key: 'cost',         label: 'ต้นทุน',     type: 'currency' as const, align: 'right' as const, editable: true },
     { key: 'quantity',     label: 'จำนวน',      type: 'number'   as const, align: 'right' as const, editable: true },
@@ -122,7 +122,7 @@ export default function Home() {
       .catch(() => setLoading(false))
   }, [tab])
 
-  const handleCellEdit = useCallback((rowKey: string, colKey: string, value: number) => {
+  const handleCellEdit = useCallback((rowKey: string, colKey: string, value: string | number) => {
     setAllPending((prev) => {
       const updated = {
         ...prev,
@@ -182,6 +182,24 @@ export default function Home() {
     setAllPending((prev) => ({ ...prev, [tab]: {} }))
     localStorage.removeItem(`cf_draft_${tab}`)
   }
+
+  const handleAddProduct = useCallback(async (newData: Record<string, string | number>) => {
+    if (!newData.group_name || !newData.product_name) return
+    try {
+      const res = await fetch('/api/catalog', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newData),
+      })
+      if (!res.ok) throw new Error()
+      const fresh = await fetch('/api/catalog').then(r => r.json())
+      setData(prev => ({ ...prev, products: fresh }))
+      setSaveMsg('เพิ่มสินค้าสำเร็จ')
+      setTimeout(() => setSaveMsg(null), 3000)
+    } catch {
+      setSaveMsg('เกิดข้อผิดพลาด')
+    }
+  }, [])
 
   const rows = data[tab]
   const cols = COLUMNS[tab]
@@ -283,6 +301,7 @@ export default function Home() {
             onCellEdit={handleCellEdit}
             rowKeyField={ROW_KEY[tab]}
             groupByField={tab === 'products' ? 'group_name' : undefined}
+            onAddRow={tab === 'products' ? handleAddProduct : undefined}
           />
         )}
       </main>

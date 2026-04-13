@@ -6,7 +6,7 @@ import DataTable from '@/components/DataTable'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RowData = Record<string, any>
-type PendingEdits = Record<string, Record<string, number>>
+type PendingEdits = Record<string, Record<string, string | number>>
 
 const DRAFT_KEY = 'cf_draft_catalog'
 
@@ -47,7 +47,7 @@ export default function CatalogPage() {
       .catch(() => setLoading(false))
   }, [])
 
-  const handleCellEdit = useCallback((rowKey: string, colKey: string, value: number) => {
+  const handleCellEdit = useCallback((rowKey: string, colKey: string, value: string | number) => {
     setPending(prev => {
       const next = {
         ...prev,

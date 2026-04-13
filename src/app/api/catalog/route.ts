@@ -17,6 +17,49 @@ async function ensureTable() {
   `)
   const { rows } = await pool.query('SELECT COUNT(*)::int AS n FROM products_catalog')
   if (rows[0].n === 0) await seedData()
+  // Seed กระดาษฝอย products if not yet present
+  await seedKradaatFoi()
+}
+
+async function seedKradaatFoi() {
+  const { rows } = await pool.query(
+    "SELECT COUNT(*)::int AS n FROM products_catalog WHERE group_name IN ('รุ่นสีอ่อน','รุ่นสีพิเศษ A','รุ่นหยัก')"
+  )
+  if (rows[0].n > 0) return  // already seeded
+
+  const foiProducts: [string, string, number, number][] = [
+    ['รุ่นสีอ่อน',  '510 ขาวธรรมชาติ',    150, 90],
+    ['รุ่นสีอ่อน',  '861 ฟ้าอ่อน',        150, 80],
+    ['รุ่นสีอ่อน',  '831 สีโอรส',         150, 80],
+    ['รุ่นสีอ่อน',  '552 ชมพูเข้ม',       150, 80],
+    ['รุ่นสีอ่อน',  '551 ชมพูอ่อน',       150, 80],
+    ['รุ่นสีอ่อน',  '860 ม่วงอ่อน',       150, 80],
+    ['รุ่นสีอ่อน',  '591 เทาอ่อน',        150, 70],
+    ['รุ่นสีอ่อน',  '561 ฟ้าเข้ม',        150, 80],
+    ['รุ่นสีอ่อน',  '521 ครีม',           150, 80],
+    ['รุ่นสีพิเศษ A','111 เงินเงา',        400, 250],
+    ['รุ่นสีพิเศษ A','112 เงินด้าน',       400, 250],
+    ['รุ่นสีอ่อน',  '881 เปลือกไม้',      150, 80],
+    ['รุ่นสีอ่อน',  '863 ฟ้าพาสเทลเข้ม', 150, 70],
+    ['รุ่นหยัก',    '881 เปลือกไม้ รุ่นหยัก', 250, 20],
+    ['รุ่นสีอ่อน',  '853 ชมพูพาสเทล',    150, 80],
+    ['รุ่นสีอ่อน',  '862 ฟ้า PT อ่อน',   150, 80],
+    ['รุ่นสีอ่อน',  '863 ฟ้า PT เข้ม',   150, 80],
+    ['รุ่นสีอ่อน',  '522 เหลืองอ่อน',    150, 60],
+    ['รุ่นสีอ่อน',  '571 เขียวหยก',      150, 60],
+    ['รุ่นสีอ่อน',  '882 กาแฟ',          150, 60],
+    ['รุ่นสีอ่อน',  '511 กรีนรีด',       150, 60],
+  ]
+
+  const placeholders = foiProducts.map((_, j) => {
+    const b = j * 4
+    return `($${b+1},$${b+2},$${b+3},$${b+4})`
+  }).join(',')
+  const flat = foiProducts.flatMap(([g, n, p, c]) => [g, n, p, c])
+  await pool.query(
+    `INSERT INTO products_catalog (group_name,product_name,price,cost) VALUES ${placeholders}`,
+    flat
+  )
 }
 
 async function seedData() {
@@ -285,14 +328,20 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const body = await req.json() as { id: number; price?: number; cost?: number; quantity?: number }[]
+    const body = await req.json() as {
+      id: number
+      group_name?: string; product_name?: string
+      price?: number; cost?: number; quantity?: number
+    }[]
     for (const row of body) {
       const fields: string[] = []
       const vals: unknown[] = []
       let n = 1
-      if (row.price    !== undefined) { fields.push(`price=$${n++}`);    vals.push(row.price) }
-      if (row.cost     !== undefined) { fields.push(`cost=$${n++}`);     vals.push(row.cost) }
-      if (row.quantity !== undefined) { fields.push(`quantity=$${n++}`); vals.push(row.quantity) }
+      if (row.group_name   !== undefined) { fields.push(`group_name=$${n++}`);   vals.push(row.group_name) }
+      if (row.product_name !== undefined) { fields.push(`product_name=$${n++}`); vals.push(row.product_name) }
+      if (row.price        !== undefined) { fields.push(`price=$${n++}`);        vals.push(row.price) }
+      if (row.cost         !== undefined) { fields.push(`cost=$${n++}`);         vals.push(row.cost) }
+      if (row.quantity     !== undefined) { fields.push(`quantity=$${n++}`);     vals.push(row.quantity) }
       if (!fields.length) continue
       fields.push(`updated_at=NOW()`)
       vals.push(row.id)
@@ -302,6 +351,27 @@ export async function PATCH(req: NextRequest) {
       )
     }
     return NextResponse.json({ ok: true })
+  } catch (err) {
+    console.error(err)
+    return NextResponse.json({ error: String(err) }, { status: 500 })
+  }
+}
+
+// ── POST ──────────────────────────────────────────────────────────────────────
+
+export async function POST(req: NextRequest) {
+  try {
+    await ensureTable()
+    const { group_name, product_name, price, cost, quantity } =
+      await req.json() as { group_name: string; product_name: string; price?: number; cost?: number; quantity?: number }
+    if (!group_name || !product_name)
+      return NextResponse.json({ error: 'group_name and product_name required' }, { status: 400 })
+    const { rows } = await pool.query(
+      `INSERT INTO products_catalog (group_name,product_name,price,cost,quantity)
+       VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+      [group_name, product_name, price ?? null, cost ?? null, quantity ?? null]
+    )
+    return NextResponse.json({ ok: true, id: rows[0].id })
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: String(err) }, { status: 500 })
