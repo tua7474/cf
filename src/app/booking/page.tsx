@@ -19,9 +19,44 @@ interface Product {
   current_qty: number
 }
 
+type SubgroupColor = 'gray' | 'light' | 'orange' | 'teal' | 'maroon'
+
 type SectionRow =
-  | { type: 'subgroup'; name: string }
+  | { type: 'subgroup'; name: string; color: SubgroupColor }
   | { type: 'product'; product: Product }
+
+// ── Sub-group colors (ดึงจาก Excel จริง) ─────────────────────────────────────
+// key = "section_order-subgroup_order"
+
+const SUBGROUP_COLOR: Record<string, SubgroupColor> = {
+  // S2 ซองน้ำตาล
+  '2-1': 'gray',   '2-2': 'light',  '2-3': 'gray',  '2-4': 'gray',
+  '2-5': 'orange', '2-6': 'gray',   '2-7': 'orange','2-8': 'orange',
+  '2-9': 'gray',   '2-10': 'gray',
+  // S3 ซอง PP
+  '3-1': 'gray',   '3-2': 'gray',   '3-3': 'gray',  '3-4': 'gray',
+  '3-5': 'light',  '3-6': 'light',  '3-7': 'teal',  '3-8': 'orange',
+  '3-9': 'orange',
+  // S4 บับเบิล
+  '4-1': 'light',  '4-2': 'light',  '4-3': 'gray',  '4-4': 'light',
+  '4-5': 'gray',   '4-6': 'gray',   '4-7': 'orange','4-8': 'orange',
+  '4-9': 'orange',
+  // S5 กล่อง Thank You
+  '5-1': 'light',  '5-2': 'gray',   '5-3': 'gray',  '5-4': 'gray',
+  '5-5': 'orange', '5-6': 'maroon',
+  // S6 ซองกันกระแทก
+  '6-1': 'gray',   '6-2': 'orange', '6-3': 'orange','6-4': 'gray',
+  '6-5': 'orange', '6-6': 'orange', '6-7': 'orange','6-8': 'orange',
+  '6-9': 'gray',   '6-10': 'gray',
+}
+
+const SUBGROUP_BG: Record<SubgroupColor, string> = {
+  gray:   'bg-gray-500   text-white  border-gray-600',
+  light:  'bg-gray-300   text-gray-800 border-gray-400',
+  orange: 'bg-orange-400 text-white  border-orange-500',
+  teal:   'bg-teal-500   text-white  border-teal-600',
+  maroon: 'bg-red-800    text-white  border-red-900',
+}
 
 interface Section {
   order: number
@@ -71,9 +106,11 @@ function buildSections(products: Product[]): Section[] {
     const sec = map.get(p.section_order)!
     // Insert sub-group header when the subgroup name changes (skip sections without sub-groups)
     if (p.subgroup_order > 0) {
-      const prev = [...sec.rows].reverse().find(r => r.type === 'subgroup') as { type: 'subgroup'; name: string } | undefined
+      const prev = [...sec.rows].reverse().find(r => r.type === 'subgroup') as { type: 'subgroup'; name: string; color: SubgroupColor } | undefined
       if (!prev || prev.name !== p.subgroup_name) {
-        sec.rows.push({ type: 'subgroup', name: p.subgroup_name })
+        const colorKey = `${p.section_order}-${p.subgroup_order}`
+        const color: SubgroupColor = SUBGROUP_COLOR[colorKey] ?? 'gray'
+        sec.rows.push({ type: 'subgroup', name: p.subgroup_name, color })
       }
     }
     sec.rows.push({ type: 'product', product: p })
@@ -270,7 +307,7 @@ export default function BookingPage() {
                           <td
                             key={`${si}-sg`}
                             colSpan={4}
-                            className="border border-orange-300 bg-orange-200 px-2 py-px text-[9px] font-bold text-orange-900"
+                            className={`border px-2 py-px text-[9px] font-bold ${SUBGROUP_BG[cell.color]}`}
                           >
                             {cell.name}
                           </td>,
