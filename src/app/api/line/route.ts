@@ -25,13 +25,22 @@ function verifySignature(body: string, sig: string) {
 
 // ── Session (DB) ──────────────────────────────────────────────────────────────
 
+interface InputState {
+  id: number; name: string; price: number; sec: number; sg: number; page: number
+}
+
 async function ensureTable() {
   await pool.query(`
     CREATE TABLE IF NOT EXISTS line_sessions (
-      user_id    VARCHAR(100) PRIMARY KEY,
-      order_data JSONB        NOT NULL DEFAULT '{}',
-      updated_at TIMESTAMP    NOT NULL DEFAULT NOW()
+      user_id     VARCHAR(100) PRIMARY KEY,
+      order_data  JSONB        NOT NULL DEFAULT '{}',
+      input_state JSONB,
+      updated_at  TIMESTAMP    NOT NULL DEFAULT NOW()
     )`)
+  // Add input_state column if upgrading from older schema
+  await pool.query(`
+    ALTER TABLE line_sessions ADD COLUMN IF NOT EXISTS input_state JSONB
+  `).catch(() => {})
 }
 
 async function getOrder(userId: string): Promise<Record<number, number>> {
@@ -46,6 +55,19 @@ async function saveOrder(userId: string, data: Record<number, number>) {
     INSERT INTO line_sessions (user_id, order_data, updated_at) VALUES ($1,$2,NOW())
     ON CONFLICT (user_id) DO UPDATE SET order_data=$2, updated_at=NOW()
   `, [userId, JSON.stringify(data)])
+}
+
+async function getInputState(userId: string): Promise<InputState | null> {
+  const { rows } = await pool.query('SELECT input_state FROM line_sessions WHERE user_id=$1', [userId])
+  return rows[0]?.input_state ?? null
+}
+
+async function setInputState(userId: string, state: InputState | null) {
+  await ensureTable()
+  await pool.query(`
+    INSERT INTO line_sessions (user_id, order_data, input_state, updated_at) VALUES ($1,'{}', $2, NOW())
+    ON CONFLICT (user_id) DO UPDATE SET input_state=$2, updated_at=NOW()
+  `, [userId, state ? JSON.stringify(state) : null])
 }
 
 // ── DB Queries ────────────────────────────────────────────────────────────────
@@ -245,26 +267,41 @@ async function productsView(sectionOrder: number, subgroupOrder: number, page: n
 
   const prodRows = pageProds.map(p => {
     const qty = order[p.id] ?? 0
+    const total = qty * p.unit_price
     return {
       type: 'box', layout: 'vertical', margin: 'sm', paddingAll: '8px',
       backgroundColor: qty > 0 ? '#f0fff4' : '#f8f8f8', cornerRadius: '8px',
       contents: [
+        // Product name + qty badge
         {
-          type: 'box', layout: 'horizontal',
+          type: 'box', layout: 'horizontal', alignItems: 'center',
           contents: [
-            { type: 'text', text: p.product_name, size: 'sm', flex: 5, wrap: true, color: '#222222' },
-            { type: 'text', text: qty > 0 ? `✅ ${qty}` : '—', size: 'sm', flex: 2, align: 'end', weight: 'bold', color: qty > 0 ? '#1a7f37' : '#cccccc' }
+            { type: 'text', text: p.product_name, size: 'sm', flex: 5, wrap: true, color: '#222222', weight: qty > 0 ? 'bold' : 'regular' },
+            { type: 'text', text: qty > 0 ? `×${qty}` : '', size: 'sm', flex: 1, align: 'end', color: '#1a7f37', weight: 'bold' }
           ]
         },
-        { type: 'text', text: `฿${fmt(p.unit_price)} / ชิ้น`, size: 'xs', color: '#888888', margin: 'xs' },
+        // Price + total row
         {
-          type: 'box', layout: 'horizontal', margin: 'sm', spacing: 'xs',
+          type: 'box', layout: 'horizontal', margin: 'xs',
           contents: [
-            { type: 'button', action: { type: 'postback', label: '+1',  data: `A:${p.id}:1`  }, height: 'sm', style: 'secondary', flex: 1 },
-            { type: 'button', action: { type: 'postback', label: '+5',  data: `A:${p.id}:5`  }, height: 'sm', style: 'secondary', flex: 1 },
-            { type: 'button', action: { type: 'postback', label: '+10', data: `A:${p.id}:10` }, height: 'sm', style: 'secondary', flex: 1 },
-            { type: 'button', action: { type: 'postback', label: '+50', data: `A:${p.id}:50` }, height: 'sm', style: 'primary',   color: '#1a7f37', flex: 1 },
-            { type: 'button', action: { type: 'postback', label: '✕',   data: `R:${p.id}`    }, height: 'sm', style: 'secondary', color: '#cc0000', flex: 1 }
+            { type: 'text', text: `฿${fmt(p.unit_price)}/ชิ้น`, size: 'xs', flex: 3, color: '#888888' },
+            { type: 'text', text: qty > 0 ? `รวม ฿${fmt(total)}` : '', size: 'xs', flex: 3, align: 'end', color: '#1a7f37', weight: 'bold' }
+          ]
+        },
+        // Buttons row: ⌨️ ระบุจำนวน + ✕
+        {
+          type: 'box', layout: 'horizontal', margin: 'sm', spacing: 'sm',
+          contents: [
+            {
+              type: 'button', flex: 4,
+              action: { type: 'postback', label: '⌨️ ระบุจำนวน', data: `QI:${p.id}:${sectionOrder}:${subgroupOrder}:${page}` },
+              style: 'primary', color: '#1a5c29', height: 'sm'
+            },
+            {
+              type: 'button', flex: 1,
+              action: { type: 'postback', label: '✕', data: `R:${p.id}` },
+              style: 'secondary', height: 'sm'
+            }
           ]
         }
       ]
@@ -289,7 +326,7 @@ async function productsView(sectionOrder: number, subgroupOrder: number, page: n
         type: 'box', layout: 'vertical', backgroundColor: headerBg,
         contents: [
           { type: 'text', text: title, color: '#ffffff', weight: 'bold', size: 'sm', wrap: true },
-          { type: 'text', text: `หน้า ${page+1}/${totalPages}  ·  กด +จำนวน แล้วกด "บันทึกและกลับ"`, color: '#ffffff99', size: 'xs' }
+          { type: 'text', text: `หน้า ${page+1}/${totalPages}  ·  กด ⌨️ แล้วพิมพ์จำนวน`, color: '#ffffff99', size: 'xs' }
         ]
       },
       body: {
@@ -300,7 +337,7 @@ async function productsView(sectionOrder: number, subgroupOrder: number, page: n
         type: 'box', layout: 'vertical', spacing: 'sm',
         contents: [
           ...(navBtns.length ? [{ type: 'box', layout: 'horizontal', spacing: 'sm', contents: navBtns }] : []),
-          { type: 'button', action: { type: 'postback', label: '✅ บันทึกและกลับ', data: backData }, style: 'primary', color: '#1a5c29', height: 'sm' }
+          { type: 'button', action: { type: 'postback', label: '✅ ยืนยันและกลับ', data: backData }, style: 'primary', color: '#1a5c29', height: 'sm' }
         ]
       }
     }
@@ -471,17 +508,29 @@ async function handlePostback(data: string, userId: string, replyToken: string) 
     const order = await getOrder(userId)
     delete order[id]
     await saveOrder(userId, order)
+    // Reply with simple text — don't push new Flex
+    return reply(replyToken, [{ type: 'text', text: '✕ รีเซ็ตจำนวนสินค้าแล้วครับ' }])
+  }
 
+  // QUERY INPUT: QI:{id}:{sec}:{sg}:{page}
+  if (data.startsWith('QI:')) {
+    const [, idStr, secStr, sgStr, pageStr] = data.split(':')
+    const id = Number(idStr)
     const { rows } = await pool.query(
-      'SELECT section_order, subgroup_order FROM booking_products WHERE id=$1', [id])
-    if (rows[0]) {
-      const { section_order: sec, subgroup_order: sg } = rows[0]
-      const allProds = await getProducts(sec, sg)
-      const idx  = allProds.findIndex(p => p.id === id)
-      const page = Math.floor(Math.max(idx, 0) / PAGE_SIZE)
-      return reply(replyToken, [await productsView(sec, sg, page, userId)])
-    }
-    return reply(replyToken, [{ type: 'text', text: '✕ รีเซ็ตจำนวนแล้ว' }])
+      'SELECT product_name, unit_price FROM booking_products WHERE id=$1', [id])
+    if (!rows[0]) return reply(replyToken, [{ type: 'text', text: 'ไม่พบสินค้า' }])
+    const { product_name, unit_price } = rows[0]
+
+    // Store input state
+    await setInputState(userId, {
+      id, name: product_name, price: unit_price,
+      sec: Number(secStr), sg: Number(sgStr), page: Number(pageStr)
+    })
+
+    return reply(replyToken, [{
+      type: 'text',
+      text: `⌨️ กรอกจำนวน:\n"${product_name}"\nราคา ฿${fmt(unit_price)} / ชิ้น\n\nพิมพ์จำนวนที่ต้องการ (ตัวเลขเท่านั้น):`
+    }])
   }
 }
 
@@ -489,6 +538,24 @@ async function handlePostback(data: string, userId: string, replyToken: string) 
 
 async function handleText(text: string, userId: string, replyToken: string) {
   const t = text.trim().toLowerCase()
+
+  // Check if user is responding to a QI: input prompt
+  const numVal = parseFloat(text.trim())
+  if (!isNaN(numVal) && numVal > 0 && /^\d+(\.\d+)?$/.test(text.trim())) {
+    const state = await getInputState(userId)
+    if (state) {
+      const qty = Math.round(numVal)
+      const order = await getOrder(userId)
+      order[state.id] = qty
+      await saveOrder(userId, order)
+      await setInputState(userId, null)
+      const total = qty * state.price
+      return reply(replyToken, [{
+        type: 'text',
+        text: `✅ บันทึกแล้วครับ\n${state.name}\n× ${qty} ชิ้น = ฿${fmt(total)}\n\nกรอกสินค้าถัดไปได้เลย หรือกด ✅ ยืนยันและกลับ เพื่อกลับหน้าหมวด`
+      }])
+    }
+  }
 
   if (['ใบจอง', 'จอง', 'สั่งสินค้า', 'order', 'booking', 'เมนู', 'menu'].includes(t)) {
     return reply(replyToken, [await mainMenu(userId)])

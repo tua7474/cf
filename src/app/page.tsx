@@ -43,7 +43,7 @@ const COLUMNS = {
     { key: 'ordered_qty',      label: 'สั่งมา',          type: 'number' as const,   align: 'right' as const },
   ],
   products: [
-    { key: 'group_name',   label: 'กลุ่มสินค้า', editable: true },
+    { key: 'group_name', label: 'กลุ่มสินค้า', editable: true, confirmOnEdit: true },
     { key: 'product_name', label: 'ชื่อสินค้า',  editable: true },
     { key: 'price',        label: 'ราคาสินค้า', type: 'currency' as const, align: 'right' as const, editable: true },
     { key: 'cost',         label: 'ต้นทุน',     type: 'currency' as const, align: 'right' as const, editable: true },
@@ -131,9 +131,28 @@ export default function Home() {
           [rowKey]: { ...prev[tab][rowKey], [colKey]: value },
         },
       }
-      saveDraft(tab, updated[tab]) // auto-save ลง localStorage ทันที
+      saveDraft(tab, updated[tab])
       return updated
     })
+
+    // When group_name changes in products: visually move row to new group immediately
+    if (tab === 'products' && colKey === 'group_name') {
+      const newGroup = String(value)
+      setData((prev) => {
+        const updated = prev.products.map((r) =>
+          String(r.id) === rowKey ? { ...r, group_name: newGroup } : r
+        )
+        // Preserve existing group order; append new group at bottom
+        const existingGroupOrder = Array.from(
+          new Set(prev.products.map((r) => r.group_name as string))
+        )
+        const groupOrder = existingGroupOrder.includes(newGroup)
+          ? existingGroupOrder
+          : [...existingGroupOrder, newGroup]
+        const sorted = groupOrder.flatMap((g) => updated.filter((r) => r.group_name === g))
+        return { ...prev, products: sorted }
+      })
+    }
   }, [tab])
 
   const pendingCount = Object.keys(allPending[tab]).length
@@ -302,6 +321,9 @@ export default function Home() {
             rowKeyField={ROW_KEY[tab]}
             groupByField={tab === 'products' ? 'group_name' : undefined}
             onAddRow={tab === 'products' ? handleAddProduct : undefined}
+            existingGroups={tab === 'products'
+              ? Array.from(new Set(rows.map((r) => r.group_name as string)))
+              : undefined}
           />
         )}
       </main>

@@ -8,6 +8,8 @@ interface Column {
   type?: 'number' | 'currency' | 'percent' | 'date' | 'text'
   align?: 'left' | 'right' | 'center'
   editable?: boolean
+  confirmOnEdit?: boolean   // show confirm dialog on blur before calling onCellEdit
+  confirmMsg?: (oldVal: string, newVal: string) => string
 }
 
 interface DataTableProps {
@@ -19,6 +21,7 @@ interface DataTableProps {
   rowKeyField?: string
   groupByField?: string
   onAddRow?: (data: Record<string, string | number>) => void
+  existingGroups?: string[]   // for confirmOnEdit group columns
 }
 
 function fmt(value: unknown, type?: string): string {
@@ -49,7 +52,7 @@ export default function DataTable({
   columns, rows, summary,
   pendingEdits = {}, onCellEdit,
   rowKeyField = 'id', groupByField,
-  onAddRow,
+  onAddRow, existingGroups = [],
 }: DataTableProps) {
   const [newRow, setNewRow] = useState<Record<string, string>>({})
 
@@ -184,7 +187,38 @@ export default function DataTable({
                           </td>
                         )
                       }
-                      // Text editable
+                      // Text editable — with optional confirm-on-blur
+                      if (col.confirmOnEdit) {
+                        return (
+                          <td key={col.key} className="px-1 py-0.5 border-r border-gray-100 last:border-r-0">
+                            <input
+                              type="text"
+                              defaultValue={String(displayValue ?? '')}
+                              key={`${rowKey}-${col.key}-${hasPending ? rowEdits[col.key] : row[col.key]}`}
+                              onBlur={(e) => {
+                                const newVal = e.target.value.trim()
+                                const oldVal = String(displayValue ?? '').trim()
+                                if (newVal === oldVal) return
+                                const groupExists = existingGroups.includes(newVal)
+                                const msg = col.confirmMsg
+                                  ? col.confirmMsg(oldVal, newVal)
+                                  : groupByField && col.key === groupByField
+                                    ? `ย้ายสินค้าจากกลุ่ม "${oldVal}" ไปยังกลุ่ม "${newVal}" ใช่หรือไม่?\n\n` +
+                                      (groupExists
+                                        ? `✅ กลุ่ม "${newVal}" มีอยู่แล้ว — จะย้ายไปต่อท้ายกลุ่มนั้น`
+                                        : `🆕 กลุ่ม "${newVal}" ยังไม่มี — จะสร้างกลุ่มใหม่ที่ด้านล่าง`)
+                                    : `เปลี่ยนจาก "${oldVal}" เป็น "${newVal}" ใช่หรือไม่?`
+                                if (!window.confirm(msg)) {
+                                  e.target.value = oldVal   // revert
+                                  return
+                                }
+                                onCellEdit(rowKey, col.key, newVal)
+                              }}
+                              className={`w-full px-2 py-1 rounded border text-sm focus:outline-none focus:ring-2 focus:ring-green-400 ${hasPending ? 'border-yellow-400 bg-yellow-50 font-medium' : 'border-gray-200 bg-white'}`}
+                            />
+                          </td>
+                        )
+                      }
                       return (
                         <td key={col.key} className="px-1 py-0.5 border-r border-gray-100 last:border-r-0">
                           <input
