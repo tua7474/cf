@@ -13,8 +13,8 @@ const DRAFT_KEY = 'cf_draft_catalog'
 const VIEW_COLUMNS = [
   { key: 'group_name',   label: 'กลุ่มสินค้า' },
   { key: 'product_name', label: 'ชื่อสินค้า' },
-  { key: 'price',      label: 'ราคาสินค้า', type: 'currency' as const, align: 'right' as const },
-  { key: 'cost',       label: 'ต้นทุน',     type: 'currency' as const, align: 'right' as const },
+  { key: 'price',      label: 'ราคาโกดัง', type: 'currency' as const, align: 'right' as const },
+  { key: 'cost',       label: 'สต็อค',     type: 'currency' as const, align: 'right' as const },
   { key: 'quantity',   label: 'จำนวน',      type: 'number'   as const, align: 'right' as const },
   { key: 'updated_at', label: 'แก้ไขล่าสุด', align: 'center' as const },
 ]
@@ -22,8 +22,8 @@ const VIEW_COLUMNS = [
 const EDIT_COLUMNS = [
   { key: 'group_name',   label: 'กลุ่มสินค้า', editable: true, confirmOnEdit: true },
   { key: 'product_name', label: 'ชื่อสินค้า',  editable: true },
-  { key: 'price',      label: 'ราคาสินค้า', type: 'currency' as const, align: 'right' as const, editable: true },
-  { key: 'cost',       label: 'ต้นทุน',     type: 'currency' as const, align: 'right' as const, editable: true },
+  { key: 'price',      label: 'ราคาโกดัง', type: 'currency' as const, align: 'right' as const, editable: true },
+  { key: 'cost',       label: 'สต็อค',     type: 'currency' as const, align: 'right' as const, editable: true },
   { key: 'quantity',   label: 'จำนวน',      type: 'number'   as const, align: 'right' as const, editable: true },
   { key: 'updated_at', label: 'แก้ไขล่าสุด', align: 'center' as const },
 ]
