@@ -19,6 +19,21 @@ async function ensureTable() {
   if (rows[0].n === 0) await seedData()
   // Seed กระดาษฝอย products if not yet present
   await seedKradaatFoi()
+  // Merge groups that share the same prefix into one group
+  await mergeGroupsByPrefix()
+}
+
+async function mergeGroupsByPrefix() {
+  // Merge any group starting with "กระดาษฝอย" → "กระดาษฝอย"
+  await pool.query(`
+    UPDATE products_catalog SET group_name = 'กระดาษฝอย', updated_at = NOW()
+    WHERE group_name LIKE 'กระดาษฝอย%' AND group_name <> 'กระดาษฝอย'
+  `)
+  // Merge any group starting with "กระบอก" → "กระบอก"
+  await pool.query(`
+    UPDATE products_catalog SET group_name = 'กระบอก', updated_at = NOW()
+    WHERE group_name LIKE 'กระบอก%' AND group_name <> 'กระบอก'
+  `)
 }
 
 async function seedKradaatFoi() {
@@ -315,7 +330,7 @@ export async function GET() {
       SELECT id, group_name, product_name, price, cost, quantity,
              to_char(updated_at, 'YYYY-MM-DD HH24:MI') AS updated_at
       FROM products_catalog
-      ORDER BY id
+      ORDER BY group_name, id
     `)
     return NextResponse.json(rows)
   } catch (err) {
