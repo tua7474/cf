@@ -392,3 +392,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
+
+// ── DELETE ─────────────────────────────────────────────────────────────────────
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const id = Number(searchParams.get('id'))
+    if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+    await pool.query('DELETE FROM products_catalog WHERE id=$1', [id])
+    return NextResponse.json({ ok: true })
+  } catch (err) {
+    console.error(err)
+    return NextResponse.json({ error: String(err) }, { status: 500 })
+  }
+}

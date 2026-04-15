@@ -90,6 +90,23 @@ export default function CatalogPage() {
     }
   }, [])
 
+  const handleDeleteProduct = useCallback(async (rowKey: string) => {
+    try {
+      const res = await fetch(`/api/catalog?id=${rowKey}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error()
+      setRows(prev => prev.filter(r => String(r.id) !== rowKey))
+      // Also remove from pending if exists
+      setPending(prev => {
+        const next = { ...prev }
+        delete next[rowKey]
+        saveDraft(next)
+        return next
+      })
+    } catch {
+      alert('เกิดข้อผิดพลาดในการลบสินค้า')
+    }
+  }, [])
+
   const pendingCount = Object.keys(pending).length
 
   const handleSave = async () => {
@@ -258,6 +275,7 @@ export default function CatalogPage() {
             groupByField={isEditing ? 'group_name' : undefined}
             onAddRow={isEditing ? handleAddProduct : undefined}
             existingGroups={isEditing ? groups : []}
+            onDeleteRow={isEditing ? handleDeleteProduct : undefined}
           />
         )}
       </main>

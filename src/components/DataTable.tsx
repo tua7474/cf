@@ -22,6 +22,7 @@ interface DataTableProps {
   groupByField?: string
   onAddRow?: (data: Record<string, string | number>) => void
   existingGroups?: string[]   // for confirmOnEdit group columns
+  onDeleteRow?: (rowKey: string) => void
 }
 
 function fmt(value: unknown, type?: string): string {
@@ -53,6 +54,7 @@ export default function DataTable({
   pendingEdits = {}, onCellEdit,
   rowKeyField = 'id', groupByField,
   onAddRow, existingGroups = [],
+  onDeleteRow,
 }: DataTableProps) {
   const [newRow, setNewRow] = useState<Record<string, string>>({})
 
@@ -241,6 +243,18 @@ export default function DataTable({
                       </td>
                     )
                   })}
+                  {onDeleteRow && (
+                    <td className="px-2 py-0.5 border-l border-gray-100 w-10 text-center">
+                      <button
+                        onClick={() => {
+                          if (window.confirm('ลบรายการนี้ใช่หรือไม่?')) onDeleteRow(rowKey)
+                        }}
+                        className="px-2 py-0.5 text-xs rounded bg-red-100 hover:bg-red-200 text-red-700 transition-colors"
+                      >
+                        ลบ
+                      </button>
+                    </td>
+                  )}
                 </tr>
               )
             })
