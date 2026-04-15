@@ -4,13 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import DataTable from '@/components/DataTable'
 
-type Tab = 'products' | 'kradaat'
 type PendingEdits = Record<string, Record<string, string | number>>
-
-const TABS: { key: Tab; label: string }[] = [
-  { key: 'products', label: '📦 สินค้า' },
-  { key: 'kradaat',  label: '📦 กระดาษฝอย' },
-]
 
 const CATALOG_COLUMNS = [
   { key: 'group_name',   label: 'กลุ่มสินค้า', editable: true, confirmOnEdit: true },
@@ -34,7 +28,6 @@ function saveDraft(edits: PendingEdits) {
 }
 
 export default function Home() {
-  const [tab, setTab]         = useState<Tab>('products')
   const [rows, setRows]       = useState<RowData[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving]   = useState(false)
@@ -158,21 +151,11 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Tabs */}
-      <div className="bg-white border-b border-gray-200 px-4 flex gap-0 shadow-sm">
-        {TABS.map(t => (
-          <button
-            key={t.key}
-            onClick={() => setTab(t.key)}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-              tab === t.key
-                ? 'border-green-600 text-green-700 bg-green-50'
-                : 'border-transparent text-gray-600 hover:text-green-700 hover:bg-gray-50'
-            }`}
-          >
-            {t.label}
-          </button>
-        ))}
+      {/* Tab header */}
+      <div className="bg-white border-b border-gray-200 px-4 shadow-sm">
+        <span className="inline-block px-4 py-3 text-sm font-medium border-b-2 border-green-600 text-green-700 bg-green-50">
+          📦 กระดาษฝอย
+        </span>
       </div>
 
       <main className="p-4">
@@ -188,7 +171,7 @@ export default function Home() {
         ) : (
           <DataTable
             columns={CATALOG_COLUMNS}
-            rows={tab === 'kradaat' ? rows.filter(r => r.group_name === 'กระดาษฝอย') : rows}
+            rows={rows.filter(r => r.group_name === 'กระดาษฝอย')}
             pendingEdits={pending}
             onCellEdit={handleCellEdit}
             rowKeyField="id"
