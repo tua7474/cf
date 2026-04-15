@@ -4,191 +4,90 @@ import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 import DataTable from '@/components/DataTable'
 
-type Tab = 'sell' | 'buy' | 'products' | 'inventory' | 'targets'
-// pendingEdits: { [rowKey]: { [colKey]: newValue } }
+type Tab = 'products' | 'kradaat'
 type PendingEdits = Record<string, Record<string, string | number>>
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: 'sell',      label: '💰 Transaction ขาย' },
-  { key: 'buy',       label: '💸 Transaction ซื้อ' },
-  { key: 'products',  label: '📦 สินค้า' },
-  { key: 'inventory', label: '📊 คงเหลือ' },
-  { key: 'targets',   label: '🎯 เป้าหมาย' },
+  { key: 'products', label: '📦 สินค้า' },
+  { key: 'kradaat',  label: '📦 กระดาษฝอย' },
 ]
 
-const COLUMNS = {
-  sell: [
-    { key: 'date',             label: 'วันที่',             type: 'date' as const },
-    { key: 'product_name',     label: 'ชื่อสินค้า' },
-    { key: 'price',            label: 'ราคา',              type: 'currency' as const, align: 'right' as const, editable: true },
-    { key: 'unit',             label: 'หน่วย',             align: 'center' as const },
-    { key: 'quantity_sold',    label: 'จำนวนที่ขาย',      type: 'number' as const,   align: 'right' as const },
-    { key: 'total_value',      label: 'มูลค่ารวม',        type: 'currency' as const, align: 'right' as const },
-    { key: 'avg_cost_total',   label: 'ต้นทุนเฉลี่ยรวม', type: 'currency' as const, align: 'right' as const },
-    { key: 'gross_profit',     label: 'กำไรขั้นต้น',     type: 'currency' as const, align: 'right' as const },
-    { key: 'gross_profit_pct', label: '%กำไร',            type: 'percent' as const,  align: 'right' as const },
-    { key: 'year_month',       label: 'ปี-เดือน',         align: 'center' as const },
-    { key: 'product_group',    label: 'กลุ่มสินค้า' },
-    { key: 'note',             label: 'หมายเหตุ' },
-  ],
-  buy: [
-    { key: 'date',             label: 'วันที่',            type: 'date' as const },
-    { key: 'product_name',     label: 'ชื่อสินค้า' },
-    { key: 'price',            label: 'ราคา',             type: 'currency' as const, align: 'right' as const, editable: true },
-    { key: 'unit',             label: 'หน่วย',            align: 'center' as const },
-    { key: 'actual_quantity',  label: 'ตัดได้จริง',      type: 'number' as const,   align: 'right' as const },
-    { key: 'other_costs',      label: 'ต้นทุนอื่นๆ',     type: 'currency' as const, align: 'right' as const },
-    { key: 'total_value',      label: 'มูลค่ารวม',       type: 'currency' as const, align: 'right' as const },
-    { key: 'year_month',       label: 'ปี-เดือน',        align: 'center' as const },
-    { key: 'ordered_qty',      label: 'สั่งมา',          type: 'number' as const,   align: 'right' as const },
-  ],
-  products: [
-    { key: 'group_name', label: 'กลุ่มสินค้า', editable: true, confirmOnEdit: true },
-    { key: 'product_name', label: 'ชื่อสินค้า',  editable: true },
-    { key: 'price',        label: 'ราคาสินค้า', type: 'currency' as const, align: 'right' as const, editable: true },
-    { key: 'cost',         label: 'ต้นทุน',     type: 'currency' as const, align: 'right' as const, editable: true },
-    { key: 'quantity',     label: 'จำนวน',      type: 'number'   as const, align: 'right' as const, editable: true },
-    { key: 'updated_at',   label: 'แก้ไขล่าสุด', align: 'center' as const },
-  ],
-  inventory: [
-    { key: 'product_name',   label: 'ชื่อสินค้า' },
-    { key: 'product_group',  label: 'กลุ่มสินค้า' },
-    { key: 'unit',           label: 'หน่วย',          align: 'center' as const },
-    { key: 'total_bought',   label: 'ซื้อทั้งหมด',   type: 'number' as const,   align: 'right' as const },
-    { key: 'total_sold',     label: 'ขายทั้งหมด',   type: 'number' as const,   align: 'right' as const },
-    { key: 'stock_qty',      label: 'คงเหลือ',       type: 'number' as const,   align: 'right' as const },
-    { key: 'avg_cost',       label: 'ต้นทุนเฉลี่ย', type: 'currency' as const, align: 'right' as const },
-    { key: 'stock_value',    label: 'มูลค่าคงเหลือ', type: 'currency' as const, align: 'right' as const },
-    { key: 'sell_price',     label: 'ราคาขาย',      type: 'currency' as const, align: 'right' as const },
-    { key: 'min_quantity',   label: 'ขั้นต่ำ',       type: 'number' as const,   align: 'right' as const },
-    { key: 'status',         label: 'Status',        align: 'center' as const },
-  ],
-  targets: [
-    { key: 'year_month',      label: 'ปี-เดือน',   align: 'center' as const },
-    { key: 'target',          label: 'เป้าหมาย',   type: 'currency' as const, align: 'right' as const, editable: true },
-    { key: 'actual',          label: 'ยอดขายจริง', type: 'currency' as const, align: 'right' as const },
-    { key: 'achievement_pct', label: '% บรรลุเป้า', type: 'percent' as const,  align: 'right' as const },
-  ],
-}
+const CATALOG_COLUMNS = [
+  { key: 'group_name',   label: 'กลุ่มสินค้า', editable: true, confirmOnEdit: true },
+  { key: 'product_name', label: 'ชื่อสินค้า',  editable: true },
+  { key: 'price',        label: 'ราคาโกดัง',  type: 'currency' as const, align: 'right' as const, editable: true },
+  { key: 'cost',         label: 'สต็อค',      type: 'currency' as const, align: 'right' as const, editable: true },
+  { key: 'quantity',     label: 'จำนวน',       type: 'number'   as const, align: 'right' as const, editable: true },
+  { key: 'updated_at',   label: 'แก้ไขล่าสุด', align: 'center' as const },
+]
 
-const ROW_KEY: Record<Tab, string> = {
-  sell: 'id', buy: 'id', products: 'id', inventory: 'product_name', targets: 'year_month',
-}
-
-// Map tab → actual API endpoint (products tab uses catalog API)
-const TAB_API: Record<Tab, string> = {
-  sell: 'sell', buy: 'buy', products: 'catalog', inventory: 'inventory', targets: 'targets',
-}
+const DRAFT_KEY = 'cf_draft_products'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RowData = Record<string, any>
 
-function loadDraft(tab: Tab): PendingEdits {
-  try {
-    const raw = localStorage.getItem(`cf_draft_${tab}`)
-    return raw ? JSON.parse(raw) : {}
-  } catch { return {} }
+function loadDraft(): PendingEdits {
+  try { return JSON.parse(localStorage.getItem(DRAFT_KEY) ?? '{}') } catch { return {} }
 }
-
-function saveDraft(tab: Tab, edits: PendingEdits) {
-  localStorage.setItem(`cf_draft_${tab}`, JSON.stringify(edits))
+function saveDraft(edits: PendingEdits) {
+  localStorage.setItem(DRAFT_KEY, JSON.stringify(edits))
 }
 
 export default function Home() {
-  const [tab, setTab] = useState<Tab>('sell')
-  const [data, setData] = useState<Record<Tab, RowData[]>>({ sell: [], buy: [], products: [], inventory: [], targets: [] })
+  const [tab, setTab]         = useState<Tab>('products')
+  const [rows, setRows]       = useState<RowData[]>([])
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [saving, setSaving]   = useState(false)
   const [saveMsg, setSaveMsg] = useState<string | null>(null)
-  const [allPending, setAllPending] = useState<Record<Tab, PendingEdits>>({
-    sell: {}, buy: {}, products: {}, inventory: {}, targets: {},
-  })
+  const [pending, setPending] = useState<PendingEdits>({})
 
-  // โหลด draft จาก localStorage เมื่อเปิดหน้า
-  useEffect(() => {
-    const tabs: Tab[] = ['sell', 'buy', 'products', 'inventory', 'targets']
-    const drafts = Object.fromEntries(tabs.map((t) => [t, loadDraft(t)])) as Record<Tab, PendingEdits>
-    setAllPending(drafts)
-  }, [])
+  useEffect(() => { setPending(loadDraft()) }, [])
 
   useEffect(() => {
     setLoading(true)
-    fetch(`/api/${TAB_API[tab]}`)
-      .then((r) => r.json())
-      .then((rows) => {
-        setData((prev) => ({ ...prev, [tab]: rows }))
-        setLoading(false)
-      })
+    fetch('/api/catalog')
+      .then(r => r.json())
+      .then((data: RowData[]) => { setRows(data); setLoading(false) })
       .catch(() => setLoading(false))
-  }, [tab])
+  }, [])
 
   const handleCellEdit = useCallback((rowKey: string, colKey: string, value: string | number) => {
-    setAllPending((prev) => {
-      const updated = {
-        ...prev,
-        [tab]: {
-          ...prev[tab],
-          [rowKey]: { ...prev[tab][rowKey], [colKey]: value },
-        },
-      }
-      saveDraft(tab, updated[tab])
-      return updated
+    setPending(prev => {
+      const next = { ...prev, [rowKey]: { ...prev[rowKey], [colKey]: value } }
+      saveDraft(next)
+      return next
     })
-
-    // When group_name changes in products: visually move row to new group immediately
-    if (tab === 'products' && colKey === 'group_name') {
+    // Immediately re-sort when group_name changes
+    if (colKey === 'group_name') {
       const newGroup = String(value)
-      setData((prev) => {
-        const updated = prev.products.map((r) =>
-          String(r.id) === rowKey ? { ...r, group_name: newGroup } : r
-        )
-        // Preserve existing group order; append new group at bottom
-        const existingGroupOrder = Array.from(
-          new Set(prev.products.map((r) => r.group_name as string))
-        )
-        const groupOrder = existingGroupOrder.includes(newGroup)
-          ? existingGroupOrder
-          : [...existingGroupOrder, newGroup]
-        const sorted = groupOrder.flatMap((g) => updated.filter((r) => r.group_name === g))
-        return { ...prev, products: sorted }
+      setRows(prev => {
+        const updated = prev.map(r => String(r.id) === rowKey ? { ...r, group_name: newGroup } : r)
+        const groupOrder = Array.from(new Set(prev.map(r => r.group_name as string)))
+        const finalOrder = groupOrder.includes(newGroup) ? groupOrder : [...groupOrder, newGroup]
+        return finalOrder.flatMap(g => updated.filter(r => r.group_name === g))
       })
     }
-  }, [tab])
+  }, [])
 
-  const pendingCount = Object.keys(allPending[tab]).length
+  const pendingCount = Object.keys(pending).length
 
   const handleSave = async () => {
-    if (pendingCount === 0) return
+    if (!pendingCount) return
     setSaving(true)
     setSaveMsg(null)
-
     try {
-      const edits = allPending[tab]
-      let body: unknown
-
-      if (tab === 'sell' || tab === 'buy' || tab === 'products') {
-        body = Object.entries(edits).map(([id, cols]) => ({ id: Number(id), ...cols }))
-      } else if (tab === 'targets') {
-        body = Object.entries(edits).map(([year_month, cols]) => ({ year_month, ...cols }))
-      }
-
-      const res = await fetch(`/api/${TAB_API[tab]}`, {
+      const body = Object.entries(pending).map(([id, cols]) => ({ id: Number(id), ...cols }))
+      const res = await fetch('/api/catalog', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       })
-
-      if (!res.ok) throw new Error('save failed')
-
-      // ล้าง draft + reload data
-      const newPending = { ...allPending, [tab]: {} }
-      setAllPending(newPending)
-      localStorage.removeItem(`cf_draft_${tab}`)
+      if (!res.ok) throw new Error()
+      setPending({})
+      localStorage.removeItem(DRAFT_KEY)
       setSaveMsg(`บันทึกสำเร็จ ${pendingCount} รายการ`)
-
-      // reload
-      const fresh = await fetch(`/api/${tab}`).then((r) => r.json())
-      setData((prev) => ({ ...prev, [tab]: fresh }))
+      const fresh = await fetch('/api/catalog').then(r => r.json())
+      setRows(fresh)
     } catch {
       setSaveMsg('เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
@@ -197,22 +96,17 @@ export default function Home() {
     }
   }
 
-  const handleDiscard = () => {
-    setAllPending((prev) => ({ ...prev, [tab]: {} }))
-    localStorage.removeItem(`cf_draft_${tab}`)
-  }
-
-  const handleAddProduct = useCallback(async (newData: Record<string, string | number>) => {
-    if (!newData.group_name || !newData.product_name) return
+  const handleAddProduct = useCallback(async (data: Record<string, string | number>) => {
+    if (!data.group_name || !data.product_name) return
     try {
       const res = await fetch('/api/catalog', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newData),
+        body: JSON.stringify(data),
       })
       if (!res.ok) throw new Error()
       const fresh = await fetch('/api/catalog').then(r => r.json())
-      setData(prev => ({ ...prev, products: fresh }))
+      setRows(fresh)
       setSaveMsg('เพิ่มสินค้าสำเร็จ')
       setTimeout(() => setSaveMsg(null), 3000)
     } catch {
@@ -220,14 +114,7 @@ export default function Home() {
     }
   }, [])
 
-  const rows = data[tab]
-  const cols = COLUMNS[tab]
-  const pending = allPending[tab]
-
-  const summary: Record<string, number> = {}
-  cols.filter((c) => c.type === 'currency' || c.type === 'number').forEach((col) => {
-    summary[col.key] = rows.reduce((sum, row) => sum + (parseFloat(row[col.key]) || 0), 0)
-  })
+  const existingGroups = Array.from(new Set(rows.map(r => r.group_name as string)))
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -237,13 +124,12 @@ export default function Home() {
           <p className="text-green-200 text-xs mt-0.5">ข้อมูลจาก Railway PostgreSQL</p>
         </div>
 
-        {/* ปุ่มบันทึก + ปุ่มใบจอง */}
         <div className="flex items-center gap-3">
           <Link
             href="/catalog"
             className="px-4 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white font-medium transition-colors border border-white/30"
           >
-            🏷 แก้ไขราคา
+            🏷 แก้ไขสินค้า
           </Link>
           <Link
             href="/booking"
@@ -258,72 +144,57 @@ export default function Home() {
           )}
           {pendingCount > 0 && (
             <>
-              <span className="text-yellow-300 text-sm">
-                ✎ แก้ไขค้างอยู่ {pendingCount} แถว (auto-saved)
-              </span>
-              <button
-                onClick={handleDiscard}
-                className="px-3 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white transition-colors"
-              >
+              <span className="text-yellow-300 text-sm">✎ แก้ไขค้างอยู่ {pendingCount} แถว</span>
+              <button onClick={() => { setPending({}); localStorage.removeItem(DRAFT_KEY) }}
+                className="px-3 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white transition-colors">
                 ยกเลิก
               </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors disabled:opacity-50"
-              >
-                {saving ? 'กำลังบันทึก...' : `💾 บันทึกลง DB`}
+              <button onClick={handleSave} disabled={saving}
+                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors disabled:opacity-50">
+                {saving ? 'กำลังบันทึก...' : '💾 บันทึกลง DB'}
               </button>
             </>
           )}
         </div>
       </header>
 
+      {/* Tabs */}
       <div className="bg-white border-b border-gray-200 px-4 flex gap-0 shadow-sm">
-        {TABS.map((t) => {
-          const draftCount = Object.keys(allPending[t.key]).length
-          return (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors relative ${
-                tab === t.key
-                  ? 'border-green-600 text-green-700 bg-green-50'
-                  : 'border-transparent text-gray-600 hover:text-green-700 hover:bg-gray-50'
-              }`}
-            >
-              {t.label}
-              {draftCount > 0 && (
-                <span className="ml-1.5 bg-yellow-400 text-yellow-900 text-xs rounded-full px-1.5 py-0.5 font-bold">
-                  {draftCount}
-                </span>
-              )}
-            </button>
-          )
-        })}
+        {TABS.map(t => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              tab === t.key
+                ? 'border-green-600 text-green-700 bg-green-50'
+                : 'border-transparent text-gray-600 hover:text-green-700 hover:bg-gray-50'
+            }`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       <main className="p-4">
         <div className="mb-3 text-sm text-gray-500">
           {loading ? 'กำลังโหลด...' : `${rows.length} รายการ`}
-          {pendingCount > 0 && <span className="ml-2 text-yellow-600 font-medium">— มีการแก้ไขที่ยังไม่บันทึกลง DB (auto-saved ใน browser แล้ว)</span>}
+          {pendingCount > 0 && (
+            <span className="ml-2 text-yellow-600 font-medium">— มีการแก้ไขที่ยังไม่บันทึกลง DB</span>
+          )}
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center h-40 text-gray-400">กำลังโหลดข้อมูล...</div>
         ) : (
           <DataTable
-            columns={cols}
+            columns={CATALOG_COLUMNS}
             rows={rows}
-            summary={summary}
             pendingEdits={pending}
             onCellEdit={handleCellEdit}
-            rowKeyField={ROW_KEY[tab]}
-            groupByField={tab === 'products' ? 'group_name' : undefined}
-            onAddRow={tab === 'products' ? handleAddProduct : undefined}
-            existingGroups={tab === 'products'
-              ? Array.from(new Set(rows.map((r) => r.group_name as string)))
-              : undefined}
+            rowKeyField="id"
+            groupByField="group_name"
+            onAddRow={handleAddProduct}
+            existingGroups={existingGroups}
           />
         )}
       </main>
