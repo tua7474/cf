@@ -188,7 +188,7 @@ export default function Home() {
         ) : (
           <DataTable
             columns={CATALOG_COLUMNS}
-            rows={rows}
+            rows={tab === 'kradaat' ? rows.filter(r => r.group_name === 'กระดาษฝอย') : rows}
             pendingEdits={pending}
             onCellEdit={handleCellEdit}
             rowKeyField="id"
