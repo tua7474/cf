@@ -154,7 +154,7 @@ export default function Home() {
       {/* Tab header */}
       <div className="bg-white border-b border-gray-200 px-4 shadow-sm">
         <span className="inline-block px-4 py-3 text-sm font-medium border-b-2 border-green-600 text-green-700 bg-green-50">
-          📦 กระดาษฝอย
+          📦 สินค้า
         </span>
       </div>
 
@@ -171,7 +171,7 @@ export default function Home() {
         ) : (
           <DataTable
             columns={CATALOG_COLUMNS}
-            rows={rows.filter(r => r.group_name === 'กระดาษฝอย')}
+            rows={rows}
             pendingEdits={pending}
             onCellEdit={handleCellEdit}
             rowKeyField="id"
