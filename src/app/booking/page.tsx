@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useState, useEffect, useCallback } from 'react'
+import { Fragment, useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
 
 // ── Types ────────────────────────────────────────────────────────────────────
