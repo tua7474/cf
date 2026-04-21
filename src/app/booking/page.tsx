@@ -1,7 +1,8 @@
 'use client'
 
-import { Fragment, useState, useEffect, useCallback, useRef } from 'react'
+import { Fragment, useState, useEffect, useCallback, useRef, use } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -127,12 +128,36 @@ function fmt2(n: number): string {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export default function BookingPage() {
+type SearchParams = Promise<{ order?: string }>
+
+export default function BookingPage({ searchParams }: { searchParams: SearchParams }) {
+  const sp          = use(searchParams)
+  const editOrderNo = sp?.order ?? null
+  const router      = useRouter()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading]   = useState(true)
   const [saving, setSaving]     = useState(false)
   const [saveMsg, setSaveMsg]   = useState<string | null>(null)
   const [pending, setPending]   = useState<Record<number, number>>({})
+
+  // ── Edit mode: load order quantities ─────────────────────────────────────────
+  const [editQty, setEditQty] = useState<Record<number, number>>({})
+
+  useEffect(() => {
+    if (!editOrderNo) return
+    fetch(`/api/orders?no=${editOrderNo}`)
+      .then(r => r.json())
+      .then((order: { quantities?: Record<string, number> } | null) => {
+        if (!order?.quantities) return
+        const qtyMap: Record<number, number> = {}
+        for (const [id, qty] of Object.entries(order.quantities)) {
+          qtyMap[Number(id)] = Number(qty)
+        }
+        setEditQty(qtyMap)
+        setPending(qtyMap)  // pre-fill form with order quantities
+      })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editOrderNo])
 
   // ── Scale-to-fit for mobile ────────────────────────────────────────────────
   const contentRef = useRef<HTMLDivElement>(null)
@@ -188,6 +213,7 @@ export default function BookingPage() {
     setSaving(true)
     setSaveMsg(null)
     try {
+      // 1. Update booking_products
       const body = Object.entries(pending).map(([id, current_qty]) => ({ id: Number(id), current_qty }))
       const res = await fetch('/api/booking', {
         method: 'PATCH',
@@ -195,11 +221,46 @@ export default function BookingPage() {
         body: JSON.stringify(body),
       })
       if (!res.ok) throw new Error()
+
+      // 2. Snapshot all current quantities + compute total
+      const productMap = new Map(products.map(p => [p.id, p]))
+      const quantities: Record<number, number> = {}
+      let orderTotal = 0
+      for (const p of products) {
+        if (p.is_free) continue
+        const baseQty = editOrderNo
+          ? (editQty[p.id] ?? 0)
+          : Math.round(Number(p.current_qty ?? 0))
+        const qty = pending[p.id] !== undefined ? pending[p.id] : baseQty
+        if (qty > 0) {
+          quantities[p.id] = qty
+          const prod = productMap.get(p.id)
+          if (prod) orderTotal += prod.unit_price * qty
+        }
+      }
+
+      // 3. Create or update order record
+      if (editOrderNo) {
+        await fetch('/api/orders', {
+          method:  'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ order_no: editOrderNo, total_amount: orderTotal, quantities }),
+        })
+      } else {
+        await fetch('/api/orders', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ total_amount: orderTotal, quantities }),
+        })
+      }
+
       setPending({})
       localStorage.removeItem(DRAFT_KEY)
       setSaveMsg(`บันทึกสำเร็จ ${pendingCount} รายการ`)
       const fresh: Product[] = await fetch('/api/booking').then(r => r.json())
       setProducts(fresh)
+
+      if (editOrderNo) router.push('/orders')
     } catch {
       setSaveMsg('เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
@@ -239,10 +300,22 @@ export default function BookingPage() {
             ← กลับหน้าหลัก
           </Link>
           <div>
-            <h1 className="text-xl font-bold">ใบจอง</h1>
+            <h1 className="text-xl font-bold">
+              ใบจอง
+              {editOrderNo && (
+                <span className="ml-2 text-yellow-300 text-sm font-normal">✎ แก้ไข #{editOrderNo}</span>
+              )}
+            </h1>
             <p className="text-green-200 text-xs mt-0.5">แก้ไขจำนวนได้ · Auto-save ใน browser</p>
           </div>
         </div>
+
+        <Link
+          href="/orders"
+          className="px-3 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white transition-colors border border-white/30"
+        >
+          📋 บันทึกใบจอง
+        </Link>
 
         <div className="flex items-center gap-3">
           {saveMsg && (
@@ -266,7 +339,7 @@ export default function BookingPage() {
                 disabled={saving}
                 className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors disabled:opacity-50"
               >
-                {saving ? 'กำลังบันทึก...' : '💾 บันทึกลง DB'}
+                {saving ? 'กำลังบันทึก...' : editOrderNo ? `💾 อัพเดทใบจอง #${editOrderNo}` : '💾 บันทึกลง DB'}
               </button>
             </>
           )}
@@ -354,7 +427,9 @@ export default function BookingPage() {
 
                         // ── Product row ──
                         const { product: p } = cell
-                        const dbQty      = Math.round(Number(p.current_qty ?? 0))
+                        const dbQty      = editOrderNo
+                          ? (editQty[p.id] ?? 0)
+                          : Math.round(Number(p.current_qty ?? 0))
                         const qty        = pending[p.id] !== undefined ? pending[p.id] : dbQty
                         const total      = qty * p.unit_price
                         const hasPending = pending[p.id] !== undefined
