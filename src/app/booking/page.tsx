@@ -315,7 +315,7 @@ export default function BookingPage({ searchParams }: { searchParams: SearchPara
           href="/orders"
           className="px-3 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white transition-colors border border-white/30"
         >
-          📋 บันทึกใบจอง
+          📋 ประวัติใบจอง
         </Link>
 
         <div className="flex items-center gap-3">
