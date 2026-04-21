@@ -134,6 +134,35 @@ export default function BookingPage() {
   const [saveMsg, setSaveMsg]   = useState<string | null>(null)
   const [pending, setPending]   = useState<Record<number, number>>({})
 
+  // ── Scale-to-fit for mobile ────────────────────────────────────────────────
+  const contentRef = useRef<HTMLDivElement>(null)
+  const [scale, setScale]               = useState(1)
+  const [scaledHeight, setScaledHeight] = useState<number | undefined>()
+
+  const measureScale = useCallback(() => {
+    const el = contentRef.current
+    if (!el) return
+    const newScale = Math.min(1, window.innerWidth / el.scrollWidth)
+    setScale(newScale)
+    setScaledHeight(newScale < 1 ? el.scrollHeight * newScale : undefined)
+  }, [])
+
+  // Re-measure on viewport resize
+  useEffect(() => {
+    window.addEventListener('resize', measureScale)
+    measureScale()
+    return () => window.removeEventListener('resize', measureScale)
+  }, [measureScale])
+
+  // Re-measure when content size changes (products finish loading)
+  useEffect(() => {
+    const el = contentRef.current
+    if (!el) return
+    const ro = new ResizeObserver(measureScale)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [measureScale])
+
   useEffect(() => { setPending(loadDraft()) }, [])
 
   useEffect(() => {
@@ -144,7 +173,7 @@ export default function BookingPage() {
   }, [])
 
   const handleQtyChange = useCallback((id: number, val: string) => {
-    const qty = parseFloat(val) || 0
+    const qty = parseInt(val, 10) || 0
     setPending(prev => {
       const next = { ...prev, [id]: qty }
       saveDraft(next)
@@ -245,7 +274,17 @@ export default function BookingPage() {
       </header>
 
       {/* ── Main ──────────────────────────────────────────────────────────── */}
-      <main className="p-4 overflow-x-auto">
+      <main className="overflow-x-hidden">
+        {/* wrapper ปรับ height ให้พอดีกับ content ที่ scale แล้ว */}
+        <div style={{ height: scaledHeight, overflow: 'hidden' }}>
+          <div
+            ref={contentRef}
+            className="p-4"
+            style={{
+              transform: scale < 1 ? `scale(${scale})` : undefined,
+              transformOrigin: 'top left',
+            }}
+          >
         {loading ? (
           <div className="flex items-center justify-center h-40 text-gray-400">กำลังโหลดข้อมูล...</div>
         ) : (
@@ -365,9 +404,9 @@ export default function BookingPage() {
                           >
                             {!p.is_free && (
                               <input
-                                type="number"
-                                min="0"
-                                step="1"
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
                                 defaultValue={dbQty || ''}
                                 key={`qty-${p.id}-${dbQty}`}
                                 onChange={e => handleQtyChange(p.id, e.target.value)}
@@ -417,6 +456,8 @@ export default function BookingPage() {
             </div>
           </>
         )}
+          </div>
+        </div>
       </main>
     </div>
   )

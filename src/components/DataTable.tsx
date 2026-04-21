@@ -119,12 +119,12 @@ export default function DataTable({
                     <div className="flex items-center gap-1">
                       {showInput && (
                         <input
-                          type={isNumeric ? 'number' : 'text'}
-                          step={isNumeric ? '0.01' : undefined}
+                          type="text"
+                          inputMode={isNumeric ? 'numeric' : undefined}
                           placeholder={col.label}
                           value={newRow[col.key] ?? ''}
                           onChange={e => setNewRow(prev => ({ ...prev, [col.key]: e.target.value }))}
-                          className={`w-full px-2 py-1 text-sm rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 ${isNumeric ? `text-right ${NO_SPIN}` : ''}`}
+                          className={`w-full px-2 py-1 text-sm rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 ${isNumeric ? 'text-right' : ''}`}
                         />
                       )}
                       {isLast && (
@@ -176,15 +176,15 @@ export default function DataTable({
                         return (
                           <td key={col.key} className="px-1 py-0.5 border-r border-gray-100 last:border-r-0">
                             <input
-                              type="number"
-                              step="0.01"
+                              type="text"
+                              inputMode="numeric"
                               defaultValue={parseFloat(String(displayValue)) || 0}
                               key={`${rowKey}-${col.key}-${hasPending ? rowEdits[col.key] : row[col.key]}`}
                               onChange={(e) => {
                                 const v = parseFloat(e.target.value)
                                 if (!isNaN(v)) onCellEdit(rowKey, col.key, v)
                               }}
-                              className={`w-full text-right px-2 py-1 rounded border text-sm focus:outline-none focus:ring-2 focus:ring-green-400 ${NO_SPIN} ${hasPending ? 'border-yellow-400 bg-yellow-50 font-medium' : 'border-gray-200 bg-white'}`}
+                              className={`w-full text-right px-2 py-1 rounded border text-sm focus:outline-none focus:ring-2 focus:ring-green-400 ${hasPending ? 'border-yellow-400 bg-yellow-50 font-medium' : 'border-gray-200 bg-white'}`}
                             />
                           </td>
                         )
