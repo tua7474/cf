@@ -188,7 +188,8 @@ export default function BookingPage({ searchParams }: { searchParams: SearchPara
     return () => ro.disconnect()
   }, [measureScale])
 
-  useEffect(() => { setPending(loadDraft()) }, [])
+  // ไม่โหลด draft อัตโนมัติ — เปิดหน้าใหม่ทุกครั้งให้เริ่มจาก 0 เสมอ
+  useEffect(() => { localStorage.removeItem(DRAFT_KEY) }, [])
 
   useEffect(() => {
     fetch('/api/booking')
@@ -427,9 +428,7 @@ export default function BookingPage({ searchParams }: { searchParams: SearchPara
 
                         // ── Product row ──
                         const { product: p } = cell
-                        const dbQty      = editOrderNo
-                          ? (editQty[p.id] ?? 0)
-                          : Math.round(Number(p.current_qty ?? 0))
+                        const dbQty      = editOrderNo ? (editQty[p.id] ?? 0) : 0
                         const qty        = pending[p.id] !== undefined ? pending[p.id] : dbQty
                         const total      = qty * p.unit_price
                         const hasPending = pending[p.id] !== undefined
