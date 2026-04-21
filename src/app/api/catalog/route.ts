@@ -15,6 +15,11 @@ async function ensureTable() {
       updated_at   TIMESTAMP NOT NULL DEFAULT NOW()
     )
   `)
+  // Add stock-tracking columns if not yet present
+  await pool.query(`ALTER TABLE products_catalog ADD COLUMN IF NOT EXISTS last_added_qty  NUMERIC(12,2) DEFAULT 0`)
+  await pool.query(`ALTER TABLE products_catalog ADD COLUMN IF NOT EXISTS last_added_at   TIMESTAMP`)
+  await pool.query(`ALTER TABLE products_catalog ADD COLUMN IF NOT EXISTS last_booked_qty NUMERIC(12,2) DEFAULT 0`)
+  await pool.query(`ALTER TABLE products_catalog ADD COLUMN IF NOT EXISTS last_booked_at  TIMESTAMP`)
   const { rows } = await pool.query('SELECT COUNT(*)::int AS n FROM products_catalog')
   if (rows[0].n === 0) await seedData()
   // Seed กระดาษฝอย products if not yet present
@@ -327,8 +332,8 @@ export async function GET() {
   try {
     await ensureTable()
     const { rows } = await pool.query(`
-      SELECT id, group_name, product_name, price, cost, quantity,
-             to_char(updated_at, 'YYYY-MM-DD HH24:MI') AS updated_at
+      SELECT id, group_name, product_name, price, quantity,
+             last_added_qty, last_added_at, last_booked_qty, last_booked_at
       FROM products_catalog
       ORDER BY group_name, id
     `)
@@ -343,12 +348,52 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const body = await req.json() as {
-      id: number
-      group_name?: string; product_name?: string
-      price?: number; cost?: number; quantity?: number
-    }[]
-    for (const row of body) {
+    const body = await req.json()
+
+    // Stock operation: { id, action:'add'|'book', qty }
+    if (!Array.isArray(body) && body.action) {
+      const { id, action, qty } = body
+      if (action === 'add') {
+        const { rows } = await pool.query(`
+          UPDATE products_catalog
+          SET quantity       = COALESCE(quantity, 0) + $1,
+              last_added_qty = $1,
+              last_added_at  = NOW(),
+              updated_at     = NOW()
+          WHERE id = $2 RETURNING *`, [qty, id])
+        return NextResponse.json(rows[0])
+      }
+      if (action === 'book') {
+        const { rows } = await pool.query(`
+          UPDATE products_catalog
+          SET quantity        = COALESCE(quantity, 0) - $1,
+              last_booked_qty = $1,
+              last_booked_at  = NOW(),
+              updated_at      = NOW()
+          WHERE id = $2 RETURNING *`, [qty, id])
+        return NextResponse.json(rows[0])
+      }
+    }
+
+    // Info update: single object { id, group_name?, product_name?, price? }
+    if (!Array.isArray(body)) {
+      const { id, group_name, product_name, price } = body
+      const fields: string[] = []
+      const vals: unknown[] = []
+      let n = 1
+      if (group_name   !== undefined) { fields.push(`group_name=$${n++}`);   vals.push(group_name) }
+      if (product_name !== undefined) { fields.push(`product_name=$${n++}`); vals.push(product_name) }
+      if (price        !== undefined) { fields.push(`price=$${n++}`);        vals.push(price) }
+      if (!fields.length) return NextResponse.json({ ok: true })
+      fields.push(`updated_at=NOW()`)
+      vals.push(id)
+      await pool.query(`UPDATE products_catalog SET ${fields.join(',')} WHERE id=$${n}`, vals)
+      return NextResponse.json({ ok: true })
+    }
+
+    // Batch info update (legacy): array
+    const rows = body as { id: number; group_name?: string; product_name?: string; price?: number; cost?: number; quantity?: number }[]
+    for (const row of rows) {
       const fields: string[] = []
       const vals: unknown[] = []
       let n = 1
@@ -360,10 +405,7 @@ export async function PATCH(req: NextRequest) {
       if (!fields.length) continue
       fields.push(`updated_at=NOW()`)
       vals.push(row.id)
-      await pool.query(
-        `UPDATE products_catalog SET ${fields.join(',')} WHERE id=$${n}`,
-        vals
-      )
+      await pool.query(`UPDATE products_catalog SET ${fields.join(',')} WHERE id=$${n}`, vals)
     }
     return NextResponse.json({ ok: true })
   } catch (err) {

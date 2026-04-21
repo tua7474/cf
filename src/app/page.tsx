@@ -2,156 +2,165 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import DataTable from '@/components/DataTable'
 
-type PendingEdits = Record<string, Record<string, string | number>>
+// ── Types ─────────────────────────────────────────────────────────────────────
 
-const CATALOG_COLUMNS = [
-  { key: 'group_name',   label: 'กลุ่มสินค้า', editable: true, confirmOnEdit: true },
-  { key: 'product_name', label: 'ชื่อสินค้า',  editable: true },
-  { key: 'price',        label: 'ราคาโกดัง',  type: 'currency' as const, align: 'right' as const, editable: true },
-  { key: 'cost',         label: 'สต็อค',      type: 'currency' as const, align: 'right' as const, editable: true },
-  { key: 'quantity',     label: 'จำนวน',       type: 'number'   as const, align: 'right' as const, editable: true },
-  { key: 'updated_at',   label: 'แก้ไขล่าสุด', align: 'center' as const },
-]
-
-const DRAFT_KEY = 'cf_draft_products'
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type RowData = Record<string, any>
-
-function loadDraft(): PendingEdits {
-  try { return JSON.parse(localStorage.getItem(DRAFT_KEY) ?? '{}') } catch { return {} }
+interface Product {
+  id: number
+  group_name: string
+  product_name: string
+  price: string | null
+  quantity: string | null
+  last_added_qty: string | null
+  last_added_at: string | null
+  last_booked_qty: string | null
+  last_booked_at: string | null
 }
-function saveDraft(edits: PendingEdits) {
-  localStorage.setItem(DRAFT_KEY, JSON.stringify(edits))
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function fmtQty(n: string | number | null): string {
+  if (n === null || n === undefined || n === '') return '0'
+  const v = parseFloat(String(n))
+  return isNaN(v) ? '0' : v.toLocaleString('th-TH', { maximumFractionDigits: 2 })
 }
+
+function fmtMoney(n: string | number | null): string {
+  if (n === null || n === undefined || n === '') return '-'
+  const v = parseFloat(String(n))
+  return isNaN(v) ? '-' : v.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+}
+
+function fmtDate(iso: string | null): string {
+  if (!iso) return '-'
+  return new Date(iso).toLocaleString('th-TH', {
+    day: '2-digit', month: '2-digit', year: '2-digit',
+    hour: '2-digit', minute: '2-digit',
+    timeZone: 'Asia/Bangkok',
+  })
+}
+
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function Home() {
-  const [rows, setRows]       = useState<RowData[]>([])
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving]   = useState(false)
-  const [saveMsg, setSaveMsg] = useState<string | null>(null)
-  const [pending, setPending] = useState<PendingEdits>({})
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading]   = useState(true)
+  const [addInputs, setAddInputs]   = useState<Record<number, string>>({})
+  const [bookInputs, setBookInputs] = useState<Record<number, string>>({})
+  const [rowEdits, setRowEdits] = useState<Record<number, { group_name?: string; product_name?: string; price?: string }>>({})
+  const [busy, setBusy]   = useState<Record<string, boolean>>({})
+  const [msg, setMsg]     = useState<string | null>(null)
 
-  useEffect(() => { setPending(loadDraft()) }, [])
-
-  useEffect(() => {
+  const load = useCallback(() => {
     setLoading(true)
     fetch('/api/catalog')
       .then(r => r.json())
-      .then((data: RowData[]) => { setRows(data); setLoading(false) })
+      .then((data: Product[]) => { setProducts(data); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
 
-  const handleCellEdit = useCallback((rowKey: string, colKey: string, value: string | number) => {
-    setPending(prev => {
-      const next = { ...prev, [rowKey]: { ...prev[rowKey], [colKey]: value } }
-      saveDraft(next)
-      return next
+  useEffect(() => { load() }, [load])
+
+  const showMsg = (text: string) => {
+    setMsg(text)
+    setTimeout(() => setMsg(null), 2500)
+  }
+
+  // ── Stock operations ─────────────────────────────────────────────────────────
+
+  const handleStock = async (id: number, action: 'add' | 'book') => {
+    const raw = action === 'add' ? addInputs[id] : bookInputs[id]
+    const qty = parseFloat(raw ?? '')
+    if (!qty || qty <= 0) return
+    setBusy(b => ({ ...b, [`${action}-${id}`]: true }))
+    const res = await fetch('/api/catalog', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, action, qty }),
     })
-    // Immediately re-sort when group_name changes
-    if (colKey === 'group_name') {
-      const newGroup = String(value)
-      setRows(prev => {
-        const updated = prev.map(r => String(r.id) === rowKey ? { ...r, group_name: newGroup } : r)
-        const groupOrder = Array.from(new Set(prev.map(r => r.group_name as string)))
-        const finalOrder = groupOrder.includes(newGroup) ? groupOrder : [...groupOrder, newGroup]
-        return finalOrder.flatMap(g => updated.filter(r => r.group_name === g))
-      })
-    }
-  }, [])
-
-  const pendingCount = Object.keys(pending).length
-
-  const handleSave = async () => {
-    if (!pendingCount) return
-    setSaving(true)
-    setSaveMsg(null)
-    try {
-      const body = Object.entries(pending).map(([id, cols]) => ({ id: Number(id), ...cols }))
-      const res = await fetch('/api/catalog', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      })
-      if (!res.ok) throw new Error()
-      setPending({})
-      localStorage.removeItem(DRAFT_KEY)
-      setSaveMsg(`บันทึกสำเร็จ ${pendingCount} รายการ`)
-      const fresh = await fetch('/api/catalog').then(r => r.json())
-      setRows(fresh)
-    } catch {
-      setSaveMsg('เกิดข้อผิดพลาด กรุณาลองใหม่')
-    } finally {
-      setSaving(false)
-      setTimeout(() => setSaveMsg(null), 3000)
+    setBusy(b => ({ ...b, [`${action}-${id}`]: false }))
+    if (res.ok) {
+      if (action === 'add') setAddInputs(p => ({ ...p, [id]: '' }))
+      else setBookInputs(p => ({ ...p, [id]: '' }))
+      load()
+      showMsg(action === 'add' ? 'เพิ่มสต็อคสำเร็จ' : 'บันทึกจองสำเร็จ')
     }
   }
 
-  const handleAddProduct = useCallback(async (data: Record<string, string | number>) => {
-    if (!data.group_name || !data.product_name) return
-    try {
-      const res = await fetch('/api/catalog', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-      if (!res.ok) throw new Error()
-      const fresh = await fetch('/api/catalog').then(r => r.json())
-      setRows(fresh)
-      setSaveMsg('เพิ่มสินค้าสำเร็จ')
-      setTimeout(() => setSaveMsg(null), 3000)
-    } catch {
-      setSaveMsg('เกิดข้อผิดพลาด')
-    }
-  }, [])
+  // ── Save info edits ───────────────────────────────────────────────────────────
 
-  const existingGroups = Array.from(new Set(rows.map(r => r.group_name as string)))
+  const handleSaveInfo = async (id: number) => {
+    const edits = rowEdits[id]
+    if (!edits || Object.keys(edits).length === 0) return
+    setBusy(b => ({ ...b, [`info-${id}`]: true }))
+    const payload: Record<string, unknown> = { id }
+    for (const [k, v] of Object.entries(edits)) {
+      payload[k] = k === 'price' ? (parseFloat(String(v)) || null) : v
+    }
+    const res = await fetch('/api/catalog', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    setBusy(b => ({ ...b, [`info-${id}`]: false }))
+    if (res.ok) {
+      setRowEdits(p => { const n = { ...p }; delete n[id]; return n })
+      load()
+      showMsg('บันทึกสำเร็จ')
+    }
+  }
+
+  const setEdit = (id: number, key: string, val: string) =>
+    setRowEdits(p => ({ ...p, [id]: { ...p[id], [key]: val } }))
+
+  const editVal = (p: Product, key: 'group_name' | 'product_name' | 'price') =>
+    rowEdits[p.id]?.[key] !== undefined ? String(rowEdits[p.id][key]) : String(p[key] ?? '')
+
+  // ── Build grouped entries ─────────────────────────────────────────────────────
+
+  type Entry = { type: 'group'; name: string } | { type: 'row'; product: Product }
+  const entries: Entry[] = []
+  let lastGroup = ''
+  for (const p of products) {
+    if (p.group_name !== lastGroup) {
+      entries.push({ type: 'group', name: p.group_name })
+      lastGroup = p.group_name
+    }
+    entries.push({ type: 'row', product: p })
+  }
+
+  // ── Input styles ─────────────────────────────────────────────────────────────
+
+  const inputCls = (pending: boolean) =>
+    `w-full px-1.5 py-1 text-xs rounded border focus:outline-none focus:ring-1 focus:ring-green-400 ${pending ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200 bg-white'}`
+
+  // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-gray-100">
+
+      {/* Header */}
       <header className="bg-green-800 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold">กระดาษฝอยไทย — ระบบจัดการข้อมูล</h1>
           <p className="text-green-200 text-xs mt-0.5">ข้อมูลจาก Railway PostgreSQL</p>
         </div>
-
         <div className="flex items-center gap-3">
-          <Link
-            href="/catalog"
-            className="px-4 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white font-medium transition-colors border border-white/30"
-          >
+          <Link href="/catalog"
+            className="px-4 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white font-medium transition-colors border border-white/30">
             🏷 แก้ไขสินค้า
           </Link>
-          <Link
-            href="/booking"
-            className="px-4 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white font-medium transition-colors border border-white/30"
-          >
+          <Link href="/booking"
+            className="px-4 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white font-medium transition-colors border border-white/30">
             📋 ใบจอง
           </Link>
-          {saveMsg && (
-            <span className={`text-sm px-3 py-1 rounded-full ${saveMsg.includes('สำเร็จ') ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
-              {saveMsg}
-            </span>
-          )}
-          {pendingCount > 0 && (
-            <>
-              <span className="text-yellow-300 text-sm">✎ แก้ไขค้างอยู่ {pendingCount} แถว</span>
-              <button onClick={() => { setPending({}); localStorage.removeItem(DRAFT_KEY) }}
-                className="px-3 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white transition-colors">
-                ยกเลิก
-              </button>
-              <button onClick={handleSave} disabled={saving}
-                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors disabled:opacity-50">
-                {saving ? 'กำลังบันทึก...' : '💾 บันทึกลง DB'}
-              </button>
-            </>
+          {msg && (
+            <span className="text-sm px-3 py-1 rounded-full bg-green-500 text-white">{msg}</span>
           )}
         </div>
       </header>
 
-      {/* Tab header */}
+      {/* Tab bar */}
       <div className="bg-white border-b border-gray-200 px-4 shadow-sm flex">
         <span className="inline-block px-4 py-3 text-sm font-medium border-b-2 border-green-600 text-green-700 bg-green-50">
           📦 สินค้า
@@ -166,27 +175,132 @@ export default function Home() {
         </Link>
       </div>
 
-      <main className="p-4">
-        <div className="mb-3 text-sm text-gray-500">
-          {loading ? 'กำลังโหลด...' : `${rows.length} รายการ`}
-          {pendingCount > 0 && (
-            <span className="ml-2 text-yellow-600 font-medium">— มีการแก้ไขที่ยังไม่บันทึกลง DB</span>
-          )}
-        </div>
-
+      {/* Main */}
+      <main className="p-4 overflow-x-auto">
         {loading ? (
           <div className="flex items-center justify-center h-40 text-gray-400">กำลังโหลดข้อมูล...</div>
         ) : (
-          <DataTable
-            columns={CATALOG_COLUMNS}
-            rows={rows}
-            pendingEdits={pending}
-            onCellEdit={handleCellEdit}
-            rowKeyField="id"
-            groupByField="group_name"
-            onAddRow={handleAddProduct}
-            existingGroups={existingGroups}
-          />
+          <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <table className="min-w-full text-xs">
+              <thead>
+                <tr className="bg-green-700 text-white text-left">
+                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap">หมวดสินค้า ✎</th>
+                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap">ชื่อสินค้า ✎</th>
+                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-center">สต็อคล่าสุด</th>
+                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-center">เพิ่มสต็อค</th>
+                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-center">จำนวนจอง</th>
+                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-right">ราคาโกดัง ✎</th>
+                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-right">ราคา+9%</th>
+                  <th className="px-3 py-2 whitespace-nowrap text-center">บันทึก</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry, ei) => {
+                  if (entry.type === 'group') {
+                    return (
+                      <tr key={`g-${ei}`} className="bg-green-800 text-white">
+                        <td colSpan={8} className="px-3 py-1.5 font-bold text-sm tracking-wide">
+                          {entry.name}
+                        </td>
+                      </tr>
+                    )
+                  }
+
+                  const p = entry.product
+                  const hasPending = !!rowEdits[p.id] && Object.keys(rowEdits[p.id]).length > 0
+                  const stock = parseFloat(String(p.quantity ?? 0))
+                  const price = parseFloat(String(p.price ?? 0))
+                  const price9 = price > 0 ? price * 1.09 : null
+
+                  return (
+                    <tr key={p.id} className="bg-white even:bg-gray-50 hover:bg-yellow-50/40 transition-colors">
+
+                      {/* 1. หมวดสินค้า */}
+                      <td className="px-2 py-1 border-r border-gray-200">
+                        <input type="text" value={editVal(p, 'group_name')}
+                          onChange={e => setEdit(p.id, 'group_name', e.target.value)}
+                          className={inputCls(!!rowEdits[p.id]?.group_name)} />
+                      </td>
+
+                      {/* 2. ชื่อสินค้า */}
+                      <td className="px-2 py-1 border-r border-gray-200">
+                        <input type="text" value={editVal(p, 'product_name')}
+                          onChange={e => setEdit(p.id, 'product_name', e.target.value)}
+                          className={inputCls(!!rowEdits[p.id]?.product_name)} />
+                      </td>
+
+                      {/* 3. สต็อคล่าสุด */}
+                      <td className="px-3 py-1 border-r border-gray-200 text-center whitespace-nowrap">
+                        <div className={`text-sm font-bold ${stock < 0 ? 'text-red-600' : 'text-green-700'}`}>
+                          {fmtQty(p.quantity)}
+                        </div>
+                      </td>
+
+                      {/* 4. เพิ่มสต็อค */}
+                      <td className="px-2 py-1 border-r border-gray-200 min-w-[130px]">
+                        <div className="text-[10px] text-gray-400 mb-0.5">
+                          ล่าสุด {fmtQty(p.last_added_qty)} · {fmtDate(p.last_added_at)}
+                        </div>
+                        <div className="flex gap-1">
+                          <input type="text" inputMode="numeric" placeholder="จำนวน"
+                            value={addInputs[p.id] ?? ''}
+                            onChange={e => setAddInputs(prev => ({ ...prev, [p.id]: e.target.value }))}
+                            className="w-16 px-1.5 py-1 text-xs rounded border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-green-400 text-right" />
+                          <button onClick={() => handleStock(p.id, 'add')}
+                            disabled={!!busy[`add-${p.id}`]}
+                            className="px-2 py-1 text-xs rounded bg-green-100 hover:bg-green-200 text-green-800 border border-green-300 transition-colors disabled:opacity-50 whitespace-nowrap">
+                            + เพิ่ม
+                          </button>
+                        </div>
+                      </td>
+
+                      {/* 5. จำนวนจอง */}
+                      <td className="px-2 py-1 border-r border-gray-200 min-w-[130px]">
+                        <div className="text-[10px] text-gray-400 mb-0.5">
+                          ล่าสุด {fmtQty(p.last_booked_qty)} · {fmtDate(p.last_booked_at)}
+                        </div>
+                        <div className="flex gap-1">
+                          <input type="text" inputMode="numeric" placeholder="จำนวน"
+                            value={bookInputs[p.id] ?? ''}
+                            onChange={e => setBookInputs(prev => ({ ...prev, [p.id]: e.target.value }))}
+                            className="w-16 px-1.5 py-1 text-xs rounded border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-orange-400 text-right" />
+                          <button onClick={() => handleStock(p.id, 'book')}
+                            disabled={!!busy[`book-${p.id}`]}
+                            className="px-2 py-1 text-xs rounded bg-orange-100 hover:bg-orange-200 text-orange-800 border border-orange-300 transition-colors disabled:opacity-50 whitespace-nowrap">
+                            − จอง
+                          </button>
+                        </div>
+                      </td>
+
+                      {/* 6. ราคาโกดัง */}
+                      <td className="px-2 py-1 border-r border-gray-200">
+                        <input type="text" inputMode="numeric" value={editVal(p, 'price')}
+                          onChange={e => setEdit(p.id, 'price', e.target.value)}
+                          className={`${inputCls(!!rowEdits[p.id]?.price)} text-right`} />
+                      </td>
+
+                      {/* 7. ราคา+9% */}
+                      <td className="px-3 py-1 border-r border-gray-200 text-right text-gray-600 whitespace-nowrap">
+                        {price9 !== null ? fmtMoney(price9) : '-'}
+                      </td>
+
+                      {/* บันทึก */}
+                      <td className="px-2 py-1 text-center">
+                        {hasPending && (
+                          <button onClick={() => handleSaveInfo(p.id)}
+                            disabled={!!busy[`info-${p.id}`]}
+                            className="px-2 py-1 text-xs rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
+                            💾 บันทึก
+                          </button>
+                        )}
+                      </td>
+
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
         )}
       </main>
     </div>
