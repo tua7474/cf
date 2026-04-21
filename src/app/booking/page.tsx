@@ -280,7 +280,8 @@ export default function BookingPage({ searchParams }: { searchParams: SearchPara
   for (const sec of sections) {
     for (const row of sec.rows) {
       if (row.type !== 'product' || row.product.is_free) continue
-      const qty = pending[row.product.id] !== undefined ? pending[row.product.id] : (row.product.current_qty ?? 0)
+      const baseQty = editOrderNo ? (editQty[row.product.id] ?? 0) : 0
+      const qty = pending[row.product.id] !== undefined ? pending[row.product.id] : baseQty
       const val = row.product.unit_price * qty
       if (sec.is_vat_included) grayTotal += val
       else orangeTotal += val
