@@ -130,18 +130,6 @@ export default function Home() {
           >
             📋 ใบจอง
           </Link>
-          <Link
-            href="/stock"
-            className="px-4 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white font-medium transition-colors border border-white/30"
-          >
-            📦 สต้อคกระดาษฝอย
-          </Link>
-          <Link
-            href="/branches"
-            className="px-4 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white font-medium transition-colors border border-white/30"
-          >
-            🏪 สาขาและตัวแทน
-          </Link>
           {saveMsg && (
             <span className={`text-sm px-3 py-1 rounded-full ${saveMsg.includes('สำเร็จ') ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}>
               {saveMsg}
@@ -164,10 +152,18 @@ export default function Home() {
       </header>
 
       {/* Tab header */}
-      <div className="bg-white border-b border-gray-200 px-4 shadow-sm">
+      <div className="bg-white border-b border-gray-200 px-4 shadow-sm flex">
         <span className="inline-block px-4 py-3 text-sm font-medium border-b-2 border-green-600 text-green-700 bg-green-50">
           📦 สินค้า
         </span>
+        <Link href="/stock"
+          className="inline-block px-4 py-3 text-sm font-medium text-gray-500 hover:text-green-700 hover:bg-green-50 transition-colors">
+          🌿 สต็อคกระดาษฝอย
+        </Link>
+        <Link href="/branches"
+          className="inline-block px-4 py-3 text-sm font-medium text-gray-500 hover:text-green-700 hover:bg-green-50 transition-colors">
+          🏪 สาขาและตัวแทน
+        </Link>
       </div>
 
       <main className="p-4">
