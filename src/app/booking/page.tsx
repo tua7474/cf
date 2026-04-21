@@ -354,7 +354,7 @@ export default function BookingPage() {
 
                         // ── Product row ──
                         const { product: p } = cell
-                        const dbQty      = p.current_qty ?? 0
+                        const dbQty      = Math.round(Number(p.current_qty ?? 0))
                         const qty        = pending[p.id] !== undefined ? pending[p.id] : dbQty
                         const total      = qty * p.unit_price
                         const hasPending = pending[p.id] !== undefined
