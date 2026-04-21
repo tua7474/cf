@@ -3,6 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 
+// ── รุ่นกระดาษฝอย ────────────────────────────────────────────────────────────
+
+const MODEL_OPTIONS = ['ปุยนุ่น', 'สีอ่อน', 'สีพิเศษA', 'สีพิเศษB', '1.5มิล', '4มิล', 'ฝอยหยัก', 'พิมพ์ตัวอักษร']
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface StockItem {
@@ -199,9 +203,12 @@ export default function StockPage() {
                 {/* ── Add new row ── */}
                 <tr className="bg-blue-50 border-b-2 border-blue-300">
                   <td className="px-2 py-1.5 border-r border-gray-200">
-                    <input type="text" placeholder="ชื่อรุ่น" value={newRow.model_name}
+                    <select value={newRow.model_name}
                       onChange={e => setNewRow(p => ({ ...p, model_name: e.target.value }))}
-                      className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                      className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400">
+                      <option value="">-- เลือกรุ่น --</option>
+                      {MODEL_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
+                    </select>
                   </td>
                   <td className="px-2 py-1.5 border-r border-gray-200">
                     <input type="text" placeholder="รหัสสี" value={newRow.color_code}
@@ -248,9 +255,11 @@ export default function StockPage() {
 
                       {/* 1. ชื่อรุ่น */}
                       <td className="px-2 py-1.5 border-r border-gray-200">
-                        <input type="text" value={editVal(item, 'model_name')}
+                        <select value={editVal(item, 'model_name')}
                           onChange={e => setEdit(item.id, 'model_name', e.target.value)}
-                          className={inputCls(!!rowEdits[item.id]?.model_name)} />
+                          className={inputCls(!!rowEdits[item.id]?.model_name)}>
+                          {MODEL_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
                       </td>
 
                       {/* 2. รหัสสี */}
