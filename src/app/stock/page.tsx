@@ -77,7 +77,17 @@ export default function StockPage() {
     setLoading(true)
     fetch('/api/stock')
       .then(r => r.json())
-      .then((data: StockItem[]) => { setItems(data); setLoading(false) })
+      .then((data: StockItem[]) => {
+        const sorted = [...data].sort((a, b) => {
+          const ai = MODEL_OPTIONS.indexOf(a.model_name)
+          const bi = MODEL_OPTIONS.indexOf(b.model_name)
+          const modelDiff = (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
+          if (modelDiff !== 0) return modelDiff
+          return a.color_name.localeCompare(b.color_name, 'th')
+        })
+        setItems(sorted)
+        setLoading(false)
+      })
       .catch(() => setLoading(false))
   }, [])
 
