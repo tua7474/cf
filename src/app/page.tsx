@@ -251,6 +251,10 @@ export default function Home() {
                             className="px-2 py-1 text-xs rounded bg-green-100 hover:bg-green-200 text-green-800 border border-green-300 transition-colors disabled:opacity-50 whitespace-nowrap">
                             + เพิ่ม
                           </button>
+                          <Link href={`/history?id=${p.id}&type=add&name=${encodeURIComponent(p.product_name)}`}
+                            className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-300 transition-colors whitespace-nowrap">
+                            ประวัติ
+                          </Link>
                         </div>
                       </td>
 
@@ -269,6 +273,10 @@ export default function Home() {
                             className="px-2 py-1 text-xs rounded bg-orange-100 hover:bg-orange-200 text-orange-800 border border-orange-300 transition-colors disabled:opacity-50 whitespace-nowrap">
                             − จอง
                           </button>
+                          <Link href={`/history?id=${p.id}&type=book&name=${encodeURIComponent(p.product_name)}`}
+                            className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-300 transition-colors whitespace-nowrap">
+                            ประวัติ
+                          </Link>
                         </div>
                       </td>
 

@@ -20,6 +20,16 @@ async function ensureTable() {
   await pool.query(`ALTER TABLE products_catalog ADD COLUMN IF NOT EXISTS last_added_at   TIMESTAMP`)
   await pool.query(`ALTER TABLE products_catalog ADD COLUMN IF NOT EXISTS last_booked_qty NUMERIC(12,2) DEFAULT 0`)
   await pool.query(`ALTER TABLE products_catalog ADD COLUMN IF NOT EXISTS last_booked_at  TIMESTAMP`)
+  // Stock log table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS catalog_stock_log (
+      id         SERIAL PRIMARY KEY,
+      product_id INT NOT NULL,
+      action     VARCHAR(10) NOT NULL,
+      qty        NUMERIC(12,2) NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `)
   const { rows } = await pool.query('SELECT COUNT(*)::int AS n FROM products_catalog')
   if (rows[0].n === 0) await seedData()
   // Seed กระดาษฝอย products if not yet present
@@ -361,6 +371,10 @@ export async function PATCH(req: NextRequest) {
               last_added_at  = NOW(),
               updated_at     = NOW()
           WHERE id = $2 RETURNING *`, [qty, id])
+        await pool.query(
+          `INSERT INTO catalog_stock_log (product_id, action, qty) VALUES ($1, 'add', $2)`,
+          [id, qty]
+        )
         return NextResponse.json(rows[0])
       }
       if (action === 'book') {
@@ -371,6 +385,10 @@ export async function PATCH(req: NextRequest) {
               last_booked_at  = NOW(),
               updated_at      = NOW()
           WHERE id = $2 RETURNING *`, [qty, id])
+        await pool.query(
+          `INSERT INTO catalog_stock_log (product_id, action, qty) VALUES ($1, 'book', $2)`,
+          [id, qty]
+        )
         return NextResponse.json(rows[0])
       }
     }
