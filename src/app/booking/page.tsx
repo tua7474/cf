@@ -229,9 +229,7 @@ export default function BookingPage({ searchParams }: { searchParams: SearchPara
       let orderTotal = 0
       for (const p of products) {
         if (p.is_free) continue
-        const baseQty = editOrderNo
-          ? (editQty[p.id] ?? 0)
-          : Math.round(Number(p.current_qty ?? 0))
+        const baseQty = editOrderNo ? (editQty[p.id] ?? 0) : 0
         const qty = pending[p.id] !== undefined ? pending[p.id] : baseQty
         if (qty > 0) {
           quantities[p.id] = qty
