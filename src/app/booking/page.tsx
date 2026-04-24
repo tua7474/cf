@@ -248,10 +248,16 @@ export default function BookingPage({ searchParams }: { searchParams: SearchPara
           body:    JSON.stringify({ order_no: editOrderNo, total_amount: orderTotal, quantities }),
         })
       } else {
+        // Read branch session from localStorage (set when branch user logs in)
+        let branchId: number | null = null
+        try {
+          const bs = localStorage.getItem('branch_session')
+          if (bs) branchId = JSON.parse(bs)?.branch_id ?? null
+        } catch { /* ignore */ }
         await fetch('/api/orders', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body:    JSON.stringify({ total_amount: orderTotal, quantities }),
+          body:    JSON.stringify({ total_amount: orderTotal, quantities, branch_id: branchId }),
         })
       }
 

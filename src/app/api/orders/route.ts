@@ -52,16 +52,18 @@ export async function GET(request: Request) {
 // ── POST — create new order ───────────────────────────────────────────────────
 
 export async function POST(request: Request) {
-  const { total_amount, quantities } = await request.json()
+  const { total_amount, quantities, branch_id } = await request.json()
   await pool.query(CREATE_TABLE)
+  // Ensure branch_id column exists
+  await pool.query(`ALTER TABLE booking_orders ADD COLUMN IF NOT EXISTS branch_id INT`).catch(() => {})
 
   let order_no = genOrderNo()
 
   try {
     const { rows } = await pool.query(
-      `INSERT INTO booking_orders (order_no, total_amount, quantities)
-       VALUES ($1, $2, $3) RETURNING *`,
-      [order_no, total_amount, JSON.stringify(quantities)]
+      `INSERT INTO booking_orders (order_no, total_amount, quantities, branch_id)
+       VALUES ($1, $2, $3, $4) RETURNING *`,
+      [order_no, total_amount, JSON.stringify(quantities), branch_id ?? null]
     )
     return NextResponse.json(rows[0], { status: 201 })
   } catch (e: unknown) {
@@ -69,9 +71,9 @@ export async function POST(request: Request) {
     if ((e as { code?: string }).code === '23505') {
       order_no = order_no + String(new Date().getUTCSeconds()).padStart(2, '0')
       const { rows } = await pool.query(
-        `INSERT INTO booking_orders (order_no, total_amount, quantities)
-         VALUES ($1, $2, $3) RETURNING *`,
-        [order_no, total_amount, JSON.stringify(quantities)]
+        `INSERT INTO booking_orders (order_no, total_amount, quantities, branch_id)
+         VALUES ($1, $2, $3, $4) RETURNING *`,
+        [order_no, total_amount, JSON.stringify(quantities), branch_id ?? null]
       )
       return NextResponse.json(rows[0], { status: 201 })
     }

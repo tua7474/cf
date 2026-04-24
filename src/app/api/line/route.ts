@@ -557,6 +557,22 @@ async function handleText(text: string, userId: string, replyToken: string) {
     }
   }
 
+  // ลงทะเบียน 0xxxxxxxxx — link phone to LINE userId
+  if (t.startsWith('ลงทะเบียน')) {
+    const phone = t.replace('ลงทะเบียน', '').trim().replace(/\D/g, '')
+    if (!phone) return reply(replyToken, [{ type: 'text', text: 'กรุณาระบุเบอร์โทร เช่น: ลงทะเบียน 0812345678' }])
+    try {
+      const { rows } = await pool.query(
+        `UPDATE branch_phones SET line_user_id=$1 WHERE phone=$2 AND is_admin=true RETURNING id`,
+        [userId, phone]
+      )
+      if (!rows[0]) return reply(replyToken, [{ type: 'text', text: `❌ ไม่พบเบอร์ ${phone} ในรายชื่อ Admin\nกรุณาให้ผู้ดูแลระบบเพิ่มเบอร์ของคุณก่อนครับ` }])
+      return reply(replyToken, [{ type: 'text', text: `✅ ลงทะเบียนสำเร็จ!\nเบอร์ ${phone} เชื่อมกับบัญชี LINE นี้แล้ว\nคุณจะได้รับ OTP ผ่าน LINE เมื่อต้องการยืนยันชำระเงินครับ` }])
+    } catch {
+      return reply(replyToken, [{ type: 'text', text: '❌ เกิดข้อผิดพลาด กรุณาลองใหม่' }])
+    }
+  }
+
   if (['ใบจอง', 'จอง', 'สั่งสินค้า', 'order', 'booking', 'เมนู', 'menu'].includes(t)) {
     return reply(replyToken, [await mainMenu(userId)])
   }
