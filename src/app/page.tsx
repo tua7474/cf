@@ -189,9 +189,9 @@ export default function Home() {
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-center">สต็อคล่าสุด</th>
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-center">เพิ่มสต็อค</th>
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-center">จำนวนจอง</th>
-                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-right">ราคาโกดัง ✎</th>
-                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-right">ราคา+9%</th>
-                  <th className="px-3 py-2 whitespace-nowrap text-right">ราคา+9%+7%</th>
+                  <th className="px-3 py-2 border-r border-orange-400 whitespace-nowrap text-right bg-orange-500">ราคาโกดัง ✎</th>
+                  <th className="px-3 py-2 border-r border-yellow-400 whitespace-nowrap text-right bg-yellow-500 text-gray-900">ราคา+9%</th>
+                  <th className="px-3 py-2 whitespace-nowrap text-right bg-red-600">ราคา+9%+7%</th>
                 </tr>
               </thead>
               <tbody>
@@ -282,19 +282,19 @@ export default function Home() {
                       </td>
 
                       {/* 6. ราคาโกดัง */}
-                      <td className="px-2 py-1 border-r border-gray-200">
+                      <td className="px-2 py-1 border-r border-orange-200 bg-orange-50">
                         <input type="text" inputMode="numeric" value={editVal(p, 'price')}
                           onChange={e => setEdit(p.id, 'price', e.target.value)}
                           className={`${inputCls(!!rowEdits[p.id]?.price)} text-right`} />
                       </td>
 
                       {/* 7. ราคา+9% */}
-                      <td className="px-3 py-1 border-r border-gray-200 text-right text-gray-600 whitespace-nowrap">
+                      <td className="px-3 py-1 border-r border-yellow-200 bg-yellow-50 text-right text-gray-700 whitespace-nowrap font-medium">
                         {price9 !== null ? fmtMoney(price9) : '-'}
                       </td>
 
                       {/* 8. ราคา+9%+7% */}
-                      <td className="px-3 py-1 text-right text-gray-600 whitespace-nowrap">
+                      <td className="px-3 py-1 bg-red-50 border-r border-red-200 text-right text-red-700 whitespace-nowrap font-medium">
                         <div>{price9p7 !== null ? fmtMoney(price9p7) : '-'}</div>
                         {hasPending && (
                           <button onClick={() => handleSaveInfo(p.id)}
