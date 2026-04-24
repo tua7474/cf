@@ -191,7 +191,7 @@ export default function Home() {
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-center">จำนวนจอง</th>
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-right">ราคาโกดัง ✎</th>
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-right">ราคา+9%</th>
-                  <th className="px-3 py-2 whitespace-nowrap text-center">บันทึก</th>
+                  <th className="px-3 py-2 whitespace-nowrap text-right">ราคา+9%+7%</th>
                 </tr>
               </thead>
               <tbody>
@@ -210,7 +210,8 @@ export default function Home() {
                   const hasPending = !!rowEdits[p.id] && Object.keys(rowEdits[p.id]).length > 0
                   const stock = parseFloat(String(p.quantity ?? 0))
                   const price = parseFloat(String(p.price ?? 0))
-                  const price9 = price > 0 ? price * 1.09 : null
+                  const price9    = price > 0 ? price * 1.09 : null
+                  const price9p7  = price > 0 ? price * 1.09 * 1.07 : null
 
                   return (
                     <tr key={p.id} className="bg-white even:bg-gray-50 hover:bg-yellow-50/40 transition-colors">
@@ -292,12 +293,13 @@ export default function Home() {
                         {price9 !== null ? fmtMoney(price9) : '-'}
                       </td>
 
-                      {/* บันทึก */}
-                      <td className="px-2 py-1 text-center">
+                      {/* 8. ราคา+9%+7% */}
+                      <td className="px-3 py-1 text-right text-gray-600 whitespace-nowrap">
+                        <div>{price9p7 !== null ? fmtMoney(price9p7) : '-'}</div>
                         {hasPending && (
                           <button onClick={() => handleSaveInfo(p.id)}
                             disabled={!!busy[`info-${p.id}`]}
-                            className="px-2 py-1 text-xs rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
+                            className="mt-0.5 px-2 py-0.5 text-[10px] rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
                             💾 บันทึก
                           </button>
                         )}
