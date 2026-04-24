@@ -1,6 +1,6 @@
 'use client'
 
-import { Fragment, useState, useEffect, useCallback, useRef, use } from 'react'
+import { Fragment, useState, useEffect, useCallback, use } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -159,34 +159,16 @@ export default function BookingPage({ searchParams }: { searchParams: SearchPara
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editOrderNo])
 
-  // ── Scale-to-fit for mobile ────────────────────────────────────────────────
-  const contentRef = useRef<HTMLDivElement>(null)
-  const [scale, setScale]               = useState(1)
-  const [scaledHeight, setScaledHeight] = useState<number | undefined>()
+  // ── Scale-to-fit for mobile (CSS zoom — affects layout correctly) ────────────
+  const [zoom, setZoom] = useState(1)
 
-  const measureScale = useCallback(() => {
-    const el = contentRef.current
-    if (!el) return
-    const newScale = Math.min(1, window.innerWidth / el.scrollWidth)
-    setScale(newScale)
-    setScaledHeight(newScale < 1 ? el.scrollHeight * newScale : undefined)
+  useEffect(() => {
+    const CONTENT_W = TABLE_W + 32 // table + p-4 padding (16px × 2)
+    const calc = () => setZoom(Math.min(1, window.innerWidth / CONTENT_W))
+    calc()
+    window.addEventListener('resize', calc)
+    return () => window.removeEventListener('resize', calc)
   }, [])
-
-  // Re-measure on viewport resize
-  useEffect(() => {
-    window.addEventListener('resize', measureScale)
-    measureScale()
-    return () => window.removeEventListener('resize', measureScale)
-  }, [measureScale])
-
-  // Re-measure when content size changes (products finish loading)
-  useEffect(() => {
-    const el = contentRef.current
-    if (!el) return
-    const ro = new ResizeObserver(measureScale)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [measureScale])
 
   // ไม่โหลด draft อัตโนมัติ — เปิดหน้าใหม่ทุกครั้งให้เริ่มจาก 0 เสมอ
   useEffect(() => { localStorage.removeItem(DRAFT_KEY) }, [])
@@ -353,17 +335,11 @@ export default function BookingPage({ searchParams }: { searchParams: SearchPara
       </header>
 
       {/* ── Main ──────────────────────────────────────────────────────────── */}
-      <main className="overflow-x-hidden">
-        {/* wrapper ปรับ height ให้พอดีกับ content ที่ scale แล้ว */}
-        <div style={{ height: scaledHeight, overflow: 'hidden' }}>
-          <div
-            ref={contentRef}
-            className="p-4"
-            style={{
-              transform: scale < 1 ? `scale(${scale})` : undefined,
-              transformOrigin: 'top left',
-            }}
-          >
+      <main>
+        <div
+          className="p-4"
+          style={{ zoom: zoom < 1 ? zoom : undefined }}
+        >
         {loading ? (
           <div className="flex items-center justify-center h-40 text-gray-400">กำลังโหลดข้อมูล...</div>
         ) : (
@@ -535,7 +511,6 @@ export default function BookingPage({ searchParams }: { searchParams: SearchPara
             </div>
           </>
         )}
-          </div>
         </div>
       </main>
     </div>
