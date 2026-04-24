@@ -6,7 +6,52 @@ import Link from 'next/link'
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface BranchPhone { id: number; phone: string; is_admin: boolean; line_user_id: string | null }
-interface Branch { id: number; name: string; phones: BranchPhone[] }
+interface Branch { id: number; name: string; phones: BranchPhone[]; pending_count: number }
+
+// ── Color groups ──────────────────────────────────────────────────────────────
+
+const YELLOW_BRANCHES = ['ท่าฉลอม', 'หนองแขม', 'ไทรม้า', 'อ้อมน้อย']
+const RED_BRANCHES    = ['สนามบินน้ำ', 'ตลาดรังสิต']
+
+type ColorGroup = 'yellow' | 'red' | 'orange'
+
+function getBranchColor(name: string): ColorGroup {
+  if (YELLOW_BRANCHES.some(n => name.includes(n))) return 'yellow'
+  if (RED_BRANCHES.some(n => name.includes(n)))    return 'red'
+  return 'orange'
+}
+
+const GROUP_ORDER: ColorGroup[] = ['yellow', 'red', 'orange']
+
+const ROW_BG: Record<ColorGroup, string> = {
+  yellow: 'bg-yellow-50  hover:bg-yellow-100/70',
+  red:    'bg-red-50     hover:bg-red-100/70',
+  orange: 'bg-orange-50  hover:bg-orange-100/70',
+}
+const GROUP_HEADER_BG: Record<ColorGroup, string> = {
+  yellow: 'bg-yellow-200 text-yellow-900',
+  red:    'bg-red-200    text-red-900',
+  orange: 'bg-orange-200 text-orange-900',
+}
+const GROUP_LABEL: Record<ColorGroup, string> = {
+  yellow: 'กลุ่มสีเหลือง',
+  red:    'กลุ่มสีแดง',
+  orange: 'กลุ่มสีส้ม',
+}
+
+function sortAndGroup(branches: Branch[]): { color: ColorGroup; items: Branch[] }[] {
+  const grouped: Record<ColorGroup, Branch[]> = { yellow: [], red: [], orange: [] }
+  for (const b of branches) {
+    grouped[getBranchColor(b.name)].push(b)
+  }
+  // Sort within each group by pending_count desc
+  for (const g of GROUP_ORDER) {
+    grouped[g].sort((a, b) => b.pending_count - a.pending_count)
+  }
+  return GROUP_ORDER
+    .filter(g => grouped[g].length > 0)
+    .map(g => ({ color: g, items: grouped[g] }))
+}
 interface BranchOrder {
   id: number; order_no: string; total_amount: string
   status: string; payment_status: string; created_at: string; updated_at: string
@@ -41,11 +86,12 @@ const MONTH_NAMES = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.
 // ── Branch Row Component ──────────────────────────────────────────────────────
 
 function BranchRow({
-  branch, session, onManage,
+  branch, session, onManage, colorGroup,
 }: {
   branch: Branch
   session: BranchSession | null
   onManage: (b: Branch) => void
+  colorGroup: ColorGroup
 }) {
   const [orders, setOrders] = useState<BranchOrder[]>([])
   const [monthOrders, setMonthOrders] = useState<BranchOrder[]>([])
@@ -132,7 +178,7 @@ function BranchRow({
   }
 
   return (
-    <tr className="bg-white even:bg-gray-50 align-top border-b border-gray-200">
+    <tr className={`${ROW_BG[colorGroup]} align-top border-b border-gray-200 transition-colors`}>
 
       {/* 1. ชื่อสาขา */}
       <td className="px-3 py-2 border-r border-gray-200 font-semibold text-green-800 whitespace-nowrap">
@@ -526,9 +572,18 @@ export default function BranchesPage() {
                 </tr>
               </thead>
               <tbody>
-                {visibleBranches.map(b => (
-                  <BranchRow key={b.id} branch={b} session={session}
-                    onManage={setManageBranch} />
+                {sortAndGroup(visibleBranches).map(({ color, items }) => (
+                  <>
+                    <tr key={`header-${color}`} className={GROUP_HEADER_BG[color]}>
+                      <td colSpan={6} className="px-3 py-1 text-xs font-bold tracking-wide">
+                        {GROUP_LABEL[color]}
+                      </td>
+                    </tr>
+                    {items.map(b => (
+                      <BranchRow key={b.id} branch={b} session={session}
+                        onManage={setManageBranch} colorGroup={color} />
+                    ))}
+                  </>
                 ))}
               </tbody>
             </table>

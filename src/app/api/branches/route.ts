@@ -45,17 +45,25 @@ export async function ensureTables() {
   `)
 }
 
-// ── GET — list all branches with phone numbers ────────────────────────────────
+// ── GET — list all branches with phone numbers + pending count ────────────────
 
 export async function GET() {
   try {
     await ensureTables()
     const { rows: branches } = await pool.query(`SELECT id, name, created_at FROM branches ORDER BY name`)
     const { rows: phones }   = await pool.query(`SELECT id, branch_id, phone, is_admin, line_user_id FROM branch_phones ORDER BY branch_id, id`)
+    const { rows: counts }   = await pool.query(`
+      SELECT branch_id, COUNT(*)::int AS pending_count
+      FROM booking_orders
+      WHERE branch_id IS NOT NULL AND payment_status != 'paid'
+      GROUP BY branch_id
+    `)
+    const countMap = Object.fromEntries(counts.map(r => [r.branch_id, r.pending_count]))
 
     const result = branches.map(b => ({
       ...b,
-      phones: phones.filter(p => p.branch_id === b.id)
+      phones: phones.filter(p => p.branch_id === b.id),
+      pending_count: countMap[b.id] ?? 0,
     }))
     return NextResponse.json(result)
   } catch (err) {
