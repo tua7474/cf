@@ -265,8 +265,13 @@ export async function GET() {
       )
     `)
     const { rows } = await pool.query(
-      `SELECT * FROM booking_products
-       ORDER BY section_order, subgroup_order, sort_order`
+      `SELECT bp.*,
+              pc.quantity AS stock_qty
+       FROM booking_products bp
+       LEFT JOIN products_catalog pc
+         ON pc.product_name = bp.product_name
+         AND pc.group_name  = bp.section_name
+       ORDER BY bp.section_order, bp.subgroup_order, bp.sort_order`
     )
     return NextResponse.json(rows)
   } catch (e) {

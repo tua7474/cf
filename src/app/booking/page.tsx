@@ -18,6 +18,7 @@ interface Product {
   is_free: boolean
   sort_order: number
   current_qty: number
+  stock_qty: string | null
 }
 
 type SubgroupColor = 'gray' | 'light' | 'orange' | 'teal' | 'maroon'
@@ -438,7 +439,12 @@ export default function BookingPage({ searchParams }: { searchParams: SearchPara
                             style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}
                             title={p.product_name}
                           >
-                            {p.product_name}
+                            <div className="truncate">{p.product_name}</div>
+                            {p.stock_qty !== null && p.stock_qty !== undefined && (
+                              <div className="text-[9px] text-blue-500 leading-none mt-px">
+                                คงเหลือ {parseFloat(String(p.stock_qty)).toLocaleString('th-TH', { maximumFractionDigits: 0 })}
+                              </div>
+                            )}
                           </td>,
 
                           // ราคา/หน่วย
