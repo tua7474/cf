@@ -435,16 +435,15 @@ export default function BookingPage({ searchParams }: { searchParams: SearchPara
                           // ชื่อสินค้า
                           <td
                             key={`${si}-pn`}
-                            className={`border border-gray-300 px-1 py-px ${nameBg} ${pendingRing}`}
-                            style={{ overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}
+                            className={`border border-gray-300 px-1 py-px ${nameBg} ${pendingRing} relative overflow-hidden`}
                             title={p.product_name}
                           >
-                            <div className="truncate">{p.product_name}</div>
                             {p.stock_qty !== null && p.stock_qty !== undefined && (
-                              <div className="text-[9px] text-blue-500 leading-none mt-px">
-                                คงเหลือ {parseFloat(String(p.stock_qty)).toLocaleString('th-TH', { maximumFractionDigits: 0 })}
-                              </div>
+                              <span className="absolute top-0 right-0 text-[7px] text-blue-500 leading-none px-0.5 py-px">
+                                {parseFloat(String(p.stock_qty)).toLocaleString('th-TH', { maximumFractionDigits: 0 })}
+                              </span>
                             )}
+                            <div className="truncate pr-4">{p.product_name}</div>
                           </td>,
 
                           // ราคา/หน่วย
