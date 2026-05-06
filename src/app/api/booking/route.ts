@@ -254,21 +254,11 @@ export async function GET() {
     if (parseInt(existing[0].count) === 0) {
       await pool.query(SEED)
     }
-    // Add ฟิล์มยืด สีดำ if not yet present
-    await pool.query(`
-      INSERT INTO booking_products
-        (section_order,section_name,is_vat_included,subgroup_name,subgroup_order,product_name,unit_price,is_free,sort_order)
-      SELECT 3,'ซอง PP',false,'ฟิล์มยืด',5,'สีดำ 50x200m',117.70,false,23
-      WHERE NOT EXISTS (
-        SELECT 1 FROM booking_products
-        WHERE section_order=3 AND subgroup_order=5 AND product_name='สีดำ 50x200m'
-      )
-    `)
     // Add ฟิล์มยืด สีดำ 15mi if not yet present
     await pool.query(`
       INSERT INTO booking_products
         (section_order,section_name,is_vat_included,subgroup_name,subgroup_order,product_name,unit_price,is_free,sort_order)
-      SELECT 3,'ซอง PP',false,'ฟิล์มยืด',5,'สีดำ 15mi 50x200m.',117.70,false,24
+      SELECT 3,'ซอง PP',false,'ฟิล์มยืด',5,'สีดำ 15mi 50x200m.',117.70,false,23
       WHERE NOT EXISTS (
         SELECT 1 FROM booking_products
         WHERE section_order=3 AND subgroup_order=5 AND product_name='สีดำ 15mi 50x200m.'
