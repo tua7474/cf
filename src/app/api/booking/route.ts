@@ -270,7 +270,7 @@ export async function GET() {
        FROM booking_products bp
        LEFT JOIN products_catalog pc
          ON pc.product_name = bp.product_name
-         AND pc.group_name  = bp.section_name
+         AND (pc.group_name = bp.section_name OR pc.group_name = bp.subgroup_name)
        ORDER BY bp.section_order, bp.subgroup_order, bp.sort_order`
     )
     return NextResponse.json(rows)
