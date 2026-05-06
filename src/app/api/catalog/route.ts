@@ -1,6 +1,95 @@
 import { NextRequest, NextResponse } from 'next/server'
 import pool from '@/lib/db'
 
+// ── Catalog group → booking section/subgroup mapping ─────────────────────────
+
+const CATALOG_GROUP_TO_BOOKING: Record<string, {
+  section_order: number; section_name: string; is_vat_included: boolean
+  subgroup_order: number; subgroup_name: string
+}> = {
+  'กล่อง':                               { section_order: 1, section_name: 'กล่อง',          is_vat_included: true,  subgroup_order: 0,  subgroup_name: '' },
+  'ซองน้ำตาล':                           { section_order: 2, section_name: 'ซองน้ำตาล',      is_vat_included: false, subgroup_order: 1,  subgroup_name: 'ซองน้ำตาล' },
+  'ซองขยายข้าง':                         { section_order: 2, section_name: 'ซองน้ำตาล',      is_vat_included: false, subgroup_order: 2,  subgroup_name: 'ซองขยายข้าง' },
+  'ซองจ่าหน้า':                          { section_order: 2, section_name: 'ซองน้ำตาล',      is_vat_included: false, subgroup_order: 3,  subgroup_name: 'ซองจ่าหน้า' },
+  'ซองบับเบิล':                          { section_order: 2, section_name: 'ซองน้ำตาล',      is_vat_included: false, subgroup_order: 4,  subgroup_name: 'ซองบับเบิล' },
+  'PP กันกระแทก':                        { section_order: 2, section_name: 'ซองน้ำตาล',      is_vat_included: false, subgroup_order: 5,  subgroup_name: 'PP กันกระแทก' },
+  'เทป OPP':                             { section_order: 2, section_name: 'ซองน้ำตาล',      is_vat_included: false, subgroup_order: 6,  subgroup_name: 'เทป OPP' },
+  'เทประวังแตก':                         { section_order: 2, section_name: 'ซองน้ำตาล',      is_vat_included: false, subgroup_order: 7,  subgroup_name: 'เทประวังแตก' },
+  'เทป OPP แกนส้ม (ใหม่)':              { section_order: 2, section_name: 'ซองน้ำตาล',      is_vat_included: false, subgroup_order: 8,  subgroup_name: 'เทป OPP แกนส้ม (ใหม่)' },
+  'เทป THANK YOU':                       { section_order: 2, section_name: 'ซองน้ำตาล',      is_vat_included: false, subgroup_order: 9,  subgroup_name: 'เทป THANK YOU' },
+  'กล่องเอกสาร':                         { section_order: 2, section_name: 'ซองน้ำตาล',      is_vat_included: false, subgroup_order: 10, subgroup_name: 'กล่องเอกสาร' },
+  'ซอง PP':                              { section_order: 3, section_name: 'ซอง PP',          is_vat_included: false, subgroup_order: 1,  subgroup_name: 'ซอง PP' },
+  'ซองเมทาลิค':                          { section_order: 3, section_name: 'ซอง PP',          is_vat_included: false, subgroup_order: 2,  subgroup_name: 'ซองเมทาลิค' },
+  'ซองสี':                               { section_order: 3, section_name: 'ซอง PP',          is_vat_included: false, subgroup_order: 3,  subgroup_name: 'ซองสี' },
+  'สติ๊กเกอร์ลาเบล100*150':             { section_order: 3, section_name: 'ซอง PP',          is_vat_included: false, subgroup_order: 4,  subgroup_name: 'สติ๊กเกอร์ลาเบล100*150' },
+  'ฟิล์มยืด':                            { section_order: 3, section_name: 'ซอง PP',          is_vat_included: false, subgroup_order: 5,  subgroup_name: 'ฟิล์มยืด' },
+  'กระบอก 2 inc':                        { section_order: 3, section_name: 'ซอง PP',          is_vat_included: false, subgroup_order: 6,  subgroup_name: 'กระบอก 2 inc' },
+  'กระบอก 3 inc':                        { section_order: 3, section_name: 'ซอง PP',          is_vat_included: false, subgroup_order: 7,  subgroup_name: 'กระบอก 3 inc' },
+  'ฝากระบอก':                            { section_order: 3, section_name: 'ซอง PP',          is_vat_included: false, subgroup_order: 8,  subgroup_name: 'ฝากระบอก' },
+  'ถุงหิ้วบริการ':                        { section_order: 3, section_name: 'ซอง PP',          is_vat_included: false, subgroup_order: 9,  subgroup_name: 'ถุงหิ้วบริการ' },
+  'บับเบิล':                             { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 1,  subgroup_name: 'บับเบิล' },
+  'โฟมบาง 2 มิล':                        { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 2,  subgroup_name: 'โฟมบาง 2 มิล' },
+  'ตัดเทป':                              { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 3,  subgroup_name: 'ตัดเทป' },
+  'สายรัด PP':                           { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 4,  subgroup_name: 'สายรัด PP' },
+  'กระดาษห่อ':                           { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 5,  subgroup_name: 'กระดาษห่อ' },
+  'สติ๊กเกอร์ระวังแตก':                  { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 6,  subgroup_name: 'สติ๊กเกอร์ระวังแตก' },
+  'กระดาษฝอย':                           { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 7,  subgroup_name: 'กระดาษฝอย' },
+  'ซองใสปะหน้า':                         { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 8,  subgroup_name: 'ซองใสปะหน้า' },
+  'ปากกาเขียนPP (แพ็ค10)':              { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 9,  subgroup_name: 'ปากกาเขียนPP (แพ็ค10)' },
+  'กล่อง Thank You':                     { section_order: 5, section_name: 'กล่อง Thank You', is_vat_included: false, subgroup_order: 1,  subgroup_name: 'กล่อง Thank You' },
+  'กล่องผลไม้':                          { section_order: 5, section_name: 'กล่อง Thank You', is_vat_included: false, subgroup_order: 2,  subgroup_name: 'กล่องผลไม้' },
+  'ถุงแก้วฝากาว 60 ไมครอน/แพ็ค 100ใบ': { section_order: 5, section_name: 'กล่อง Thank You', is_vat_included: false, subgroup_order: 3,  subgroup_name: 'ถุงแก้วฝากาว 60 ไมครอน/แพ็ค 100ใบ' },
+  'ถุงซิปรูด/แพ็ค 50ใบ':                { section_order: 5, section_name: 'กล่อง Thank You', is_vat_included: false, subgroup_order: 4,  subgroup_name: 'ถุงซิปรูด/แพ็ค 50ใบ' },
+  'เชือกขาว / เชือกฟาง':                { section_order: 5, section_name: 'กล่อง Thank You', is_vat_included: false, subgroup_order: 5,  subgroup_name: 'เชือกขาว / เชือกฟาง' },
+  'เบิกของ ฟรี':                         { section_order: 5, section_name: 'กล่อง Thank You', is_vat_included: false, subgroup_order: 6,  subgroup_name: 'เบิกของ ฟรี' },
+  'ซองกันกระแทก':                        { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 1,  subgroup_name: 'ซองกันกระแทก' },
+  'AirBag แผ่น /เมตรละ':                { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 2,  subgroup_name: 'AirBag แผ่น /เมตรละ' },
+  'AirBag ม้วน':                         { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 3,  subgroup_name: 'AirBag ม้วน' },
+  'MINI AIR':                            { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 4,  subgroup_name: 'MINI AIR' },
+  'ถุงเปล่า 30 กรัม':                    { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 5,  subgroup_name: 'ถุงเปล่า 30 กรัม' },
+  'กระบอก 1.5 inc':                      { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 6,  subgroup_name: 'กระบอก 1.5 inc' },
+  'กระดาษฝอยหนา 4 มิล':                 { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 7,  subgroup_name: 'กระดาษฝอยหนา 4 มิล' },
+  'กระดาษฝอย เส้นหยัก':                 { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 8,  subgroup_name: 'กระดาษฝอย เส้นหยัก' },
+  'เครื่อง Peripage /สติ๊กเกอร์ /เคส':  { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 9,  subgroup_name: 'เครื่อง Peripage /สติ๊กเกอร์ /เคส' },
+  'กล่อง5ชั้น':                          { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 10, subgroup_name: 'กล่อง5ชั้น' },
+}
+
+// ── Booking sync helpers ──────────────────────────────────────────────────────
+
+async function syncNewToBooking(group_name: string, product_name: string, price: number | null) {
+  const info = CATALOG_GROUP_TO_BOOKING[group_name]
+  if (!info || price === null || price === undefined) return
+  const { rows: ex } = await pool.query(
+    `SELECT 1 FROM booking_products WHERE section_order=$1 AND subgroup_order=$2 AND product_name=$3`,
+    [info.section_order, info.subgroup_order, product_name]
+  )
+  if (ex.length > 0) return
+  const { rows: mx } = await pool.query(
+    `SELECT COALESCE(MAX(sort_order), 0) + 1 AS next FROM booking_products WHERE section_order=$1 AND subgroup_order=$2`,
+    [info.section_order, info.subgroup_order]
+  )
+  await pool.query(
+    `INSERT INTO booking_products
+       (section_order,section_name,is_vat_included,subgroup_name,subgroup_order,product_name,unit_price,is_free,sort_order)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,false,$8)`,
+    [info.section_order, info.section_name, info.is_vat_included, info.subgroup_name, info.subgroup_order, product_name, price, mx[0].next]
+  )
+}
+
+async function syncPriceToBooking(product_name: string, price: number) {
+  await pool.query(
+    `UPDATE booking_products SET unit_price=$1 WHERE product_name=$2`,
+    [price, product_name]
+  )
+}
+
+async function syncNameToBooking(old_name: string, new_name: string) {
+  await pool.query(
+    `UPDATE booking_products SET product_name=$1 WHERE product_name=$2`,
+    [new_name, old_name]
+  )
+}
+
 // ── Ensure table + seed ───────────────────────────────────────────────────────
 
 async function ensureTable() {
@@ -396,6 +485,10 @@ export async function PATCH(req: NextRequest) {
     // Info update: single object { id, group_name?, product_name?, price? }
     if (!Array.isArray(body)) {
       const { id, group_name, product_name, price } = body
+      // Fetch current state before updating (for booking sync)
+      const { rows: curr } = await pool.query(
+        'SELECT group_name, product_name, price FROM products_catalog WHERE id=$1', [id]
+      )
       const fields: string[] = []
       const vals: unknown[] = []
       let n = 1
@@ -406,6 +499,17 @@ export async function PATCH(req: NextRequest) {
       fields.push(`updated_at=NOW()`)
       vals.push(id)
       await pool.query(`UPDATE products_catalog SET ${fields.join(',')} WHERE id=$${n}`, vals)
+      // Sync to booking_products
+      if (curr.length > 0) {
+        const old = curr[0]
+        if (product_name !== undefined && product_name !== old.product_name) {
+          await syncNameToBooking(old.product_name, product_name)
+        }
+        if (price !== undefined) {
+          const finalName = product_name ?? old.product_name
+          await syncPriceToBooking(finalName, price)
+        }
+      }
       return NextResponse.json({ ok: true })
     }
 
@@ -446,6 +550,8 @@ export async function POST(req: NextRequest) {
        VALUES ($1,$2,$3,$4,$5) RETURNING id`,
       [group_name, product_name, price ?? null, cost ?? null, quantity ?? null]
     )
+    // Auto-add to booking_products if group maps to a known section
+    await syncNewToBooking(group_name, product_name, price ?? null)
     return NextResponse.json({ ok: true, id: rows[0].id })
   } catch (err) {
     console.error(err)
