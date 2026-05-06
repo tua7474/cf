@@ -163,7 +163,7 @@ export default function Home() {
       {/* Tab bar */}
       <div className="bg-white border-b border-gray-200 px-4 shadow-sm flex">
         <span className="inline-block px-4 py-3 text-sm font-medium border-b-2 border-green-600 text-green-700 bg-green-50">
-          📦 สินค้า
+          📦 สต็อคสินค้า
         </span>
         <Link href="/stock"
           className="inline-block px-4 py-3 text-sm font-medium text-gray-500 hover:text-green-700 hover:bg-green-50 transition-colors">
