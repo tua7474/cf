@@ -513,9 +513,13 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ ok: true })
     }
 
-    // Batch info update (legacy): array
+    // Batch info update: array
     const rows = body as { id: number; group_name?: string; product_name?: string; price?: number; cost?: number; quantity?: number }[]
     for (const row of rows) {
+      // Fetch current state for sync
+      const { rows: curr } = await pool.query(
+        'SELECT group_name, product_name, price FROM products_catalog WHERE id=$1', [row.id]
+      )
       const fields: string[] = []
       const vals: unknown[] = []
       let n = 1
@@ -528,6 +532,17 @@ export async function PATCH(req: NextRequest) {
       fields.push(`updated_at=NOW()`)
       vals.push(row.id)
       await pool.query(`UPDATE products_catalog SET ${fields.join(',')} WHERE id=$${n}`, vals)
+      // Sync to booking_products
+      if (curr.length > 0) {
+        const old = curr[0]
+        if (row.product_name !== undefined && row.product_name !== old.product_name) {
+          await syncNameToBooking(old.product_name, row.product_name)
+        }
+        if (row.price !== undefined) {
+          const finalName = row.product_name ?? old.product_name
+          await syncPriceToBooking(finalName, row.price)
+        }
+      }
     }
     return NextResponse.json({ ok: true })
   } catch (err) {
