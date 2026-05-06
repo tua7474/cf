@@ -15,6 +15,7 @@ interface Product {
   last_added_at: string | null
   last_booked_qty: string | null
   last_booked_at: string | null
+  show_in_booking: boolean
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -116,6 +117,26 @@ export default function Home() {
   const editVal = (p: Product, key: 'group_name' | 'product_name' | 'price') =>
     rowEdits[p.id]?.[key] !== undefined ? String(rowEdits[p.id][key]) : String(p[key] ?? '')
 
+  // ── Toggle show_in_booking ────────────────────────────────────────────────────
+
+  const handleToggleBooking = useCallback(async (id: number, newVal: boolean) => {
+    setProducts(prev => prev.map(p => p.id === id ? { ...p, show_in_booking: newVal } : p))
+    await fetch('/api/catalog', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, show_in_booking: newVal }),
+    })
+  }, [])
+
+  const handleToggleGroupBooking = useCallback(async (groupName: string, newVal: boolean) => {
+    setProducts(prev => prev.map(p => p.group_name === groupName ? { ...p, show_in_booking: newVal } : p))
+    await fetch('/api/catalog', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'toggle_group', group_name: groupName, show_in_booking: newVal }),
+    })
+  }, [])
+
   // ── Build grouped entries ─────────────────────────────────────────────────────
 
   type Entry = { type: 'group'; name: string } | { type: 'row'; product: Product }
@@ -195,16 +216,27 @@ export default function Home() {
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-center">จำนวนจอง</th>
                   <th className="px-3 py-2 border-r border-orange-400 whitespace-nowrap text-right bg-orange-500">ราคาโกดัง ✎</th>
                   <th className="px-3 py-2 border-r border-yellow-400 whitespace-nowrap text-right bg-yellow-500 text-gray-900">ราคา+9%</th>
-                  <th className="px-3 py-2 whitespace-nowrap text-right bg-red-600">ราคา+9%+7%</th>
+                  <th className="px-3 py-2 border-r border-red-500 whitespace-nowrap text-right bg-red-600">ราคา+9%+7%</th>
+                  <th className="px-3 py-2 whitespace-nowrap text-center bg-green-900">ใบจองสินค้า</th>
                 </tr>
               </thead>
               <tbody>
                 {entries.map((entry, ei) => {
                   if (entry.type === 'group') {
+                    const groupProducts = products.filter(p => p.group_name === entry.name)
+                    const allOn = groupProducts.length > 0 && groupProducts.every(p => p.show_in_booking)
                     return (
                       <tr key={`g-${ei}`} className="bg-green-800 text-white">
                         <td colSpan={8} className="px-3 py-1.5 font-bold text-sm tracking-wide">
                           {entry.name}
+                        </td>
+                        <td className="px-2 py-1 text-center">
+                          <button
+                            onClick={() => handleToggleGroupBooking(entry.name, !allOn)}
+                            className={`px-3 py-0.5 text-[11px] rounded-full font-semibold transition-colors ${allOn ? 'bg-green-400 hover:bg-green-300 text-green-900' : 'bg-red-500 hover:bg-red-400 text-white'}`}
+                          >
+                            {allOn ? '● โชว์ทั้งหมวด' : '● ซ่อนทั้งหมวด'}
+                          </button>
                         </td>
                       </tr>
                     )
@@ -307,6 +339,16 @@ export default function Home() {
                             💾 บันทึก
                           </button>
                         )}
+                      </td>
+
+                      {/* 9. ใบจองสินค้า toggle */}
+                      <td className="px-2 py-1 text-center whitespace-nowrap">
+                        <button
+                          onClick={() => handleToggleBooking(p.id, !p.show_in_booking)}
+                          className={`px-2 py-0.5 text-[11px] rounded-full font-semibold transition-colors ${p.show_in_booking ? 'bg-green-500 hover:bg-green-400 text-white' : 'bg-red-500 hover:bg-red-400 text-white'}`}
+                        >
+                          {p.show_in_booking ? '● โชว์' : '● ซ่อน'}
+                        </button>
                       </td>
 
                     </tr>

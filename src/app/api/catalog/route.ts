@@ -119,6 +119,7 @@ async function ensureTable() {
       created_at TIMESTAMP NOT NULL DEFAULT NOW()
     )
   `)
+  await pool.query(`ALTER TABLE products_catalog ADD COLUMN IF NOT EXISTS show_in_booking BOOLEAN NOT NULL DEFAULT true`)
   const { rows } = await pool.query('SELECT COUNT(*)::int AS n FROM products_catalog')
   if (rows[0].n === 0) await seedData()
   // Seed กระดาษฝอย products if not yet present
@@ -432,7 +433,8 @@ export async function GET() {
     await ensureTable()
     const { rows } = await pool.query(`
       SELECT id, group_name, product_name, price, quantity,
-             last_added_qty, last_added_at, last_booked_qty, last_booked_at
+             last_added_qty, last_added_at, last_booked_qty, last_booked_at,
+             show_in_booking
       FROM products_catalog
       ORDER BY group_name, id
     `)
@@ -448,6 +450,16 @@ export async function GET() {
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json()
+
+    // Group toggle: { action:'toggle_group', group_name, show_in_booking }
+    if (!Array.isArray(body) && body.action === 'toggle_group') {
+      const { group_name, show_in_booking } = body
+      await pool.query(
+        `UPDATE products_catalog SET show_in_booking=$1, updated_at=NOW() WHERE group_name=$2`,
+        [show_in_booking, group_name]
+      )
+      return NextResponse.json({ ok: true })
+    }
 
     // Stock operation: { id, action:'add'|'book', qty }
     if (!Array.isArray(body) && body.action) {
@@ -482,9 +494,9 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    // Info update: single object { id, group_name?, product_name?, price? }
+    // Info update: single object { id, group_name?, product_name?, price?, show_in_booking? }
     if (!Array.isArray(body)) {
-      const { id, group_name, product_name, price } = body
+      const { id, group_name, product_name, price, show_in_booking } = body
       // Fetch current state before updating (for booking sync)
       const { rows: curr } = await pool.query(
         'SELECT group_name, product_name, price FROM products_catalog WHERE id=$1', [id]
@@ -492,9 +504,10 @@ export async function PATCH(req: NextRequest) {
       const fields: string[] = []
       const vals: unknown[] = []
       let n = 1
-      if (group_name   !== undefined) { fields.push(`group_name=$${n++}`);   vals.push(group_name) }
-      if (product_name !== undefined) { fields.push(`product_name=$${n++}`); vals.push(product_name) }
-      if (price        !== undefined) { fields.push(`price=$${n++}`);        vals.push(price) }
+      if (group_name       !== undefined) { fields.push(`group_name=$${n++}`);       vals.push(group_name) }
+      if (product_name     !== undefined) { fields.push(`product_name=$${n++}`);     vals.push(product_name) }
+      if (price            !== undefined) { fields.push(`price=$${n++}`);            vals.push(price) }
+      if (show_in_booking  !== undefined) { fields.push(`show_in_booking=$${n++}`);  vals.push(show_in_booking) }
       if (!fields.length) return NextResponse.json({ ok: true })
       fields.push(`updated_at=NOW()`)
       vals.push(id)

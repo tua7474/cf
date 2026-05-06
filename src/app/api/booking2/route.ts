@@ -74,7 +74,7 @@ export async function GET() {
       `SELECT id, group_name, product_name, price,
               quantity AS stock_qty
        FROM products_catalog
-       WHERE group_name = ANY($1)
+       WHERE group_name = ANY($1) AND show_in_booking = true
        ORDER BY group_name, id`,
       [groupNames]
     )
