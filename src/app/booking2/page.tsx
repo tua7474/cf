@@ -468,16 +468,24 @@ export default function Booking2Page() {
                             // pr 7-8: วันที่ (left) | สาขา (right) — rowSpan=2
                             if (pr === 7) return [
                               <td key={`${si}-ip7`} colSpan={4} rowSpan={2} className={`${base} p-0 bg-gray-50 align-middle`}>
-                                <div className="flex h-full divide-x divide-gray-300 text-[9px]">
-                                  <div className="flex-1 flex flex-col justify-center px-1 py-0.5">
-                                    <div className="font-semibold text-gray-500 mb-0.5">วันที่อัพเดท</div>
-                                    <div className="text-gray-800 font-medium">{today}</div>
+                                <div className="flex h-full divide-x divide-gray-300">
+                                  {/* วันที่ — ใหญ่เต็มพื้นที่ */}
+                                  <div className="flex-1 flex flex-col justify-center items-center px-0.5 py-0.5 overflow-hidden">
+                                    <div className="text-[7px] text-gray-400 leading-none mb-px">วันที่</div>
+                                    <div className="text-[15px] font-extrabold text-gray-800 leading-none truncate w-full text-center">
+                                      {today}
+                                    </div>
                                   </div>
-                                  <div className="flex-1 flex flex-col justify-center px-1 py-0.5">
+                                  {/* สาขา — ใหญ่เต็มพื้นที่ */}
+                                  <div className="flex-1 flex flex-col justify-center px-0.5 py-0.5 overflow-hidden">
                                     {branchInfo ? (
                                       <>
-                                        <div className="font-semibold text-gray-800 leading-tight">{branchInfo.name}</div>
-                                        <div className="text-[7px] text-gray-500">{branchInfo.phone}</div>
+                                        <div className="text-[14px] font-extrabold text-gray-800 leading-tight truncate">
+                                          {branchInfo.name}
+                                        </div>
+                                        <div className="text-[7px] text-gray-500 leading-none truncate">
+                                          {branchInfo.phone}
+                                        </div>
                                       </>
                                     ) : (
                                       <div className="text-[8px] text-gray-400 italic">ยังไม่ได้เข้าสู่ระบบ</div>
