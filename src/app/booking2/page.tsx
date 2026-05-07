@@ -265,8 +265,16 @@ export default function Booking2Page() {
           }
 
           /* Scale content to fill A4 width at 3mm padding:
-             (297-6)mm × (96/25.4) ÷ 1476px ≈ 0.745            */
-          .a4-content { zoom: 0.745 !important; }
+             (297-6)mm × (96/25.4) ÷ 1476px ≈ 0.745
+             Unscaled height to fill A4: (210-6)mm × (96/25.4) ÷ 0.745 ≈ 1035px */
+          .a4-content {
+            zoom: 0.745 !important;
+            height: 1035px !important;
+          }
+          /* Table wrapper: fill full height */
+          .a4-content > div { display: block !important; height: 100% !important; }
+          /* Table itself: stretch rows to fill */
+          .a4-content table { height: 100% !important; }
 
           /* Ensure colors print correctly */
           * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
