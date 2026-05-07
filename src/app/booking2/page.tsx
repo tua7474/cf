@@ -73,6 +73,12 @@ const COL_TOTAL = 62
 const ROW_NUM_W = 24
 const TABLE_W = ROW_NUM_W + 6 * (COL_NAME + COL_PRICE + COL_QTY + COL_TOTAL)
 
+// ── A4 landscape dimensions ───────────────────────────────────────────────────
+// 1 CSS mm = 96/25.4 px (CSS reference pixel)
+const A4_W_PX       = 297 * (96 / 25.4)          // ≈ 1122.5 CSS px
+const A4_PAD_PX     = 8   * (96 / 25.4)          // 8 mm padding each side ≈ 30.2 px
+const CONTENT_SCALE = (A4_W_PX - A4_PAD_PX * 2) / TABLE_W  // ≈ 0.72
+
 // ── Draft helpers ─────────────────────────────────────────────────────────────
 
 const DRAFT_KEY = 'cf_draft_booking2'
@@ -125,13 +131,11 @@ export default function Booking2Page() {
   const [pending, setPending]       = useState<Record<number, number>>({})
   const [zoom, setZoom]             = useState(1)
   const [sourceType, setSourceType] = useState<'โกดัง' | 'หน้าร้าน'>('โกดัง')
-  const [docDate, setDocDate]       = useState(() => new Date().toISOString().slice(0, 10))
   const [branchInfo, setBranchInfo] = useState<{ name: string; phone: string } | null>(null)
 
-  // Mobile zoom
+  // Scale A4 frame to fit small screens
   useEffect(() => {
-    const CONTENT_W = TABLE_W + 32
-    const calc = () => setZoom(Math.min(1, window.innerWidth / CONTENT_W))
+    const calc = () => setZoom(Math.min(1, window.innerWidth / (A4_W_PX + 32)))
     calc()
     window.addEventListener('resize', calc)
     return () => window.removeEventListener('resize', calc)
@@ -222,13 +226,22 @@ export default function Booking2Page() {
       else orangeTotal += val
     }
   }
+  const today = new Date().toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 print:bg-white">
+      <style>{`
+        @media print {
+          @page { size: A4 landscape; margin: 0; }
+          .no-print { display: none !important; }
+          .a4-frame { box-shadow: none !important; margin: 0 !important; }
+        }
+      `}</style>
 
       {/* Header */}
-      <header className="bg-green-800 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
+      <header className="no-print bg-green-800 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link href="/" className="text-green-200 hover:text-white text-sm transition-colors">
             ← กลับหน้าหลัก
@@ -243,6 +256,12 @@ export default function Booking2Page() {
           className="px-3 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white transition-colors border border-white/30">
           📋 ประวัติใบจอง
         </Link>
+
+        <button
+          onClick={() => window.print()}
+          className="px-3 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white transition-colors border border-white/30">
+          🖨️ พิมพ์
+        </button>
 
         <div className="flex items-center gap-3">
           {saveMsg && (
@@ -273,11 +292,14 @@ export default function Booking2Page() {
 
       {/* Main */}
       <main>
-        <div className="p-4" style={{ zoom: zoom < 1 ? zoom : undefined }}>
+        <div className="p-4 flex justify-center" style={{ zoom: zoom < 1 ? zoom : undefined }}>
           {loading ? (
             <div className="flex items-center justify-center h-40 text-gray-400">กำลังโหลดข้อมูล...</div>
           ) : (
-            <>
+            <div className="a4-frame bg-white shadow-xl"
+              style={{ width: '297mm', minHeight: '210mm', padding: '8mm', boxSizing: 'border-box' }}>
+              <div style={{ zoom: CONTENT_SCALE, transformOrigin: 'top left' }}>
+
               {/* Table */}
               <div className="inline-block rounded shadow overflow-hidden border border-gray-400">
                 <table
@@ -440,15 +462,10 @@ export default function Booking2Page() {
                     </label>
                   </div>
 
-                  {/* Row 3: Date */}
+                  {/* Row 3: Date (read-only, auto today) */}
                   <div className="flex items-center gap-3 px-3 py-2 border-b border-gray-300">
                     <span className="text-gray-600 font-semibold whitespace-nowrap">วันที่อัพเดท:</span>
-                    <input
-                      type="date"
-                      value={docDate}
-                      onChange={e => setDocDate(e.target.value)}
-                      className="border border-gray-300 rounded px-2 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-green-500"
-                    />
+                    <span className="text-gray-800 font-medium">{today}</span>
                   </div>
 
                   {/* Row 4: Total */}
@@ -473,7 +490,8 @@ export default function Booking2Page() {
 
                 </div>
               </div>
-            </>
+              </div>{/* end zoom wrapper */}
+            </div>{/* end a4-frame */}
           )}
         </div>
       </main>
