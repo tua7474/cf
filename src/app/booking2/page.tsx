@@ -118,12 +118,15 @@ function fmt2(n: number) {
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function Booking2Page() {
-  const [products, setProducts] = useState<CatalogProduct[]>([])
-  const [loading, setLoading]   = useState(true)
-  const [saving, setSaving]     = useState(false)
-  const [saveMsg, setSaveMsg]   = useState<string | null>(null)
-  const [pending, setPending]   = useState<Record<number, number>>({})
-  const [zoom, setZoom]         = useState(1)
+  const [products, setProducts]     = useState<CatalogProduct[]>([])
+  const [loading, setLoading]       = useState(true)
+  const [saving, setSaving]         = useState(false)
+  const [saveMsg, setSaveMsg]       = useState<string | null>(null)
+  const [pending, setPending]       = useState<Record<number, number>>({})
+  const [zoom, setZoom]             = useState(1)
+  const [sourceType, setSourceType] = useState<'โกดัง' | 'หน้าร้าน'>('โกดัง')
+  const [docDate, setDocDate]       = useState(() => new Date().toISOString().slice(0, 10))
+  const [branchInfo, setBranchInfo] = useState<{ name: string; phone: string } | null>(null)
 
   // Mobile zoom
   useEffect(() => {
@@ -134,9 +137,16 @@ export default function Booking2Page() {
     return () => window.removeEventListener('resize', calc)
   }, [])
 
-  // Load draft on mount
+  // Load draft on mount + branch session
   useEffect(() => {
     setPending(loadDraft())
+    try {
+      const bs = localStorage.getItem('branch_session')
+      if (bs) {
+        const s = JSON.parse(bs)
+        if (s?.branch_name) setBranchInfo({ name: s.branch_name, phone: s.phone ?? '' })
+      }
+    } catch { /* ignore */ }
   }, [])
 
   // Fetch products
@@ -212,9 +222,6 @@ export default function Booking2Page() {
       else orangeTotal += val
     }
   }
-  const noVatTotal   = grayTotal + orangeTotal
-  const withVatTotal = grayTotal + orangeTotal * 1.07
-
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -390,21 +397,80 @@ export default function Booking2Page() {
                 </table>
               </div>
 
-              {/* Summary boxes */}
-              <div className="mt-4 flex gap-4" style={{ maxWidth: TABLE_W }}>
-                <div className="flex-1 rounded-lg border-2 border-orange-400 bg-orange-50 p-4">
-                  <div className="text-sm font-bold text-orange-700 mb-1">🟠 ไม่มีใบกำกับภาษี</div>
-                  <div className="text-2xl font-bold text-orange-900">
-                    {noVatTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
+              {/* Bottom info panel — right-aligned */}
+              <div className="mt-4 flex justify-end" style={{ maxWidth: TABLE_W }}>
+                <div className="border-2 border-gray-400 rounded-lg bg-white text-xs" style={{ width: 400 }}>
+
+                  {/* Row 1: Signatures */}
+                  <div className="flex border-b border-gray-300">
+                    <div className="flex-1 p-2 border-r border-gray-300">
+                      <div className="text-[10px] text-gray-500 font-semibold mb-1">ผู้ส่งสินค้า</div>
+                      <div className="h-12" />
+                    </div>
+                    <div className="flex-1 p-2">
+                      <div className="text-[10px] text-gray-500 font-semibold mb-1">ผู้รับสินค้า</div>
+                      <div className="h-12" />
+                    </div>
                   </div>
-                  <div className="text-[11px] text-orange-600 mt-1">ราคาสินค้าทุกรายการรวมกัน — ไม่บวก VAT เพิ่ม</div>
-                </div>
-                <div className="flex-1 rounded-lg border-2 border-gray-400 bg-gray-100 p-4">
-                  <div className="text-sm font-bold text-gray-700 mb-1">🔘 มีใบกำกับภาษี</div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {withVatTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
+
+                  {/* Row 2: Source type */}
+                  <div className="flex items-center gap-4 px-3 py-2 border-b border-gray-300">
+                    <span className="text-gray-600 font-semibold whitespace-nowrap">เบิกของ:</span>
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="sourceType"
+                        value="โกดัง"
+                        checked={sourceType === 'โกดัง'}
+                        onChange={() => setSourceType('โกดัง')}
+                        className="accent-green-600"
+                      />
+                      <span>โกดัง</span>
+                    </label>
+                    <label className="flex items-center gap-1 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="sourceType"
+                        value="หน้าร้าน"
+                        checked={sourceType === 'หน้าร้าน'}
+                        onChange={() => setSourceType('หน้าร้าน')}
+                        className="accent-green-600"
+                      />
+                      <span>หน้าร้าน</span>
+                    </label>
                   </div>
-                  <div className="text-[11px] text-gray-600 mt-1">กล่อง = ราคาเดิม (VAT รวมแล้ว) · สินค้าอื่น × 1.07</div>
+
+                  {/* Row 3: Date */}
+                  <div className="flex items-center gap-3 px-3 py-2 border-b border-gray-300">
+                    <span className="text-gray-600 font-semibold whitespace-nowrap">วันที่อัพเดท:</span>
+                    <input
+                      type="date"
+                      value={docDate}
+                      onChange={e => setDocDate(e.target.value)}
+                      className="border border-gray-300 rounded px-2 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-green-500"
+                    />
+                  </div>
+
+                  {/* Row 4: Total */}
+                  <div className="flex items-center justify-between px-3 py-2 border-b border-gray-300 bg-gray-50">
+                    <span className="text-gray-700 font-bold">ยอดเงินรวม</span>
+                    <span className="text-lg font-bold text-green-800">
+                      {(grayTotal + orangeTotal).toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
+                    </span>
+                  </div>
+
+                  {/* Row 5: Branch info */}
+                  <div className="px-3 py-2 min-h-[3rem]">
+                    {branchInfo ? (
+                      <>
+                        <div className="font-semibold text-gray-800">{branchInfo.name}</div>
+                        <div className="text-[10px] text-gray-500 mt-0.5">{branchInfo.phone}</div>
+                      </>
+                    ) : (
+                      <div className="text-gray-400 italic">ยังไม่ได้เข้าสู่ระบบ</div>
+                    )}
+                  </div>
+
                 </div>
               </div>
             </>
