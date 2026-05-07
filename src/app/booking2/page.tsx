@@ -243,8 +243,33 @@ export default function Booking2Page() {
       <style>{`
         @media print {
           @page { size: A4 landscape; margin: 0; }
-          .no-print { display: none !important; }
-          .a4-frame { box-shadow: none !important; margin: 0 !important; }
+          html, body { margin: 0 !important; padding: 0 !important; }
+          .no-print   { display: none !important; }
+
+          /* Remove screen-only zoom on outer wrapper */
+          .screen-zoom-wrapper {
+            zoom: 1 !important;
+            padding: 0 !important;
+            display: block !important;
+          }
+
+          /* A4 frame fills exactly one page */
+          .a4-frame {
+            width: 297mm !important;
+            height: 210mm !important;
+            min-height: unset !important;
+            padding: 3mm !important;
+            margin: 0 !important;
+            box-shadow: none !important;
+            overflow: hidden !important;
+          }
+
+          /* Scale content to fill A4 width at 3mm padding:
+             (297-6)mm × (96/25.4) ÷ 1476px ≈ 0.745            */
+          .a4-content { zoom: 0.745 !important; }
+
+          /* Ensure colors print correctly */
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         }
       `}</style>
 
@@ -300,13 +325,13 @@ export default function Booking2Page() {
 
       {/* Main */}
       <main>
-        <div className="p-4 flex justify-center" style={{ zoom: zoom < 1 ? zoom : undefined }}>
+        <div className="screen-zoom-wrapper p-4 flex justify-center" style={{ zoom: zoom < 1 ? zoom : undefined }}>
           {loading ? (
             <div className="flex items-center justify-center h-40 text-gray-400">กำลังโหลดข้อมูล...</div>
           ) : (
             <div className="a4-frame bg-white shadow-xl"
               style={{ width: '297mm', minHeight: '210mm', padding: '8mm', boxSizing: 'border-box' }}>
-              <div style={{ zoom: CONTENT_SCALE, transformOrigin: 'top left' }}>
+              <div className="a4-content" style={{ zoom: CONTENT_SCALE, transformOrigin: 'top left' }}>
 
               {/* Table */}
               <div className="inline-block rounded shadow overflow-hidden border border-gray-400">
