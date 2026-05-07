@@ -71,7 +71,8 @@ const COL_PRICE = 54
 const COL_QTY   = 44
 const COL_TOTAL = 62
 const ROW_NUM_W = 24
-const TABLE_W = ROW_NUM_W + 6 * (COL_NAME + COL_PRICE + COL_QTY + COL_TOTAL)
+const TABLE_W        = ROW_NUM_W + 6 * (COL_NAME + COL_PRICE + COL_QTY + COL_TOTAL)
+const INFO_PANEL_ROWS = 6   // rows reserved at bottom-right for the info panel
 
 // ── A4 landscape dimensions ───────────────────────────────────────────────────
 // 1 CSS mm = 96/25.4 px (CSS reference pixel)
@@ -130,7 +131,8 @@ export default function Booking2Page() {
   const [saveMsg, setSaveMsg]       = useState<string | null>(null)
   const [pending, setPending]       = useState<Record<number, number>>({})
   const [zoom, setZoom]             = useState(1)
-  const [sourceType, setSourceType] = useState<'โกดัง' | 'หน้าร้าน'>('โกดัง')
+  const [sourceType, setSourceType]   = useState<'โกดัง' | 'หน้าร้าน'>('โกดัง')
+  const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง'>('จองรถ60000')
   const [branchInfo, setBranchInfo] = useState<{ name: string; phone: string } | null>(null)
 
   // Scale A4 frame to fit small screens
@@ -212,8 +214,13 @@ export default function Booking2Page() {
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
-  const sections = buildSections(products)
-  const maxRows  = sections.length ? Math.max(...sections.map(s => s.rows.length)) : 0
+  const sections    = buildSections(products)
+  const lastSec     = sections[sections.length - 1]
+  const lastSecRows = lastSec?.rows.length ?? 0
+  const maxRows     = sections.length
+    ? Math.max(...sections.map(s => s.rows.length), lastSecRows + INFO_PANEL_ROWS)
+    : 0
+  const panelStart  = Math.max(lastSecRows, maxRows - INFO_PANEL_ROWS)
 
   let grayTotal = 0, orangeTotal = 0
   for (const sec of sections) {
@@ -348,6 +355,81 @@ export default function Booking2Page() {
                         </td>
 
                         {sections.flatMap((sec, si) => {
+                          // ── Info panel in last section's bottom rows ────────
+                          if (si === sections.length - 1 && rowIdx >= panelStart) {
+                            const pr = rowIdx - panelStart
+                            const base = 'border border-gray-300'
+                            if (pr === 0) return [
+                              <td key={`${si}-ip0`} colSpan={4} className={`${base} p-1 align-top`} style={{ height: 56 }}>
+                                <div className="flex h-full text-[9px]">
+                                  <div className="flex-1 border-r border-gray-300 pr-1">
+                                    <div className="font-semibold text-gray-500 mb-0.5">ผู้ส่งสินค้า</div>
+                                  </div>
+                                  <div className="flex-1 pl-1">
+                                    <div className="font-semibold text-gray-500 mb-0.5">ผู้รับสินค้า</div>
+                                  </div>
+                                </div>
+                              </td>,
+                            ]
+                            if (pr === 1) return [
+                              <td key={`${si}-ip1`} colSpan={4} className={`${base} px-1 py-px bg-green-50`}>
+                                <div className="flex justify-between items-center text-[9px]">
+                                  <span className="font-bold text-gray-700">ยอดเงินรวม</span>
+                                  <span className="font-bold text-green-800">
+                                    {(grayTotal + orangeTotal).toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
+                                  </span>
+                                </div>
+                              </td>,
+                            ]
+                            if (pr === 2) return [
+                              <td key={`${si}-ip2`} colSpan={4} className={`${base} px-1 py-px`}>
+                                <div className="flex items-center gap-1 text-[9px]">
+                                  <span className="font-semibold text-gray-600 whitespace-nowrap">รถ:</span>
+                                  <select value={vehicleType}
+                                    onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง')}
+                                    className="text-[9px] border border-gray-300 rounded px-0.5 bg-white focus:outline-none">
+                                    <option value="จองรถ60000">จองรถ 60,000</option>
+                                    <option value="รอพ่วง">รอพ่วง</option>
+                                  </select>
+                                </div>
+                              </td>,
+                            ]
+                            if (pr === 3) return [
+                              <td key={`${si}-ip3`} colSpan={4} className={`${base} px-1 py-px`}>
+                                <div className="flex items-center gap-1 text-[9px]">
+                                  <span className="font-semibold text-gray-600 whitespace-nowrap">เบิกของ:</span>
+                                  <select value={sourceType}
+                                    onChange={e => setSourceType(e.target.value as 'โกดัง' | 'หน้าร้าน')}
+                                    className="text-[9px] border border-gray-300 rounded px-0.5 bg-white focus:outline-none">
+                                    <option value="โกดัง">โกดัง</option>
+                                    <option value="หน้าร้าน">หน้าร้าน</option>
+                                  </select>
+                                </div>
+                              </td>,
+                            ]
+                            if (pr === 4) return [
+                              <td key={`${si}-ip4`} colSpan={4} className={`${base} px-1 py-px`}>
+                                <div className="text-[9px]">
+                                  <span className="font-semibold text-gray-600">วันที่: </span>
+                                  <span className="text-gray-800">{today}</span>
+                                </div>
+                              </td>,
+                            ]
+                            if (pr === 5) return [
+                              <td key={`${si}-ip5`} colSpan={4} className={`${base} px-1 py-px bg-gray-50`}>
+                                {branchInfo ? (
+                                  <div className="text-[9px] leading-tight">
+                                    <div className="font-semibold text-gray-800">{branchInfo.name}</div>
+                                    <div className="text-[8px] text-gray-500">{branchInfo.phone}</div>
+                                  </div>
+                                ) : (
+                                  <div className="text-[8px] text-gray-400 italic">ยังไม่ได้เข้าสู่ระบบ</div>
+                                )}
+                              </td>,
+                            ]
+                            return [<td key={`${si}-ipx`} colSpan={4} className="border border-gray-200 bg-gray-50" />]
+                          }
+
                           const cell = sec.rows[rowIdx] ?? null
 
                           if (!cell) return [
@@ -419,77 +501,6 @@ export default function Booking2Page() {
                 </table>
               </div>
 
-              {/* Bottom info panel — right-aligned */}
-              <div className="mt-4 flex justify-end" style={{ maxWidth: TABLE_W }}>
-                <div className="border-2 border-gray-400 rounded-lg bg-white text-xs" style={{ width: 400 }}>
-
-                  {/* Row 1: Signatures */}
-                  <div className="flex border-b border-gray-300">
-                    <div className="flex-1 p-2 border-r border-gray-300">
-                      <div className="text-[10px] text-gray-500 font-semibold mb-1">ผู้ส่งสินค้า</div>
-                      <div className="h-12" />
-                    </div>
-                    <div className="flex-1 p-2">
-                      <div className="text-[10px] text-gray-500 font-semibold mb-1">ผู้รับสินค้า</div>
-                      <div className="h-12" />
-                    </div>
-                  </div>
-
-                  {/* Row 2: Source type */}
-                  <div className="flex items-center gap-4 px-3 py-2 border-b border-gray-300">
-                    <span className="text-gray-600 font-semibold whitespace-nowrap">เบิกของ:</span>
-                    <label className="flex items-center gap-1 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="sourceType"
-                        value="โกดัง"
-                        checked={sourceType === 'โกดัง'}
-                        onChange={() => setSourceType('โกดัง')}
-                        className="accent-green-600"
-                      />
-                      <span>โกดัง</span>
-                    </label>
-                    <label className="flex items-center gap-1 cursor-pointer">
-                      <input
-                        type="radio"
-                        name="sourceType"
-                        value="หน้าร้าน"
-                        checked={sourceType === 'หน้าร้าน'}
-                        onChange={() => setSourceType('หน้าร้าน')}
-                        className="accent-green-600"
-                      />
-                      <span>หน้าร้าน</span>
-                    </label>
-                  </div>
-
-                  {/* Row 3: Date (read-only, auto today) */}
-                  <div className="flex items-center gap-3 px-3 py-2 border-b border-gray-300">
-                    <span className="text-gray-600 font-semibold whitespace-nowrap">วันที่อัพเดท:</span>
-                    <span className="text-gray-800 font-medium">{today}</span>
-                  </div>
-
-                  {/* Row 4: Total */}
-                  <div className="flex items-center justify-between px-3 py-2 border-b border-gray-300 bg-gray-50">
-                    <span className="text-gray-700 font-bold">ยอดเงินรวม</span>
-                    <span className="text-lg font-bold text-green-800">
-                      {(grayTotal + orangeTotal).toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
-                    </span>
-                  </div>
-
-                  {/* Row 5: Branch info */}
-                  <div className="px-3 py-2 min-h-[3rem]">
-                    {branchInfo ? (
-                      <>
-                        <div className="font-semibold text-gray-800">{branchInfo.name}</div>
-                        <div className="text-[10px] text-gray-500 mt-0.5">{branchInfo.phone}</div>
-                      </>
-                    ) : (
-                      <div className="text-gray-400 italic">ยังไม่ได้เข้าสู่ระบบ</div>
-                    )}
-                  </div>
-
-                </div>
-              </div>
               </div>
             </div>
           )}
