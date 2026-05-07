@@ -171,10 +171,6 @@ export default function Home() {
             className="px-4 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white font-medium transition-colors border border-white/30">
             🏷 แก้ไขสินค้า
           </Link>
-          <Link href="/booking"
-            className="px-4 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white font-medium transition-colors border border-white/30">
-            📋 ใบจอง
-          </Link>
           <Link href="/booking2"
             className="px-4 py-1.5 text-sm rounded bg-yellow-500 hover:bg-yellow-400 text-green-900 font-medium transition-colors border border-yellow-400">
             📝 ใบจองสินค้า

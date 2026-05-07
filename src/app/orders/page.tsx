@@ -101,8 +101,8 @@ export default function OrdersPage() {
       {/* Header */}
       <header className="bg-green-800 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/booking" className="text-green-200 hover:text-white text-sm transition-colors">
-            ← กลับหน้าใบจอง
+          <Link href="/booking2" className="text-green-200 hover:text-white text-sm transition-colors">
+            ← กลับหน้าใบจองสินค้า
           </Link>
           <div>
             <h1 className="text-xl font-bold">บันทึกใบจอง</h1>
