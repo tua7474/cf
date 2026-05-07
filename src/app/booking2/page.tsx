@@ -72,7 +72,7 @@ const COL_QTY   = 44
 const COL_TOTAL = 62
 const ROW_NUM_W = 24
 const TABLE_W        = ROW_NUM_W + 6 * (COL_NAME + COL_PRICE + COL_QTY + COL_TOTAL)
-const INFO_PANEL_ROWS = 8   // rows reserved at bottom-right for the info panel (3 sig + 5 info)
+const INFO_PANEL_ROWS = 9   // 3 sig + 2 total + 2 source/vehicle + 2 date/branch
 
 // ── A4 landscape dimensions ───────────────────────────────────────────────────
 // 1 CSS mm = 96/25.4 px (CSS reference pixel)
@@ -131,8 +131,9 @@ export default function Booking2Page() {
   const [saveMsg, setSaveMsg]       = useState<string | null>(null)
   const [pending, setPending]       = useState<Record<number, number>>({})
   const [zoom, setZoom]             = useState(1)
-  const [sourceType, setSourceType]   = useState<'โกดัง' | 'หน้าร้าน'>('โกดัง')
-  const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง'>('จองรถ60000')
+  const [sourceType, setSourceType]   = useState<'โกดัง' | 'หน้าร้าน' | ''>('')
+  const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง' | ''>('')
+  const [manualTotal, setManualTotal] = useState<string>('')
   const [branchInfo, setBranchInfo] = useState<{ name: string; phone: string } | null>(null)
 
   // Scale A4 frame to fit small screens
@@ -359,7 +360,7 @@ export default function Booking2Page() {
                           if (si === sections.length - 1 && rowIdx >= panelStart) {
                             const pr = rowIdx - panelStart
                             const base = 'border border-gray-300'
-                            // pr 0-2: signature block spanning 3 rows
+                            // pr 0-2: ผู้ส่ง | ผู้รับ — rowSpan=3
                             if (pr === 0) return [
                               <td key={`${si}-ip0`} colSpan={4} rowSpan={3} className={`${base} p-1 align-top`}>
                                 <div className="flex h-full text-[9px]">
@@ -372,63 +373,87 @@ export default function Booking2Page() {
                                 </div>
                               </td>,
                             ]
-                            if (pr === 1 || pr === 2) return [] // covered by rowSpan={3}
-                            if (pr === 3) return [
-                              <td key={`${si}-ip3`} colSpan={4} className={`${base} px-1 py-px bg-green-50`}>
-                                <div className="flex justify-between items-center text-[9px]">
-                                  <span className="font-bold text-gray-700">ยอดเงินรวม</span>
-                                  <span className="font-bold text-green-800">
-                                    {(grayTotal + orangeTotal).toLocaleString('th-TH', { minimumFractionDigits: 2 })} ฿
-                                  </span>
-                                </div>
-                              </td>,
-                            ]
-                            if (pr === 4) return [
-                              <td key={`${si}-ip4`} colSpan={4} className={`${base} px-1 py-px`}>
-                                <div className="flex items-center gap-1 text-[9px]">
-                                  <span className="font-semibold text-gray-600 whitespace-nowrap">รถ:</span>
-                                  <select value={vehicleType}
-                                    onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง')}
-                                    className="text-[9px] border border-gray-300 rounded px-0.5 bg-white focus:outline-none">
-                                    <option value="จองรถ60000">จองรถ 60,000</option>
-                                    <option value="รอพ่วง">รอพ่วง</option>
-                                  </select>
-                                </div>
-                              </td>,
-                            ]
-                            if (pr === 5) return [
-                              <td key={`${si}-ip5`} colSpan={4} className={`${base} px-1 py-px`}>
-                                <div className="flex items-center gap-1 text-[9px]">
-                                  <span className="font-semibold text-gray-600 whitespace-nowrap">เบิกของ:</span>
-                                  <select value={sourceType}
-                                    onChange={e => setSourceType(e.target.value as 'โกดัง' | 'หน้าร้าน')}
-                                    className="text-[9px] border border-gray-300 rounded px-0.5 bg-white focus:outline-none">
-                                    <option value="โกดัง">โกดัง</option>
-                                    <option value="หน้าร้าน">หน้าร้าน</option>
-                                  </select>
-                                </div>
-                              </td>,
-                            ]
-                            if (pr === 6) return [
-                              <td key={`${si}-ip6`} colSpan={4} className={`${base} px-1 py-px`}>
-                                <div className="text-[9px]">
-                                  <span className="font-semibold text-gray-600">วันที่: </span>
-                                  <span className="text-gray-800">{today}</span>
-                                </div>
-                              </td>,
-                            ]
-                            if (pr === 7) return [
-                              <td key={`${si}-ip7`} colSpan={4} className={`${base} px-1 py-px bg-gray-50`}>
-                                {branchInfo ? (
-                                  <div className="text-[9px] leading-tight">
-                                    <div className="font-semibold text-gray-800">{branchInfo.name}</div>
-                                    <div className="text-[8px] text-gray-500">{branchInfo.phone}</div>
+                            if (pr === 1 || pr === 2) return []
+
+                            // pr 3-4: ยอดรวม — rowSpan=2, large editable
+                            if (pr === 3) {
+                              const autoVal = (grayTotal + orangeTotal)
+                              const displayVal = manualTotal !== '' ? manualTotal : autoVal.toFixed(2)
+                              return [
+                                <td key={`${si}-ip3`} colSpan={4} rowSpan={2} className={`${base} p-0 bg-green-50 align-middle`}>
+                                  <div className="flex flex-col items-center justify-center h-full px-1 py-0.5">
+                                    <div className="text-[8px] font-semibold text-gray-500 self-start">ยอดเงินรวม (฿)</div>
+                                    <input
+                                      type="number"
+                                      step="0.01"
+                                      max="999999.99"
+                                      value={displayVal}
+                                      onChange={e => setManualTotal(e.target.value)}
+                                      className="w-full text-xl font-bold text-green-800 text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-green-400 rounded"
+                                    />
                                   </div>
-                                ) : (
-                                  <div className="text-[8px] text-gray-400 italic">ยังไม่ได้เข้าสู่ระบบ</div>
-                                )}
+                                </td>,
+                              ]
+                            }
+                            if (pr === 4) return []
+
+                            // pr 5-6: เบิกของ (left) | รถ (right) — rowSpan=2, required
+                            if (pr === 5) {
+                              const srcEmpty = sourceType === ''
+                              const vehEmpty = vehicleType === ''
+                              return [
+                                <td key={`${si}-ip5`} colSpan={4} rowSpan={2} className={`${base} p-0 align-middle`}>
+                                  <div className="flex h-full divide-x divide-gray-300 text-[9px]">
+                                    <div className={`flex-1 flex flex-col justify-center px-1 py-0.5 ${srcEmpty ? 'bg-red-50' : ''}`}>
+                                      <div className="font-semibold text-gray-600 mb-0.5">เบิกของ</div>
+                                      <select value={sourceType}
+                                        onChange={e => setSourceType(e.target.value as 'โกดัง' | 'หน้าร้าน')}
+                                        className={`w-full text-[9px] border rounded px-0.5 bg-white focus:outline-none ${srcEmpty ? 'border-red-400 text-red-500' : 'border-gray-300'}`}>
+                                        <option value="" disabled>— เลือก —</option>
+                                        <option value="โกดัง">โกดัง</option>
+                                        <option value="หน้าร้าน">หน้าร้าน</option>
+                                      </select>
+                                      {srcEmpty && <div className="text-[7px] text-red-500 mt-0.5">กรุณาเลือก</div>}
+                                    </div>
+                                    <div className={`flex-1 flex flex-col justify-center px-1 py-0.5 ${vehEmpty ? 'bg-red-50' : ''}`}>
+                                      <div className="font-semibold text-gray-600 mb-0.5">รถ</div>
+                                      <select value={vehicleType}
+                                        onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง')}
+                                        className={`w-full text-[9px] border rounded px-0.5 bg-white focus:outline-none ${vehEmpty ? 'border-red-400 text-red-500' : 'border-gray-300'}`}>
+                                        <option value="" disabled>— เลือก —</option>
+                                        <option value="จองรถ60000">จองรถ 60,000</option>
+                                        <option value="รอพ่วง">รอพ่วง</option>
+                                      </select>
+                                      {vehEmpty && <div className="text-[7px] text-red-500 mt-0.5">กรุณาเลือก</div>}
+                                    </div>
+                                  </div>
+                                </td>,
+                              ]
+                            }
+                            if (pr === 6) return []
+
+                            // pr 7-8: วันที่ (left) | สาขา (right) — rowSpan=2
+                            if (pr === 7) return [
+                              <td key={`${si}-ip7`} colSpan={4} rowSpan={2} className={`${base} p-0 bg-gray-50 align-middle`}>
+                                <div className="flex h-full divide-x divide-gray-300 text-[9px]">
+                                  <div className="flex-1 flex flex-col justify-center px-1 py-0.5">
+                                    <div className="font-semibold text-gray-500 mb-0.5">วันที่อัพเดท</div>
+                                    <div className="text-gray-800 font-medium">{today}</div>
+                                  </div>
+                                  <div className="flex-1 flex flex-col justify-center px-1 py-0.5">
+                                    {branchInfo ? (
+                                      <>
+                                        <div className="font-semibold text-gray-800 leading-tight">{branchInfo.name}</div>
+                                        <div className="text-[7px] text-gray-500">{branchInfo.phone}</div>
+                                      </>
+                                    ) : (
+                                      <div className="text-[8px] text-gray-400 italic">ยังไม่ได้เข้าสู่ระบบ</div>
+                                    )}
+                                  </div>
+                                </div>
                               </td>,
                             ]
+                            if (pr === 8) return []
                             return [<td key={`${si}-ipx`} colSpan={4} className="border border-gray-200 bg-gray-50" />]
                           }
 
