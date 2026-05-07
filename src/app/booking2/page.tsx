@@ -72,7 +72,7 @@ const COL_QTY   = 44
 const COL_TOTAL = 62
 const ROW_NUM_W = 24
 const TABLE_W        = ROW_NUM_W + 6 * (COL_NAME + COL_PRICE + COL_QTY + COL_TOTAL)
-const INFO_PANEL_ROWS = 6   // rows reserved at bottom-right for the info panel
+const INFO_PANEL_ROWS = 8   // rows reserved at bottom-right for the info panel (3 sig + 5 info)
 
 // ── A4 landscape dimensions ───────────────────────────────────────────────────
 // 1 CSS mm = 96/25.4 px (CSS reference pixel)
@@ -359,8 +359,9 @@ export default function Booking2Page() {
                           if (si === sections.length - 1 && rowIdx >= panelStart) {
                             const pr = rowIdx - panelStart
                             const base = 'border border-gray-300'
+                            // pr 0-2: signature block spanning 3 rows
                             if (pr === 0) return [
-                              <td key={`${si}-ip0`} colSpan={4} className={`${base} p-1 align-top`} style={{ height: 56 }}>
+                              <td key={`${si}-ip0`} colSpan={4} rowSpan={3} className={`${base} p-1 align-top`}>
                                 <div className="flex h-full text-[9px]">
                                   <div className="flex-1 border-r border-gray-300 pr-1">
                                     <div className="font-semibold text-gray-500 mb-0.5">ผู้ส่งสินค้า</div>
@@ -371,8 +372,9 @@ export default function Booking2Page() {
                                 </div>
                               </td>,
                             ]
-                            if (pr === 1) return [
-                              <td key={`${si}-ip1`} colSpan={4} className={`${base} px-1 py-px bg-green-50`}>
+                            if (pr === 1 || pr === 2) return [] // covered by rowSpan={3}
+                            if (pr === 3) return [
+                              <td key={`${si}-ip3`} colSpan={4} className={`${base} px-1 py-px bg-green-50`}>
                                 <div className="flex justify-between items-center text-[9px]">
                                   <span className="font-bold text-gray-700">ยอดเงินรวม</span>
                                   <span className="font-bold text-green-800">
@@ -381,8 +383,8 @@ export default function Booking2Page() {
                                 </div>
                               </td>,
                             ]
-                            if (pr === 2) return [
-                              <td key={`${si}-ip2`} colSpan={4} className={`${base} px-1 py-px`}>
+                            if (pr === 4) return [
+                              <td key={`${si}-ip4`} colSpan={4} className={`${base} px-1 py-px`}>
                                 <div className="flex items-center gap-1 text-[9px]">
                                   <span className="font-semibold text-gray-600 whitespace-nowrap">รถ:</span>
                                   <select value={vehicleType}
@@ -394,8 +396,8 @@ export default function Booking2Page() {
                                 </div>
                               </td>,
                             ]
-                            if (pr === 3) return [
-                              <td key={`${si}-ip3`} colSpan={4} className={`${base} px-1 py-px`}>
+                            if (pr === 5) return [
+                              <td key={`${si}-ip5`} colSpan={4} className={`${base} px-1 py-px`}>
                                 <div className="flex items-center gap-1 text-[9px]">
                                   <span className="font-semibold text-gray-600 whitespace-nowrap">เบิกของ:</span>
                                   <select value={sourceType}
@@ -407,16 +409,16 @@ export default function Booking2Page() {
                                 </div>
                               </td>,
                             ]
-                            if (pr === 4) return [
-                              <td key={`${si}-ip4`} colSpan={4} className={`${base} px-1 py-px`}>
+                            if (pr === 6) return [
+                              <td key={`${si}-ip6`} colSpan={4} className={`${base} px-1 py-px`}>
                                 <div className="text-[9px]">
                                   <span className="font-semibold text-gray-600">วันที่: </span>
                                   <span className="text-gray-800">{today}</span>
                                 </div>
                               </td>,
                             ]
-                            if (pr === 5) return [
-                              <td key={`${si}-ip5`} colSpan={4} className={`${base} px-1 py-px bg-gray-50`}>
+                            if (pr === 7) return [
+                              <td key={`${si}-ip7`} colSpan={4} className={`${base} px-1 py-px bg-gray-50`}>
                                 {branchInfo ? (
                                   <div className="text-[9px] leading-tight">
                                     <div className="font-semibold text-gray-800">{branchInfo.name}</div>
