@@ -490,8 +490,8 @@ export default function Booking2Page() {
 
                 </div>
               </div>
-              </div>{/* end zoom wrapper */}
-            </div>{/* end a4-frame */}
+              </div>
+            </div>
           )}
         </div>
       </main>
