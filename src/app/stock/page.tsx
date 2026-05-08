@@ -85,10 +85,23 @@ export default function StockPage() {
     setTimeout(() => setMsg(null), 2500)
   }
 
+  // ── Duplicate check ───────────────────────────────────────────────────────────
+
+  const isDuplicate = (model_name: string, color_name: string, excludeId?: number) =>
+    items.some(it =>
+      it.id !== excludeId &&
+      it.model_name.trim() === model_name.trim() &&
+      it.color_name.trim() === color_name.trim()
+    )
+
   // ── Add new row ──────────────────────────────────────────────────────────────
 
   const handleAddRow = async () => {
     if (!newRow.model_name.trim()) return
+    if (isDuplicate(newRow.model_name, newRow.color_name)) {
+      showMsg('❌ ชื่อรุ่น + ชื่อสี ซ้ำกับที่มีอยู่แล้ว')
+      return
+    }
     setBusy(b => ({ ...b, new: true }))
     const res = await fetch('/api/stock', {
       method: 'POST',
@@ -129,6 +142,15 @@ export default function StockPage() {
   const handleSaveInfo = async (id: number) => {
     const edits = rowEdits[id]
     if (!edits || Object.keys(edits).length === 0) return
+    const item = items.find(it => it.id === id)
+    if (item) {
+      const newModel = edits.model_name ?? item.model_name
+      const newColor = edits.color_name ?? item.color_name
+      if (isDuplicate(String(newModel), String(newColor), id)) {
+        showMsg('❌ ชื่อรุ่น + ชื่อสี ซ้ำกับที่มีอยู่แล้ว')
+        return
+      }
+    }
     setBusy(b => ({ ...b, [`info-${id}`]: true }))
     const payload: Record<string, unknown> = { id }
     for (const [k, v] of Object.entries(edits)) {
@@ -186,7 +208,7 @@ export default function StockPage() {
           </div>
         </div>
         {msg && (
-          <span className="text-sm px-3 py-1 rounded-full bg-green-500 text-white">{msg}</span>
+          <span className={`text-sm px-3 py-1 rounded-full text-white ${msg.startsWith('❌') ? 'bg-red-500' : 'bg-green-500'}`}>{msg}</span>
         )}
       </header>
 
@@ -213,45 +235,51 @@ export default function StockPage() {
               <tbody>
 
                 {/* ── Add new row ── */}
-                <tr className="bg-blue-50 border-b-2 border-blue-300">
-                  <td className="px-2 py-1.5 border-r border-gray-200">
-                    <select value={newRow.model_name}
-                      onChange={e => setNewRow(p => ({ ...p, model_name: e.target.value }))}
-                      className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400">
-                      <option value="">-- เลือกรุ่น --</option>
-                      {modelOptions.map(m => <option key={m} value={m}>{m}</option>)}
-                    </select>
-                  </td>
-                  <td className="px-2 py-1.5 border-r border-gray-200">
-                    <input type="text" placeholder="รหัสสี" value={newRow.color_code}
-                      onChange={e => setNewRow(p => ({ ...p, color_code: e.target.value }))}
-                      className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400" />
-                  </td>
-                  <td className="px-2 py-1.5 border-r border-gray-200">
-                    <input type="text" placeholder="ชื่อสี" value={newRow.color_name}
-                      onChange={e => setNewRow(p => ({ ...p, color_name: e.target.value }))}
-                      className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400" />
-                  </td>
-                  <td className="border-r border-gray-200" />
-                  <td className="border-r border-gray-200" />
-                  <td className="border-r border-gray-200" />
-                  <td className="px-2 py-1.5 border-r border-gray-200">
-                    <input type="text" inputMode="numeric" placeholder="ราคาโกดัง" value={newRow.warehouse_price}
-                      onChange={e => setNewRow(p => ({ ...p, warehouse_price: e.target.value }))}
-                      className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 text-right" />
-                  </td>
-                  <td className="px-2 py-1.5 border-r border-gray-200">
-                    <input type="text" inputMode="numeric" placeholder="ราคาลูกค้า" value={newRow.retail_price}
-                      onChange={e => setNewRow(p => ({ ...p, retail_price: e.target.value }))}
-                      className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 text-right" />
-                  </td>
-                  <td className="px-2 py-1.5 text-center">
-                    <button onClick={handleAddRow} disabled={!!busy.new}
-                      className="px-3 py-1 text-xs rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
-                      + เพิ่มรุ่น
-                    </button>
-                  </td>
-                </tr>
+                {(() => {
+                  const addDup = !!(newRow.model_name && isDuplicate(newRow.model_name, newRow.color_name))
+                  return (
+                    <tr className="bg-blue-50 border-b-2 border-blue-300">
+                      <td className="px-2 py-1.5 border-r border-gray-200">
+                        <select value={newRow.model_name}
+                          onChange={e => setNewRow(p => ({ ...p, model_name: e.target.value }))}
+                          className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400">
+                          <option value="">-- เลือกรุ่น --</option>
+                          {modelOptions.map(m => <option key={m} value={m}>{m}</option>)}
+                        </select>
+                      </td>
+                      <td className="px-2 py-1.5 border-r border-gray-200">
+                        <input type="text" placeholder="รหัสสี" value={newRow.color_code}
+                          onChange={e => setNewRow(p => ({ ...p, color_code: e.target.value }))}
+                          className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                      </td>
+                      <td className="px-2 py-1.5 border-r border-gray-200">
+                        <input type="text" placeholder="ชื่อสี" value={newRow.color_name}
+                          onChange={e => setNewRow(p => ({ ...p, color_name: e.target.value }))}
+                          className={`w-full px-1.5 py-1 text-xs rounded border focus:outline-none focus:ring-1 ${addDup ? 'border-red-400 bg-red-50 text-red-600 focus:ring-red-400' : 'border-blue-300 bg-white focus:ring-blue-400'}`} />
+                        {addDup && <div className="text-[10px] text-red-600 mt-0.5 font-semibold">ชื่อนี้ซ้ำกับที่มีอยู่แล้ว</div>}
+                      </td>
+                      <td className="border-r border-gray-200" />
+                      <td className="border-r border-gray-200" />
+                      <td className="border-r border-gray-200" />
+                      <td className="px-2 py-1.5 border-r border-gray-200">
+                        <input type="text" inputMode="numeric" placeholder="ราคาโกดัง" value={newRow.warehouse_price}
+                          onChange={e => setNewRow(p => ({ ...p, warehouse_price: e.target.value }))}
+                          className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 text-right" />
+                      </td>
+                      <td className="px-2 py-1.5 border-r border-gray-200">
+                        <input type="text" inputMode="numeric" placeholder="ราคาลูกค้า" value={newRow.retail_price}
+                          onChange={e => setNewRow(p => ({ ...p, retail_price: e.target.value }))}
+                          className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 text-right" />
+                      </td>
+                      <td className="px-2 py-1.5 text-center">
+                        <button onClick={handleAddRow} disabled={!!busy.new || addDup}
+                          className="px-3 py-1 text-xs rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
+                          + เพิ่มรุ่น
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })()}
 
                 {/* ── Data rows ── */}
                 {items.length === 0 ? (
@@ -261,6 +289,9 @@ export default function StockPage() {
                 ) : items.map((item, i) => {
                   const hasPending = !!rowEdits[item.id] && Object.keys(rowEdits[item.id]!).length > 0
                   const stock = parseFloat(item.stock_qty)
+                  const editModel = String(rowEdits[item.id]?.model_name ?? item.model_name)
+                  const editColor = String(rowEdits[item.id]?.color_name ?? item.color_name)
+                  const editDup = hasPending && isDuplicate(editModel, editColor, item.id)
 
                   return (
                     <tr key={item.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
@@ -285,7 +316,8 @@ export default function StockPage() {
                       <td className="px-2 py-1.5 border-r border-gray-200">
                         <input type="text" value={editVal(item, 'color_name')}
                           onChange={e => setEdit(item.id, 'color_name', e.target.value)}
-                          className={inputCls(!!rowEdits[item.id]?.color_name)} />
+                          className={editDup ? 'w-full px-1.5 py-1 text-xs rounded border border-red-400 bg-red-50 text-red-600 focus:outline-none focus:ring-1 focus:ring-red-400' : inputCls(!!rowEdits[item.id]?.color_name)} />
+                        {editDup && <div className="text-[10px] text-red-600 mt-0.5 font-semibold">ชื่อนี้ซ้ำกับที่มีอยู่แล้ว</div>}
                       </td>
 
                       {/* 4. สต็อคล่าสุด */}
@@ -355,9 +387,9 @@ export default function StockPage() {
                         <div className="flex flex-col gap-1">
                           {hasPending && (
                             <button onClick={() => handleSaveInfo(item.id)}
-                              disabled={!!busy[`info-${item.id}`]}
-                              className="px-2 py-1 text-xs rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
-                              💾 บันทึก
+                              disabled={!!busy[`info-${item.id}`] || editDup}
+                              className={`px-2 py-1 text-xs rounded font-semibold transition-colors disabled:opacity-50 whitespace-nowrap ${editDup ? 'bg-red-100 text-red-700 border border-red-300 cursor-not-allowed' : 'bg-yellow-400 hover:bg-yellow-300 text-green-900'}`}>
+                              {editDup ? '⛔ ชื่อซ้ำ' : '💾 บันทึก'}
                             </button>
                           )}
                           <button onClick={() => handleDelete(item.id, item.model_name)}
