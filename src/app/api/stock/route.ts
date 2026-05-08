@@ -87,6 +87,7 @@ export async function GET() {
   await pool.query(CREATE_TABLE)
   await migrateGroup('2 มิล พิเศษ A', 'รุ่นสีพิเศษ A')
   await migrateGroup('2 มิล พิเศษ B', 'รุ่นสีพิเศษ B')
+  await migrateGroup('2 มิล สีอ่อนB', 'รุ่นสีอ่อนB')
   const { rows } = await pool.query(
     'SELECT * FROM paper_stock ORDER BY model_name, color_name'
   )
