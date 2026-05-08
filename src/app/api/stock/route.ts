@@ -45,13 +45,6 @@ const CREATE_TABLE = `
 // Does NOT delete from catalog — user will verify first.
 
 async function migrateGroup(modelTarget: string, groupSource: string) {
-  // Check if migration already done
-  const { rows: existing } = await pool.query(
-    `SELECT 1 FROM paper_stock WHERE model_name = $1 LIMIT 1`,
-    [modelTarget]
-  )
-  if (existing.length > 0) return  // already migrated
-
   // Fetch source products from catalog
   const { rows: src } = await pool.query(
     `SELECT product_name, price FROM products_catalog WHERE group_name = $1 ORDER BY id`,
@@ -59,8 +52,13 @@ async function migrateGroup(modelTarget: string, groupSource: string) {
   )
   if (src.length === 0) return
 
-  // Insert into paper_stock
+  // Insert only items not already present (match by model_name + color_name)
   for (const p of src) {
+    const { rows: dup } = await pool.query(
+      `SELECT 1 FROM paper_stock WHERE model_name = $1 AND color_name = $2 LIMIT 1`,
+      [modelTarget, p.product_name]
+    )
+    if (dup.length > 0) continue
     await pool.query(
       `INSERT INTO paper_stock (model_name, color_name, warehouse_price)
        VALUES ($1, $2, $3)`,
