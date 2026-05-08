@@ -44,21 +44,18 @@ const CREATE_TABLE = `
 // Also ensures '2 มิล พิเศษ A' exists in catalog group กระดาษฝอย (for dropdown).
 // Does NOT delete from catalog — user will verify first.
 
-const MODEL_TARGET = '2 มิล พิเศษ A'
-const GROUP_SOURCE = 'รุ่นสีพิเศษ A'
-
-async function migrateSiiPhisetA() {
+async function migrateGroup(modelTarget: string, groupSource: string) {
   // Check if migration already done
   const { rows: existing } = await pool.query(
     `SELECT 1 FROM paper_stock WHERE model_name = $1 LIMIT 1`,
-    [MODEL_TARGET]
+    [modelTarget]
   )
   if (existing.length > 0) return  // already migrated
 
   // Fetch source products from catalog
   const { rows: src } = await pool.query(
     `SELECT product_name, price FROM products_catalog WHERE group_name = $1 ORDER BY id`,
-    [GROUP_SOURCE]
+    [groupSource]
   )
   if (src.length === 0) return
 
@@ -66,21 +63,20 @@ async function migrateSiiPhisetA() {
   for (const p of src) {
     await pool.query(
       `INSERT INTO paper_stock (model_name, color_name, warehouse_price)
-       VALUES ($1, $2, $3)
-       ON CONFLICT DO NOTHING`,
-      [MODEL_TARGET, p.product_name, parseFloat(p.price ?? '0') || 0]
+       VALUES ($1, $2, $3)`,
+      [modelTarget, p.product_name, parseFloat(p.price ?? '0') || 0]
     )
   }
 
   // Ensure model name exists in catalog กระดาษฝอย group (for dropdown)
   const { rows: inCat } = await pool.query(
     `SELECT 1 FROM products_catalog WHERE group_name = 'กระดาษฝอย' AND product_name = $1 LIMIT 1`,
-    [MODEL_TARGET]
+    [modelTarget]
   )
   if (inCat.length === 0) {
     await pool.query(
       `INSERT INTO products_catalog (group_name, product_name) VALUES ('กระดาษฝอย', $1)`,
-      [MODEL_TARGET]
+      [modelTarget]
     )
   }
 }
@@ -89,7 +85,8 @@ async function migrateSiiPhisetA() {
 
 export async function GET() {
   await pool.query(CREATE_TABLE)
-  await migrateSiiPhisetA()
+  await migrateGroup('2 มิล พิเศษ A', 'รุ่นสีพิเศษ A')
+  await migrateGroup('2 มิล พิเศษ B', 'รุ่นสีพิเศษ B')
   const { rows } = await pool.query(
     'SELECT * FROM paper_stock ORDER BY model_name, color_name'
   )
