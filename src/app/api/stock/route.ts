@@ -38,10 +38,58 @@ const CREATE_TABLE = `
   )
 `
 
+// ── Migrate รุ่นสีพิเศษ A → paper_stock model '2 มิล พิเศษ A' ────────────────
+// Runs once on first GET after deploy. Copies products from products_catalog
+// (group_name='รุ่นสีพิเศษ A') into paper_stock as model_name='2 มิล พิเศษ A'.
+// Also ensures '2 มิล พิเศษ A' exists in catalog group กระดาษฝอย (for dropdown).
+// Does NOT delete from catalog — user will verify first.
+
+const MODEL_TARGET = '2 มิล พิเศษ A'
+const GROUP_SOURCE = 'รุ่นสีพิเศษ A'
+
+async function migrateSiiPhisetA() {
+  // Check if migration already done
+  const { rows: existing } = await pool.query(
+    `SELECT 1 FROM paper_stock WHERE model_name = $1 LIMIT 1`,
+    [MODEL_TARGET]
+  )
+  if (existing.length > 0) return  // already migrated
+
+  // Fetch source products from catalog
+  const { rows: src } = await pool.query(
+    `SELECT product_name, price FROM products_catalog WHERE group_name = $1 ORDER BY id`,
+    [GROUP_SOURCE]
+  )
+  if (src.length === 0) return
+
+  // Insert into paper_stock
+  for (const p of src) {
+    await pool.query(
+      `INSERT INTO paper_stock (model_name, color_name, warehouse_price)
+       VALUES ($1, $2, $3)
+       ON CONFLICT DO NOTHING`,
+      [MODEL_TARGET, p.product_name, parseFloat(p.price ?? '0') || 0]
+    )
+  }
+
+  // Ensure model name exists in catalog กระดาษฝอย group (for dropdown)
+  const { rows: inCat } = await pool.query(
+    `SELECT 1 FROM products_catalog WHERE group_name = 'กระดาษฝอย' AND product_name = $1 LIMIT 1`,
+    [MODEL_TARGET]
+  )
+  if (inCat.length === 0) {
+    await pool.query(
+      `INSERT INTO products_catalog (group_name, product_name) VALUES ('กระดาษฝอย', $1)`,
+      [MODEL_TARGET]
+    )
+  }
+}
+
 // ── GET — list all items ──────────────────────────────────────────────────────
 
 export async function GET() {
   await pool.query(CREATE_TABLE)
+  await migrateSiiPhisetA()
   const { rows } = await pool.query(
     'SELECT * FROM paper_stock ORDER BY model_name, color_name'
   )
