@@ -72,7 +72,7 @@ const COL_QTY   = 44
 const COL_TOTAL = 62
 const ROW_NUM_W = 24
 const TABLE_W        = ROW_NUM_W + 6 * (COL_NAME + COL_PRICE + COL_QTY + COL_TOTAL)
-const INFO_PANEL_ROWS = 9   // 3 sig + 2 total + 2 source/vehicle + 2 date/branch
+const INFO_PANEL_ROWS = 11  // 3 sig + 2 total + 3 date/source + 3 branch/vehicle
 
 // ── A4 landscape dimensions ───────────────────────────────────────────────────
 // 1 CSS mm = 96/25.4 px (CSS reference pixel)
@@ -430,71 +430,66 @@ export default function Booking2Page() {
                             }
                             if (pr === 4) return []
 
-                            // pr 5-6: เบิกของ (left) | รถ (right) — rowSpan=2, required
-                            if (pr === 5) {
-                              const srcEmpty = sourceType === ''
-                              const vehEmpty = vehicleType === ''
-                              return [
-                                <td key={`${si}-ip5`} colSpan={4} rowSpan={2} className={`${base} p-0 align-middle`}>
-                                  <div className="flex h-full divide-x divide-gray-300 text-[9px]">
-                                    <div className={`flex-1 flex flex-col justify-center px-1 py-0.5 ${srcEmpty ? 'bg-red-50' : ''}`}>
-                                      <div className="font-semibold text-gray-600 mb-0.5">เบิกของ</div>
-                                      <select value={sourceType}
-                                        onChange={e => setSourceType(e.target.value as 'โกดัง' | 'หน้าร้าน')}
-                                        className={`w-full text-[9px] border rounded px-0.5 bg-white focus:outline-none ${srcEmpty ? 'border-red-400 text-red-500' : 'border-gray-300'}`}>
-                                        <option value="" disabled>— เลือก —</option>
-                                        <option value="โกดัง">โกดัง</option>
-                                        <option value="หน้าร้าน">หน้าร้าน</option>
-                                      </select>
-                                      {srcEmpty && <div className="text-[7px] text-red-500 mt-0.5">กรุณาเลือก</div>}
-                                    </div>
-                                    <div className={`flex-1 flex flex-col justify-center px-1 py-0.5 ${vehEmpty ? 'bg-red-50' : ''}`}>
-                                      <div className="font-semibold text-gray-600 mb-0.5">รถ</div>
-                                      <select value={vehicleType}
-                                        onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง')}
-                                        className={`w-full text-[9px] border rounded px-0.5 bg-white focus:outline-none ${vehEmpty ? 'border-red-400 text-red-500' : 'border-gray-300'}`}>
-                                        <option value="" disabled>— เลือก —</option>
-                                        <option value="จองรถ60000">จองรถ 60,000</option>
-                                        <option value="รอพ่วง">รอพ่วง</option>
-                                      </select>
-                                      {vehEmpty && <div className="text-[7px] text-red-500 mt-0.5">กรุณาเลือก</div>}
-                                    </div>
-                                  </div>
-                                </td>,
-                              ]
-                            }
-                            if (pr === 6) return []
-
-                            // pr 7-8: วันที่ (left) | สาขา (right) — rowSpan=2
-                            if (pr === 7) return [
-                              <td key={`${si}-ip7`} colSpan={4} rowSpan={2} className={`${base} p-0 bg-gray-50 align-middle`}>
-                                <div className="flex h-full divide-x divide-gray-300">
-                                  {/* วันที่ — ใหญ่เต็มพื้นที่ */}
-                                  <div className="flex-1 flex flex-col justify-center items-center px-0.5 py-0.5 overflow-hidden">
-                                    <div className="text-[7px] text-gray-400 leading-none mb-px">วันที่</div>
-                                    <div className="text-[15px] font-extrabold text-gray-800 leading-none truncate w-full text-center">
-                                      {today}
-                                    </div>
-                                  </div>
-                                  {/* สาขา — ใหญ่เต็มพื้นที่ */}
-                                  <div className="flex-1 flex flex-col justify-center px-0.5 py-0.5 overflow-hidden">
-                                    {branchInfo ? (
-                                      <>
-                                        <div className="text-[14px] font-extrabold text-gray-800 leading-tight truncate">
-                                          {branchInfo.name}
-                                        </div>
-                                        <div className="text-[7px] text-gray-500 leading-none truncate">
-                                          {branchInfo.phone}
-                                        </div>
-                                      </>
-                                    ) : (
-                                      <div className="text-[8px] text-gray-400 italic">ยังไม่ได้เข้าสู่ระบบ</div>
-                                    )}
+                            // pr 5-7: วันที่ (left colSpan=2 rowSpan=3) + เบิกของ (right colSpan=2 rowSpan=3)
+                            if (pr === 5) return [
+                              <td key={`${si}-ip5a`} colSpan={2} rowSpan={3}
+                                className={`${base} p-1 bg-gray-50 align-middle overflow-hidden`}>
+                                <div className="flex flex-col items-center justify-center h-full gap-0.5">
+                                  <div className="text-[7px] text-gray-400 leading-none">วันที่</div>
+                                  <div className="text-[20px] font-extrabold text-gray-800 leading-none text-center truncate w-full">
+                                    {today}
                                   </div>
                                 </div>
                               </td>,
+                              <td key={`${si}-ip5b`} colSpan={2} rowSpan={3}
+                                className={`${base} p-1 align-middle ${sourceType === '' ? 'bg-red-50' : 'bg-white'}`}>
+                                <div className="flex flex-col justify-center h-full gap-0.5">
+                                  <div className="text-[7px] text-gray-500 font-semibold leading-none">เบิกของ</div>
+                                  <select value={sourceType}
+                                    onChange={e => setSourceType(e.target.value as 'โกดัง' | 'หน้าร้าน')}
+                                    className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 bg-white focus:outline-none ${sourceType === '' ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-800'}`}>
+                                    <option value="" disabled>— เลือก —</option>
+                                    <option value="โกดัง">โกดัง</option>
+                                    <option value="หน้าร้าน">หน้าร้าน</option>
+                                  </select>
+                                  {sourceType === '' && <div className="text-[7px] text-red-500 leading-none">กรุณาเลือก</div>}
+                                </div>
+                              </td>,
                             ]
-                            if (pr === 8) return []
+                            if (pr === 6 || pr === 7) return []
+
+                            // pr 8-10: สาขา (left colSpan=2 rowSpan=3) + รถ (right colSpan=2 rowSpan=3)
+                            if (pr === 8) return [
+                              <td key={`${si}-ip8a`} colSpan={2} rowSpan={3}
+                                className={`${base} p-1 bg-gray-50 align-middle overflow-hidden`}>
+                                {branchInfo ? (
+                                  <div className="flex flex-col justify-center h-full gap-0.5">
+                                    <div className="text-[7px] text-gray-400 leading-none">สาขา/ตัวแทน</div>
+                                    <div className="text-[16px] font-extrabold text-gray-800 leading-tight truncate">
+                                      {branchInfo.name}
+                                    </div>
+                                    <div className="text-[8px] text-gray-500 leading-none truncate">{branchInfo.phone}</div>
+                                  </div>
+                                ) : (
+                                  <div className="text-[8px] text-gray-400 italic">ยังไม่ได้เข้าสู่ระบบ</div>
+                                )}
+                              </td>,
+                              <td key={`${si}-ip8b`} colSpan={2} rowSpan={3}
+                                className={`${base} p-1 align-middle ${vehicleType === '' ? 'bg-red-50' : 'bg-white'}`}>
+                                <div className="flex flex-col justify-center h-full gap-0.5">
+                                  <div className="text-[7px] text-gray-500 font-semibold leading-none">รถ</div>
+                                  <select value={vehicleType}
+                                    onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง')}
+                                    className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 bg-white focus:outline-none ${vehicleType === '' ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-800'}`}>
+                                    <option value="" disabled>— เลือก —</option>
+                                    <option value="จองรถ60000">จองรถ 60,000</option>
+                                    <option value="รอพ่วง">รอพ่วง</option>
+                                  </select>
+                                  {vehicleType === '' && <div className="text-[7px] text-red-500 leading-none">กรุณาเลือก</div>}
+                                </div>
+                              </td>,
+                            ]
+                            if (pr === 9 || pr === 10) return []
                             return [<td key={`${si}-ipx`} colSpan={4} className="border border-gray-200 bg-gray-50" />]
                           }
 
