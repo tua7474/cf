@@ -210,6 +210,10 @@ export default function StockPage() {
         {msg && (
           <span className={`text-sm px-3 py-1 rounded-full text-white ${msg.startsWith('❌') ? 'bg-red-500' : 'bg-green-500'}`}>{msg}</span>
         )}
+        <Link href="/booking-foy"
+          className="ml-auto px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors">
+          📋 ใบจองกระดาษฝอย
+        </Link>
       </header>
 
       {/* Main */}
