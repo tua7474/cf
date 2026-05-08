@@ -1,6 +1,24 @@
 import { NextResponse } from 'next/server'
 import pool from '@/lib/db'
 
+// ── Sync paper_stock total → products_catalog.quantity ───────────────────────
+// Sums stock_qty across all colors for a given model_name, then updates
+// products_catalog where group_name='กระดาษฝอย' AND product_name=model_name
+
+async function syncToCatalog(model_name: string) {
+  const { rows } = await pool.query(
+    `SELECT COALESCE(SUM(stock_qty), 0) AS total FROM paper_stock WHERE model_name = $1`,
+    [model_name]
+  )
+  const total = rows[0].total
+  await pool.query(
+    `UPDATE products_catalog
+     SET quantity = $1, updated_at = NOW()
+     WHERE group_name = 'กระดาษฝอย' AND product_name = $2`,
+    [total, model_name]
+  )
+}
+
 // ── Table ─────────────────────────────────────────────────────────────────────
 
 const CREATE_TABLE = `
@@ -61,6 +79,7 @@ export async function PATCH(request: Request) {
        WHERE id = $2 RETURNING *`,
       [qty, id]
     )
+    await syncToCatalog(rows[0].model_name)
     return NextResponse.json(rows[0])
   }
 
@@ -73,6 +92,7 @@ export async function PATCH(request: Request) {
        WHERE id = $2 RETURNING *`,
       [qty, id]
     )
+    await syncToCatalog(rows[0].model_name)
     return NextResponse.json(rows[0])
   }
 
@@ -102,6 +122,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   const { id } = await request.json()
-  await pool.query('DELETE FROM paper_stock WHERE id = $1', [id])
+  const { rows } = await pool.query('DELETE FROM paper_stock WHERE id = $1 RETURNING model_name', [id])
+  if (rows[0]?.model_name) await syncToCatalog(rows[0].model_name)
   return NextResponse.json({ ok: true })
 }
