@@ -3,25 +3,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 
-// ── รุ่นกระดาษฝอย ────────────────────────────────────────────────────────────
-
-const MODEL_OPTIONS = [
-  'ปุยนุ่น',
-  'สีอ่อน',
-  'สีพิเศษA',
-  'สีพิเศษB',
-  '1.5มิลสีอ่อน',
-  '1.5มิลสีพิเศษA',
-  '1.5มิลสีพิเศษB',
-  '4มิลสีอ่อน',
-  '4มิลสีพิเศษA',
-  '4มิลสีพิเศษB',
-  'ฝอยหยักสีอ่อน',
-  'ฝอยหยักสีพิเศษA',
-  'ฝอยหยักสีพิเศษB',
-  'Graphic',
-]
-
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface StockItem {
@@ -64,9 +45,10 @@ function fmtDate(iso: string | null): string {
 const EMPTY_NEW = { model_name: '', color_code: '', color_name: '', warehouse_price: '', retail_price: '' }
 
 export default function StockPage() {
-  const [items, setItems]       = useState<StockItem[]>([])
-  const [loading, setLoading]   = useState(true)
-  const [newRow, setNewRow]     = useState(EMPTY_NEW)
+  const [items, setItems]         = useState<StockItem[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [modelOptions, setModelOptions] = useState<string[]>([])
+  const [newRow, setNewRow]       = useState(EMPTY_NEW)
   const [addInputs, setAddInputs]   = useState<Record<number, string>>({})
   const [bookInputs, setBookInputs] = useState<Record<number, string>>({})
   const [rowEdits, setRowEdits] = useState<Record<number, Partial<StockItem>>>({})
@@ -78,20 +60,25 @@ export default function StockPage() {
     fetch('/api/stock')
       .then(r => r.json())
       .then((data: StockItem[]) => {
-        const sorted = [...data].sort((a, b) => {
-          const ai = MODEL_OPTIONS.indexOf(a.model_name)
-          const bi = MODEL_OPTIONS.indexOf(b.model_name)
-          const modelDiff = (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi)
-          if (modelDiff !== 0) return modelDiff
-          return a.color_name.localeCompare(b.color_name, 'th')
-        })
-        setItems(sorted)
+        setItems(data)
         setLoading(false)
       })
       .catch(() => setLoading(false))
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  useEffect(() => {
+    fetch('/api/catalog')
+      .then(r => r.json())
+      .then((data: { group_name: string; product_name: string }[]) => {
+        const names = data
+          .filter(p => p.group_name === 'กระดาษฝอย')
+          .map(p => p.product_name)
+        setModelOptions(names)
+      })
+      .catch(() => {})
+  }, [])
 
   const showMsg = (text: string) => {
     setMsg(text)
@@ -232,7 +219,7 @@ export default function StockPage() {
                       onChange={e => setNewRow(p => ({ ...p, model_name: e.target.value }))}
                       className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400">
                       <option value="">-- เลือกรุ่น --</option>
-                      {MODEL_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
+                      {modelOptions.map(m => <option key={m} value={m}>{m}</option>)}
                     </select>
                   </td>
                   <td className="px-2 py-1.5 border-r border-gray-200">
@@ -283,7 +270,7 @@ export default function StockPage() {
                         <select value={editVal(item, 'model_name')}
                           onChange={e => setEdit(item.id, 'model_name', e.target.value)}
                           className={inputCls(!!rowEdits[item.id]?.model_name)}>
-                          {MODEL_OPTIONS.map(m => <option key={m} value={m}>{m}</option>)}
+                          {modelOptions.map(m => <option key={m} value={m}>{m}</option>)}
                         </select>
                       </td>
 
