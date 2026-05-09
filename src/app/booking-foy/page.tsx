@@ -148,7 +148,7 @@ export default function BookingFoyPage() {
   let grandTotal = 0
   for (const [idStr, qty] of Object.entries(pending)) {
     const item = items.find(it => it.id === Number(idStr))
-    if (item) grandTotal += (parseFloat(item.retail_price) || 0) * qty
+    if (item) grandTotal += (parseFloat(item.warehouse_price) || 0) * qty
   }
   const displayTotal = manualTotal !== '' ? manualTotal : grandTotal.toFixed(2)
   const today = new Date().toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })
@@ -182,7 +182,7 @@ export default function BookingFoyPage() {
         </thead>
         <tbody>
           {g.items.map(item => {
-            const price      = parseFloat(item.retail_price) || 0
+            const price      = parseFloat(item.warehouse_price) || 0
             const qty        = pending[item.id] ?? 0
             const total      = qty * price
             const hasPending = qty > 0
