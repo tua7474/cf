@@ -224,17 +224,26 @@ export default function Booking2Page() {
   const panelStart  = Math.max(lastSecRows, maxRows - INFO_PANEL_ROWS)
 
   let grayTotal = 0, orangeTotal = 0
-  const sectionTotals = new Map<number, number>()
+  const sectionTotals  = new Map<number, number>()
+  const subgroupTotals = new Map<string, number>()   // key = `${sec.order}-${subgroup.name}`
   for (const sec of sections) {
     let secTotal = 0
+    let currentSubgroup: string | null = null
     for (const row of sec.rows) {
-      if (row.type !== 'product') continue
-      const qty = pending[row.product.id] ?? 0
-      const price = parseFloat(row.product.price ?? '0') || 0
-      const val = price * qty
-      if (sec.is_vat_included) grayTotal += val
-      else orangeTotal += val
-      secTotal += val
+      if (row.type === 'subgroup') {
+        currentSubgroup = row.name
+      } else {
+        const qty   = pending[row.product.id] ?? 0
+        const price = parseFloat(row.product.price ?? '0') || 0
+        const val   = price * qty
+        if (sec.is_vat_included) grayTotal += val
+        else orangeTotal += val
+        secTotal += val
+        if (currentSubgroup !== null) {
+          const sgKey = `${sec.order}-${currentSubgroup}`
+          subgroupTotals.set(sgKey, (subgroupTotals.get(sgKey) ?? 0) + val)
+        }
+      }
     }
     sectionTotals.set(sec.order, secTotal)
   }
@@ -518,12 +527,20 @@ export default function Booking2Page() {
                             <td key={`${si}-et`} className="border border-gray-200 bg-gray-50" />,
                           ]
 
-                          if (cell.type === 'subgroup') return [
-                            <td key={`${si}-sg`} colSpan={4}
-                              className={`border px-2 py-px text-[9px] font-bold ${SUBGROUP_BG[cell.color]}`}>
-                              {cell.name}
-                            </td>,
-                          ]
+                          if (cell.type === 'subgroup') {
+                            const sgTotal = subgroupTotals.get(`${sec.order}-${cell.name}`) ?? 0
+                            return [
+                              <td key={`${si}-sg`} colSpan={4}
+                                className={`border px-2 py-px text-[9px] font-bold ${SUBGROUP_BG[cell.color]}`}>
+                                <div className="flex items-center justify-between gap-1">
+                                  <span>{cell.name}</span>
+                                  {sgTotal > 0 && (
+                                    <span className="text-[8px] font-semibold opacity-90 whitespace-nowrap">฿{fmt2(sgTotal)}</span>
+                                  )}
+                                </div>
+                              </td>,
+                            ]
+                          }
 
                           const { product: p } = cell
                           const price      = parseFloat(p.price ?? '0') || 0
