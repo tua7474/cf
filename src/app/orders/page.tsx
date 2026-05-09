@@ -163,7 +163,16 @@ export default function OrdersPage() {
 
                       {/* 4. สถานะใบจอง */}
                       <td className="px-4 py-3 border-r border-gray-200">
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-1.5">
+                          {/* รถ + เบิกของ — small text left/right above button */}
+                          <div className="flex justify-between items-center gap-2 text-[11px] text-gray-500">
+                            <span className={order.vehicle_type ? (order.vehicle_type === 'จองรถ60000' ? 'text-blue-700 font-medium' : 'text-orange-700 font-medium') : 'text-gray-300'}>
+                              🚛 {order.vehicle_type === 'จองรถ60000' ? 'จองรถ 60,000' : order.vehicle_type === 'รอพ่วง' ? 'รอพ่วง' : '—'}
+                            </span>
+                            <span className={order.source_type ? 'text-gray-600 font-medium' : 'text-gray-300'}>
+                              {order.source_type ?? '—'} 📦
+                            </span>
+                          </div>
                           {/* แก้ไข — disabled after pickup */}
                           {pickedUp ? (
                             <span className="inline-block px-2 py-1 text-xs rounded border border-red-200 bg-red-50 text-red-400 cursor-not-allowed select-none w-fit">
@@ -176,18 +185,6 @@ export default function OrdersPage() {
                             >
                               ✎ แก้ไข
                             </button>
-                          )}
-                          {/* รถ */}
-                          {order.vehicle_type && (
-                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold w-fit ${order.vehicle_type === 'จองรถ60000' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'}`}>
-                              🚛 {order.vehicle_type === 'จองรถ60000' ? 'จองรถ 60,000' : 'รอพ่วง'}
-                            </span>
-                          )}
-                          {/* เบิกของ */}
-                          {order.source_type && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 w-fit">
-                              📦 เบิกของ: {order.source_type}
-                            </span>
                           )}
                         </div>
                       </td>
