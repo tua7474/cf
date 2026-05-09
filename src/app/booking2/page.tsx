@@ -224,7 +224,9 @@ export default function Booking2Page() {
   const panelStart  = Math.max(lastSecRows, maxRows - INFO_PANEL_ROWS)
 
   let grayTotal = 0, orangeTotal = 0
+  const sectionTotals = new Map<number, number>()
   for (const sec of sections) {
+    let secTotal = 0
     for (const row of sec.rows) {
       if (row.type !== 'product') continue
       const qty = pending[row.product.id] ?? 0
@@ -232,7 +234,9 @@ export default function Booking2Page() {
       const val = price * qty
       if (sec.is_vat_included) grayTotal += val
       else orangeTotal += val
+      secTotal += val
     }
+    sectionTotals.set(sec.order, secTotal)
   }
   const today = new Date().toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
@@ -360,14 +364,26 @@ export default function Booking2Page() {
                   {/* Section name header row */}
                   <thead>
                     <tr className="bg-green-700 text-white text-[10px]">
-                      <th className="border border-gray-500 py-1 text-center">#</th>
-                      {sections.map(sec => (
-                        <th key={sec.order} colSpan={4}
-                          className="border border-gray-500 px-1 py-1 text-center font-bold">
-                          {sec.name}
-                          {sec.is_vat_included && <span className="ml-1 text-yellow-300 text-[9px]">(มีVAT)</span>}
-                        </th>
-                      ))}
+                      <th className="border border-gray-500 py-1 text-center bg-orange-500 text-white font-bold leading-tight">กล่อง</th>
+                      {sections.map(sec => {
+                        const secTotal = sectionTotals.get(sec.order) ?? 0
+                        return (
+                          <th key={sec.order} colSpan={4}
+                            className="border border-gray-500 px-1 py-1 font-bold">
+                            <div className="flex items-center justify-between gap-1">
+                              <span>
+                                {sec.name}
+                                {sec.is_vat_included && <span className="ml-1 text-yellow-300 text-[9px]">(มีVAT)</span>}
+                              </span>
+                              {secTotal > 0 && (
+                                <span className="text-yellow-300 text-[9px] font-semibold whitespace-nowrap">
+                                  ฿{fmt2(secTotal)}
+                                </span>
+                              )}
+                            </div>
+                          </th>
+                        )
+                      })}
                     </tr>
                     <tr className="bg-green-800 text-white text-[9px]">
                       <th className="border border-gray-500 py-0.5 text-center">#</th>
