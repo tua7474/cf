@@ -225,13 +225,14 @@ export default function Home() {
       </div>
 
       {/* Main */}
-      <main className="p-4 overflow-x-auto">
+      <main className="p-4">
         {loading ? (
           <div className="flex items-center justify-center h-40 text-gray-400">กำลังโหลดข้อมูล...</div>
         ) : (
           <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 96px)' }}>
             <table className="min-w-full text-xs">
-              <thead>
+              <thead className="sticky top-0 z-20">
                 <tr className="bg-green-700 text-white text-left">
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap">หมวดสินค้า ✎</th>
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap">ชื่อสินค้า ✎</th>
@@ -244,10 +245,8 @@ export default function Home() {
                   <th className="px-3 py-2 whitespace-nowrap text-center bg-green-900">ใบจองสินค้า</th>
                   <th className="px-3 py-2 whitespace-nowrap text-center bg-green-900">จัดการ</th>
                 </tr>
-              </thead>
-              <tbody>
 
-                {/* ── Add new product row ── */}
+                {/* ── Add new product row (sticky) ── */}
                 <tr className="bg-blue-50 border-b-2 border-blue-300">
                   <td className="px-2 py-1.5 border-r border-gray-200">
                     <input type="text" placeholder="หมวดสินค้า" value={newRow.group_name}
@@ -259,7 +258,6 @@ export default function Home() {
                       onChange={e => setNewRow(p => ({ ...p, product_name: e.target.value }))}
                       className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400" />
                   </td>
-                  {/* สต็อค, เพิ่มสต็อค, จำนวนจอง — empty */}
                   <td className="border-r border-gray-200" />
                   <td className="border-r border-gray-200" />
                   <td className="border-r border-gray-200" />
@@ -268,7 +266,6 @@ export default function Home() {
                       onChange={e => setNewRow(p => ({ ...p, price: e.target.value }))}
                       className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 text-right" />
                   </td>
-                  {/* ราคา+9%, ราคา+9%+7%, ใบจอง — empty */}
                   <td className="border-r border-gray-200 bg-yellow-50" />
                   <td className="border-r border-gray-200 bg-red-50" />
                   <td className="border-r border-gray-200" />
@@ -279,14 +276,16 @@ export default function Home() {
                     </button>
                   </td>
                 </tr>
+              </thead>
 
+              <tbody>
                 {entries.map((entry, ei) => {
                   if (entry.type === 'group') {
                     const groupProducts = products.filter(p => p.group_name === entry.name)
                     const allOn = groupProducts.length > 0 && groupProducts.every(p => p.show_in_booking)
                     return (
                       <tr key={`g-${ei}`} className="bg-green-800 text-white">
-                        <td colSpan={9} className="px-3 py-1.5 font-bold text-sm tracking-wide">
+                        <td colSpan={8} className="px-3 py-1.5 font-bold text-sm tracking-wide">
                           {entry.name}
                         </td>
                         <td className="px-2 py-1 text-center">
@@ -297,6 +296,7 @@ export default function Home() {
                             {allOn ? '● โชว์ทั้งหมวด' : '● ซ่อนทั้งหมวด'}
                           </button>
                         </td>
+                        <td />
                       </tr>
                     )
                   }
@@ -424,6 +424,7 @@ export default function Home() {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </main>

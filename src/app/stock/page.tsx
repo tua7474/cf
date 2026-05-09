@@ -225,13 +225,14 @@ export default function StockPage() {
       </header>
 
       {/* Main */}
-      <main className="p-4 overflow-x-auto">
+      <main className="p-4">
         {loading ? (
           <div className="flex items-center justify-center h-40 text-gray-400">กำลังโหลด...</div>
         ) : (
           <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 96px)' }}>
             <table className="min-w-full text-xs">
-              <thead>
+              <thead className="sticky top-0 z-20">
                 <tr className="bg-green-700 text-white text-left">
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap">ชื่อรุ่น ✎</th>
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap">รหัสสี ✎</th>
@@ -246,10 +247,8 @@ export default function StockPage() {
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-center">ใบจองฝอย</th>
                   <th className="px-3 py-2 whitespace-nowrap text-center">จัดการ</th>
                 </tr>
-              </thead>
-              <tbody>
 
-                {/* ── Add new row ── */}
+                {/* ── Add new row (sticky) ── */}
                 {(() => {
                   const addDup = !!(newRow.model_name && isDuplicate(newRow.model_name, newRow.color_name))
                   return (
@@ -299,6 +298,8 @@ export default function StockPage() {
                     </tr>
                   )
                 })()}
+              </thead>
+              <tbody>
 
                 {/* ── Data rows ── */}
                 {items.length === 0 ? (
@@ -452,6 +453,7 @@ export default function StockPage() {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
         )}
       </main>
