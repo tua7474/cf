@@ -18,6 +18,7 @@ interface BookingOrder {
   pickup_status: string
   source_type: string | null
   vehicle_type: string | null
+  branch_name: string | null
   created_at: string
   updated_at: string
 }
@@ -134,6 +135,7 @@ export default function OrdersPage() {
                   <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">วันเวลาอัพเดทล่าสุด</th>
                   <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">สถานะใบจอง</th>
                   <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">ขึ้นของ</th>
+                  <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">แจ้งชื่อตัวแทนสาขา</th>
                   <th className="px-4 py-2 whitespace-nowrap">สถานะการชำระเงิน</th>
                 </tr>
               </thead>
@@ -205,7 +207,12 @@ export default function OrdersPage() {
                         )}
                       </td>
 
-                      {/* 6. สถานะการชำระเงิน */}
+                      {/* 6. แจ้งชื่อตัวแทนสาขา */}
+                      <td className="px-4 py-3 border-r border-gray-200 text-sm text-gray-700 whitespace-nowrap">
+                        {order.branch_name ?? <span className="text-gray-300 text-xs">—</span>}
+                      </td>
+
+                      {/* 7. สถานะการชำระเงิน */}
                       <td className="px-4 py-3">
                         {paid ? (
                           <div className="flex flex-col gap-0.5">
