@@ -336,7 +336,7 @@ export default function Booking2Page() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={saving || cannotBook60k}
+                disabled={saving || cannotBook60k || vehicleType === '' || sourceType === ''}
                 className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors disabled:opacity-50"
               >
                 {saving ? 'กำลังบันทึก...' : '💾 บันทึกการจอง'}
