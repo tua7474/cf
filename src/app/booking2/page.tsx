@@ -247,6 +247,8 @@ export default function Booking2Page() {
     }
     sectionTotals.set(sec.order, secTotal)
   }
+  const effectiveTotal  = manualTotal !== '' ? (parseFloat(manualTotal) || 0) : (grayTotal + orangeTotal)
+  const cannotBook60k   = vehicleType === 'จองรถ60000' && effectiveTotal < 60000
   const today = new Date().toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -334,11 +336,16 @@ export default function Booking2Page() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || cannotBook60k}
                 className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors disabled:opacity-50"
               >
                 {saving ? 'กำลังบันทึก...' : '💾 บันทึกลง DB'}
               </button>
+              {cannotBook60k && (
+                <span className="text-red-400 text-sm font-semibold">
+                  ⛔ ยอดไม่ถึง 60,000 — จองรถไม่ได้
+                </span>
+              )}
             </>
           )}
         </div>
@@ -500,17 +507,22 @@ export default function Booking2Page() {
                                 )}
                               </td>,
                               <td key={`${si}-ip8b`} colSpan={2} rowSpan={3}
-                                className={`${base} p-1 align-middle ${vehicleType === '' ? 'bg-red-50' : 'bg-white'}`}>
+                                className={`${base} p-1 align-middle ${(vehicleType === '' || cannotBook60k) ? 'bg-red-50' : 'bg-white'}`}>
                                 <div className="flex flex-col justify-center h-full gap-0.5">
                                   <div className="text-[7px] text-gray-500 font-semibold leading-none">รถ</div>
                                   <select value={vehicleType}
                                     onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง')}
-                                    className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 bg-white focus:outline-none ${vehicleType === '' ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-800'}`}>
+                                    className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 bg-white focus:outline-none ${(vehicleType === '' || cannotBook60k) ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-800'}`}>
                                     <option value="" disabled>— เลือก —</option>
                                     <option value="จองรถ60000">จองรถ 60,000</option>
                                     <option value="รอพ่วง">รอพ่วง</option>
                                   </select>
                                   {vehicleType === '' && <div className="text-[7px] text-red-500 leading-none">กรุณาเลือก</div>}
+                                  {cannotBook60k && (
+                                    <div className="text-[7px] text-red-600 font-bold leading-tight">
+                                      จองไม่ได้ — ยอดไม่ถึง 60,000
+                                    </div>
+                                  )}
                                 </div>
                               </td>,
                             ]
