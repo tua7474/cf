@@ -159,7 +159,7 @@ export default function OrdersPage() {
                         </span>
                         <div className="flex gap-1 flex-wrap">
                           <button
-                            onClick={() => router.push(`/booking?order=${order.order_no}`)}
+                            onClick={() => router.push(`/booking2?edit=${order.order_no}`)}
                             className="px-2 py-1 text-xs rounded bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border border-yellow-300 transition-colors"
                           >
                             ✎ แก้ไข

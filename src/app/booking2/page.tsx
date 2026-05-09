@@ -1,7 +1,8 @@
 'use client'
 
-import { Fragment, useState, useEffect, useCallback } from 'react'
+import { Fragment, useState, useEffect, useCallback, Suspense } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -124,7 +125,10 @@ function fmt2(n: number) {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 
-export default function Booking2Page() {
+function Booking2Inner() {
+  const searchParams  = useSearchParams()
+  const editOrderNo   = searchParams.get('edit')   // null = new order, string = edit mode
+
   const [products, setProducts]     = useState<CatalogProduct[]>([])
   const [loading, setLoading]       = useState(true)
   const [saving, setSaving]         = useState(false)
@@ -145,9 +149,9 @@ export default function Booking2Page() {
     return () => window.removeEventListener('resize', calc)
   }, [])
 
-  // Load draft on mount + branch session
+  // Load draft / branch session on mount
   useEffect(() => {
-    setPending(loadDraft())
+    if (!editOrderNo) setPending(loadDraft())
     try {
       const bs = localStorage.getItem('branch_session')
       if (bs) {
@@ -155,7 +159,22 @@ export default function Booking2Page() {
         if (s?.branch_name) setBranchInfo({ name: s.branch_name, phone: s.phone ?? '' })
       }
     } catch { /* ignore */ }
-  }, [])
+  }, [editOrderNo])
+
+  // When editing — load existing order quantities
+  useEffect(() => {
+    if (!editOrderNo) return
+    fetch(`/api/orders?no=${editOrderNo}`)
+      .then(r => r.json())
+      .then((order: { quantities: Record<string, number>; total_amount: string } | null) => {
+        if (!order) return
+        const qty: Record<number, number> = {}
+        for (const [k, v] of Object.entries(order.quantities)) qty[Number(k)] = v
+        setPending(qty)
+        setManualTotal(parseFloat(order.total_amount).toFixed(2))
+      })
+      .catch(() => {})
+  }, [editOrderNo])
 
   // Fetch products
   useEffect(() => {
@@ -169,10 +188,10 @@ export default function Booking2Page() {
     const qty = parseInt(val, 10) || 0
     setPending(prev => {
       const next = qty > 0 ? { ...prev, [id]: qty } : (() => { const n = { ...prev }; delete n[id]; return n })()
-      saveDraft(next)
+      if (!editOrderNo) saveDraft(next)
       return next
     })
-  }, [])
+  }, [editOrderNo])
 
   const pendingCount = Object.values(pending).filter(q => q > 0).length
 
@@ -183,30 +202,46 @@ export default function Booking2Page() {
     try {
       const productMap = new Map(products.map(p => [p.id, p]))
       const quantities: Record<number, number> = {}
-      let orderTotal = 0
+      let computedTotal = 0
       for (const [idStr, qty] of Object.entries(pending)) {
         const id = Number(idStr)
         const p = productMap.get(id)
         if (!p || qty <= 0) continue
         quantities[id] = qty
         const price = parseFloat(p.price ?? '0') || 0
-        orderTotal += price * qty
+        computedTotal += price * qty
       }
-      let branchId: number | null = null
-      try {
-        const bs = localStorage.getItem('branch_session')
-        if (bs) branchId = JSON.parse(bs)?.branch_id ?? null
-      } catch { /* ignore */ }
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ total_amount: orderTotal, quantities, branch_id: branchId, source: 'catalog' }),
-      })
-      if (!res.ok) throw new Error()
-      setPending({})
-      setResetKey(k => k + 1)
-      localStorage.removeItem(DRAFT_KEY)
-      setSaveMsg(`บันทึกสำเร็จ ${pendingCount} รายการ`)
+      const totalToSave = manualTotal !== '' ? (parseFloat(manualTotal) || computedTotal) : computedTotal
+
+      if (editOrderNo) {
+        // ── Edit existing order ───────────────────────────────────────────────
+        const res = await fetch('/api/orders', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ order_no: editOrderNo, total_amount: totalToSave, quantities }),
+        })
+        if (!res.ok) throw new Error()
+        setPending({})
+        setResetKey(k => k + 1)
+        setSaveMsg(`อัพเดทใบจอง ${editOrderNo} สำเร็จ`)
+      } else {
+        // ── Create new order ──────────────────────────────────────────────────
+        let branchId: number | null = null
+        try {
+          const bs = localStorage.getItem('branch_session')
+          if (bs) branchId = JSON.parse(bs)?.branch_id ?? null
+        } catch { /* ignore */ }
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ total_amount: totalToSave, quantities, branch_id: branchId, source: 'catalog' }),
+        })
+        if (!res.ok) throw new Error()
+        setPending({})
+        setResetKey(k => k + 1)
+        localStorage.removeItem(DRAFT_KEY)
+        setSaveMsg(`บันทึกสำเร็จ ${pendingCount} รายการ`)
+      }
     } catch {
       setSaveMsg('เกิดข้อผิดพลาด กรุณาลองใหม่')
     } finally {
@@ -305,8 +340,12 @@ export default function Booking2Page() {
             ← กลับหน้าหลัก
           </Link>
           <div>
-            <h1 className="text-xl font-bold">ใบจองสินค้า</h1>
-            <p className="text-green-200 text-xs mt-0.5">ข้อมูลจากสต็อคสินค้า · Auto-save ใน browser</p>
+            <h1 className="text-xl font-bold">
+              {editOrderNo ? `แก้ไขใบจอง — ${editOrderNo}` : 'ใบจองสินค้า'}
+            </h1>
+            <p className="text-green-200 text-xs mt-0.5">
+              {editOrderNo ? 'แก้ไขรายการแล้วกดบันทึกเพื่ออัพเดท' : 'ข้อมูลจากสต็อคสินค้า · Auto-save ใน browser'}
+            </p>
           </div>
         </div>
 
@@ -341,7 +380,7 @@ export default function Booking2Page() {
                 disabled={saving || cannotBook60k || vehicleType === '' || sourceType === ''}
                 className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors disabled:opacity-50"
               >
-                {saving ? 'กำลังบันทึก...' : '💾 บันทึกการจอง'}
+                {saving ? 'กำลังบันทึก...' : editOrderNo ? '💾 อัพเดทการจอง' : '💾 บันทึกการจอง'}
               </button>
               {cannotBook60k && (
                 <span className="text-red-400 text-sm font-semibold">
@@ -617,5 +656,13 @@ export default function Booking2Page() {
         </div>
       </main>
     </div>
+  )
+}
+
+export default function Booking2Page() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen text-gray-400">กำลังโหลด...</div>}>
+      <Booking2Inner />
+    </Suspense>
   )
 }
