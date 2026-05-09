@@ -171,7 +171,7 @@ function Booking2Inner() {
         const qty: Record<number, number> = {}
         for (const [k, v] of Object.entries(order.quantities)) qty[Number(k)] = v
         setPending(qty)
-        setManualTotal(parseFloat(order.total_amount).toFixed(2))
+        // Leave manualTotal as '' so totals recompute from quantities × current prices
         if (order.source_type) setSourceType(order.source_type as 'โกดัง' | 'หน้าร้าน')
         if (order.vehicle_type) setVehicleType(order.vehicle_type as 'จองรถ60000' | 'รอพ่วง')
       })
