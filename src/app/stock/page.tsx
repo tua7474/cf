@@ -333,7 +333,7 @@ export default function StockPage() {
                       </td>
 
                       {/* 5. เพิ่มเข้าสต็อค */}
-                      <td className="px-2 py-1.5 border-r border-gray-200 min-w-[130px]">
+                      <td className="px-2 py-1.5 border-r border-gray-200 min-w-[160px]">
                         <div className="text-[10px] text-gray-500 mb-1">
                           ล่าสุด: <span className="font-semibold text-green-700">{fmtQty(item.last_added_qty)}</span>
                           <span className="ml-1 text-gray-400">({fmtDate(item.last_added_at)})</span>
@@ -348,11 +348,15 @@ export default function StockPage() {
                             className="px-2 py-1 text-xs rounded bg-green-100 hover:bg-green-200 text-green-800 border border-green-300 transition-colors disabled:opacity-50 whitespace-nowrap">
                             + เพิ่ม
                           </button>
+                          <Link href={`/stock-history?id=${item.id}&type=add&name=${encodeURIComponent(item.model_name + ' ' + item.color_name)}`}
+                            className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-300 transition-colors whitespace-nowrap">
+                            ประวัติ
+                          </Link>
                         </div>
                       </td>
 
                       {/* 6. จำนวนจอง */}
-                      <td className="px-2 py-1.5 border-r border-gray-200 min-w-[130px]">
+                      <td className="px-2 py-1.5 border-r border-gray-200 min-w-[160px]">
                         <div className="text-[10px] text-gray-500 mb-1">
                           ล่าสุด: <span className="font-semibold text-orange-700">{fmtQty(item.last_booked_qty)}</span>
                           <span className="ml-1 text-gray-400">({fmtDate(item.last_booked_at)})</span>
@@ -367,6 +371,10 @@ export default function StockPage() {
                             className="px-2 py-1 text-xs rounded bg-orange-100 hover:bg-orange-200 text-orange-800 border border-orange-300 transition-colors disabled:opacity-50 whitespace-nowrap">
                             − จอง
                           </button>
+                          <Link href={`/stock-history?id=${item.id}&type=book&name=${encodeURIComponent(item.model_name + ' ' + item.color_name)}`}
+                            className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-300 transition-colors whitespace-nowrap">
+                            ประวัติ
+                          </Link>
                         </div>
                       </td>
 

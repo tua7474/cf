@@ -19,7 +19,17 @@ async function syncToCatalog(model_name: string) {
   )
 }
 
-// ── Table ─────────────────────────────────────────────────────────────────────
+// ── Tables ────────────────────────────────────────────────────────────────────
+
+const CREATE_LOG_TABLE = `
+  CREATE TABLE IF NOT EXISTS paper_stock_log (
+    id              SERIAL PRIMARY KEY,
+    paper_stock_id  INTEGER NOT NULL,
+    action          VARCHAR(10) NOT NULL,
+    qty             DECIMAL(10,2) NOT NULL,
+    created_at      TIMESTAMP NOT NULL DEFAULT NOW()
+  )
+`
 
 const CREATE_TABLE = `
   CREATE TABLE IF NOT EXISTS paper_stock (
@@ -83,6 +93,7 @@ async function migrateGroup(modelTarget: string, groupSource: string) {
 
 export async function GET() {
   await pool.query(CREATE_TABLE)
+  await pool.query(CREATE_LOG_TABLE)
   await migrateGroup('2 มิล พิเศษ A', 'รุ่นสีพิเศษ A')
   await migrateGroup('2 มิล พิเศษ B', 'รุ่นสีพิเศษ B')
   await migrateGroup('2 มิล สีอ่อน', 'รุ่นสีอ่อน')
@@ -123,6 +134,10 @@ export async function PATCH(request: Request) {
        WHERE id = $2 RETURNING *`,
       [qty, id]
     )
+    await pool.query(
+      `INSERT INTO paper_stock_log (paper_stock_id, action, qty) VALUES ($1, 'add', $2)`,
+      [id, qty]
+    )
     await syncToCatalog(rows[0].model_name)
     return NextResponse.json(rows[0])
   }
@@ -135,6 +150,10 @@ export async function PATCH(request: Request) {
            last_booked_at  = NOW()
        WHERE id = $2 RETURNING *`,
       [qty, id]
+    )
+    await pool.query(
+      `INSERT INTO paper_stock_log (paper_stock_id, action, qty) VALUES ($1, 'book', $2)`,
+      [id, qty]
     )
     await syncToCatalog(rows[0].model_name)
     return NextResponse.json(rows[0])
