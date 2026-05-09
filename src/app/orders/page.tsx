@@ -16,23 +16,13 @@ interface BookingOrder {
   payment_date: string | null
   payment_bank: string | null
   pickup_status: string
+  source_type: string | null
+  vehicle_type: string | null
   created_at: string
   updated_at: string
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-
-const STATUS_LABEL: Record<string, string> = {
-  pending: 'รอดำเนินการ',
-  queue:   'จองคิวรถแล้ว',
-  waiting: 'รอพ่วง',
-}
-
-const STATUS_COLOR: Record<string, string> = {
-  pending: 'bg-gray-100 text-gray-700',
-  queue:   'bg-blue-100 text-blue-800',
-  waiting: 'bg-orange-100 text-orange-800',
-}
 
 function fmtMoney(n: string | number): string {
   return parseFloat(String(n)).toLocaleString('th-TH', {
@@ -92,19 +82,6 @@ export default function OrdersPage() {
     load()
   }
 
-  const handleQueue = async (order: BookingOrder) => {
-    const total = parseFloat(String(order.total_amount))
-    if (total < 50000) {
-      alert(`กรุณาเพิ่มยอดให้ครบ 50,000 บาท เพื่อจองคิวรถ\n(ยอดปัจจุบัน ${fmtMoney(total)} บาท)`)
-      return
-    }
-    await patch(order.order_no, { status: 'queue' })
-  }
-
-  const handleWaiting = async (order: BookingOrder) => {
-    await patch(order.order_no, { status: 'waiting' })
-  }
-
   const handlePickup = async (order: BookingOrder) => {
     if (!confirm(`ยืนยัน "ขึ้นของแล้ว" สำหรับใบจอง ${order.order_no}?`)) return
     await patch(order.order_no, { pickup_status: 'picked_up' })
@@ -155,7 +132,7 @@ export default function OrdersPage() {
                   <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">เลขที่ใบจอง</th>
                   <th className="px-4 py-2 whitespace-nowrap border-r border-green-600 text-right">ยอดเงินรวม (฿)</th>
                   <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">วันเวลาอัพเดทล่าสุด</th>
-                  <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">สถานะ</th>
+                  <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">สถานะใบจอง</th>
                   <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">ขึ้นของ</th>
                   <th className="px-4 py-2 whitespace-nowrap">สถานะการชำระเงิน</th>
                 </tr>
@@ -184,39 +161,34 @@ export default function OrdersPage() {
                         {fmtDate(order.updated_at)}
                       </td>
 
-                      {/* 4. สถานะ + ปุ่มดำเนินการ */}
+                      {/* 4. สถานะใบจอง */}
                       <td className="px-4 py-3 border-r border-gray-200">
                         <div className="flex flex-col gap-2">
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLOR[order.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                            {STATUS_LABEL[order.status] ?? order.status}
-                          </span>
-                          <div className="flex gap-1 flex-wrap">
-                            {/* แก้ไข — disabled after pickup */}
-                            {pickedUp ? (
-                              <span className="px-2 py-1 text-xs rounded border border-red-200 bg-red-50 text-red-400 cursor-not-allowed select-none">
-                                ✎ แก้ไขไม่ได้
-                              </span>
-                            ) : (
-                              <button
-                                onClick={() => router.push(`/booking2?edit=${order.order_no}`)}
-                                className="px-2 py-1 text-xs rounded bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border border-yellow-300 transition-colors"
-                              >
-                                ✎ แก้ไข
-                              </button>
-                            )}
+                          {/* แก้ไข — disabled after pickup */}
+                          {pickedUp ? (
+                            <span className="inline-block px-2 py-1 text-xs rounded border border-red-200 bg-red-50 text-red-400 cursor-not-allowed select-none w-fit">
+                              ✎ แก้ไขไม่ได้
+                            </span>
+                          ) : (
                             <button
-                              onClick={() => handleQueue(order)}
-                              className={`px-2 py-1 text-xs rounded border transition-colors ${order.status === 'queue' ? 'bg-blue-200 text-blue-900 border-blue-400 font-semibold' : 'bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-300'}`}
+                              onClick={() => router.push(`/booking2?edit=${order.order_no}`)}
+                              className="px-2 py-1 text-xs rounded bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border border-yellow-300 transition-colors w-fit"
                             >
-                              🚛 จองคิวรถ
+                              ✎ แก้ไข
                             </button>
-                            <button
-                              onClick={() => handleWaiting(order)}
-                              className={`px-2 py-1 text-xs rounded border transition-colors ${order.status === 'waiting' ? 'bg-orange-200 text-orange-900 border-orange-400 font-semibold' : 'bg-orange-50 hover:bg-orange-100 text-orange-800 border-orange-300'}`}
-                            >
-                              ⏳ รอพ่วง
-                            </button>
-                          </div>
+                          )}
+                          {/* รถ */}
+                          {order.vehicle_type && (
+                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold w-fit ${order.vehicle_type === 'จองรถ60000' ? 'bg-blue-100 text-blue-800' : 'bg-orange-100 text-orange-800'}`}>
+                              🚛 {order.vehicle_type === 'จองรถ60000' ? 'จองรถ 60,000' : 'รอพ่วง'}
+                            </span>
+                          )}
+                          {/* เบิกของ */}
+                          {order.source_type && (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 w-fit">
+                              📦 เบิกของ: {order.source_type}
+                            </span>
+                          )}
                         </div>
                       </td>
 

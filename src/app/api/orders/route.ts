@@ -36,6 +36,8 @@ export async function GET(request: Request) {
   await pool.query(`ALTER TABLE booking_orders ADD COLUMN IF NOT EXISTS pickup_status VARCHAR(20) NOT NULL DEFAULT 'pending'`).catch(() => {})
   await pool.query(`ALTER TABLE booking_orders ADD COLUMN IF NOT EXISTS payment_date  DATE`).catch(() => {})
   await pool.query(`ALTER TABLE booking_orders ADD COLUMN IF NOT EXISTS payment_bank  VARCHAR(100)`).catch(() => {})
+  await pool.query(`ALTER TABLE booking_orders ADD COLUMN IF NOT EXISTS source_type   VARCHAR(50)`).catch(() => {})
+  await pool.query(`ALTER TABLE booking_orders ADD COLUMN IF NOT EXISTS vehicle_type  VARCHAR(50)`).catch(() => {})
   const { searchParams } = new URL(request.url)
   const no = searchParams.get('no')
 
@@ -55,7 +57,7 @@ export async function GET(request: Request) {
 // ── POST — create new order ───────────────────────────────────────────────────
 
 export async function POST(request: Request) {
-  const { total_amount, quantities, branch_id } = await request.json()
+  const { total_amount, quantities, branch_id, source_type, vehicle_type } = await request.json()
   await pool.query(CREATE_TABLE)
   // Ensure branch_id column exists
   await pool.query(`ALTER TABLE booking_orders ADD COLUMN IF NOT EXISTS branch_id INT`).catch(() => {})
@@ -64,9 +66,9 @@ export async function POST(request: Request) {
 
   try {
     const { rows } = await pool.query(
-      `INSERT INTO booking_orders (order_no, total_amount, quantities, branch_id)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [order_no, total_amount, JSON.stringify(quantities), branch_id ?? null]
+      `INSERT INTO booking_orders (order_no, total_amount, quantities, branch_id, source_type, vehicle_type)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [order_no, total_amount, JSON.stringify(quantities), branch_id ?? null, source_type ?? null, vehicle_type ?? null]
     )
     return NextResponse.json(rows[0], { status: 201 })
   } catch (e: unknown) {
@@ -74,9 +76,9 @@ export async function POST(request: Request) {
     if ((e as { code?: string }).code === '23505') {
       order_no = order_no + String(new Date().getUTCSeconds()).padStart(2, '0')
       const { rows } = await pool.query(
-        `INSERT INTO booking_orders (order_no, total_amount, quantities, branch_id)
-         VALUES ($1, $2, $3, $4) RETURNING *`,
-        [order_no, total_amount, JSON.stringify(quantities), branch_id ?? null]
+        `INSERT INTO booking_orders (order_no, total_amount, quantities, branch_id, source_type, vehicle_type)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [order_no, total_amount, JSON.stringify(quantities), branch_id ?? null, source_type ?? null, vehicle_type ?? null]
       )
       return NextResponse.json(rows[0], { status: 201 })
     }
@@ -87,7 +89,7 @@ export async function POST(request: Request) {
 // ── PATCH — update order (status / payment / quantities) ─────────────────────
 
 export async function PATCH(request: Request) {
-  const { order_no, status, payment_status, payment_date, payment_bank, pickup_status, total_amount, quantities } = await request.json()
+  const { order_no, status, payment_status, payment_date, payment_bank, pickup_status, total_amount, quantities, source_type, vehicle_type } = await request.json()
 
   const sets: string[] = ['updated_at = NOW()']
   const vals: unknown[] = []
@@ -100,6 +102,8 @@ export async function PATCH(request: Request) {
   if (pickup_status  !== undefined) { sets.push(`pickup_status = $${i++}`);  vals.push(pickup_status) }
   if (total_amount   !== undefined) { sets.push(`total_amount = $${i++}`);   vals.push(total_amount) }
   if (quantities     !== undefined) { sets.push(`quantities = $${i++}`);     vals.push(JSON.stringify(quantities)) }
+  if (source_type    !== undefined) { sets.push(`source_type = $${i++}`);    vals.push(source_type) }
+  if (vehicle_type   !== undefined) { sets.push(`vehicle_type = $${i++}`);   vals.push(vehicle_type) }
 
   vals.push(order_no)
   const { rows } = await pool.query(

@@ -218,7 +218,7 @@ function Booking2Inner() {
         const res = await fetch('/api/orders', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order_no: editOrderNo, total_amount: totalToSave, quantities }),
+          body: JSON.stringify({ order_no: editOrderNo, total_amount: totalToSave, quantities, source_type: sourceType || null, vehicle_type: vehicleType || null }),
         })
         if (!res.ok) throw new Error()
         setPending({})
@@ -234,7 +234,7 @@ function Booking2Inner() {
         const res = await fetch('/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ total_amount: totalToSave, quantities, branch_id: branchId, source: 'catalog' }),
+          body: JSON.stringify({ total_amount: totalToSave, quantities, branch_id: branchId, source_type: sourceType || null, vehicle_type: vehicleType || null }),
         })
         if (!res.ok) throw new Error()
         setPending({})
