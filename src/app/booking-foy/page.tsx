@@ -13,6 +13,7 @@ interface StockItem {
   stock_qty: string
   warehouse_price: string
   retail_price: string
+  show_in_booking: boolean
 }
 
 interface ModelGroup {
@@ -126,10 +127,10 @@ export default function BookingFoyPage() {
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
-  // Group items by model_name, preserving insertion order
+  // Group items by model_name, only items with show_in_booking = true
   const modelGroups: ModelGroup[] = []
   const seen = new Map<string, ModelGroup>()
-  for (const item of items) {
+  for (const item of items.filter(it => it.show_in_booking)) {
     if (!seen.has(item.model_name)) {
       const g: ModelGroup = { name: item.model_name, items: [] }
       seen.set(item.model_name, g)

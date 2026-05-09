@@ -17,6 +17,7 @@ interface StockItem {
   last_booked_at: string | null
   warehouse_price: string
   retail_price: string
+  show_in_booking: boolean
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -26,9 +27,8 @@ function fmtQty(n: string | number): string {
   return isNaN(v) ? '0' : v.toLocaleString('th-TH', { maximumFractionDigits: 2 })
 }
 
-function fmtMoney(n: string | number): string {
-  const v = parseFloat(String(n))
-  return isNaN(v) ? '0.00' : v.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+function fmtMoney(n: number): string {
+  return n.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
 function fmtDate(iso: string | null): string {
@@ -45,24 +45,21 @@ function fmtDate(iso: string | null): string {
 const EMPTY_NEW = { model_name: '', color_code: '', color_name: '', warehouse_price: '', retail_price: '' }
 
 export default function StockPage() {
-  const [items, setItems]         = useState<StockItem[]>([])
-  const [loading, setLoading]     = useState(true)
+  const [items, setItems]               = useState<StockItem[]>([])
+  const [loading, setLoading]           = useState(true)
   const [modelOptions, setModelOptions] = useState<string[]>([])
-  const [newRow, setNewRow]       = useState(EMPTY_NEW)
-  const [addInputs, setAddInputs]   = useState<Record<number, string>>({})
-  const [bookInputs, setBookInputs] = useState<Record<number, string>>({})
-  const [rowEdits, setRowEdits] = useState<Record<number, Partial<StockItem>>>({})
-  const [busy, setBusy]         = useState<Record<number | string, boolean>>({})
-  const [msg, setMsg]           = useState<string | null>(null)
+  const [newRow, setNewRow]             = useState(EMPTY_NEW)
+  const [addInputs, setAddInputs]       = useState<Record<number, string>>({})
+  const [bookInputs, setBookInputs]     = useState<Record<number, string>>({})
+  const [rowEdits, setRowEdits]         = useState<Record<number, Partial<StockItem>>>({})
+  const [busy, setBusy]                 = useState<Record<number | string, boolean>>({})
+  const [msg, setMsg]                   = useState<string | null>(null)
 
   const load = useCallback(() => {
     setLoading(true)
     fetch('/api/stock')
       .then(r => r.json())
-      .then((data: StockItem[]) => {
-        setItems(data)
-        setLoading(false)
-      })
+      .then((data: StockItem[]) => { setItems(data); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
 
@@ -85,7 +82,7 @@ export default function StockPage() {
     setTimeout(() => setMsg(null), 2500)
   }
 
-  // ── Duplicate check ───────────────────────────────────────────────────────────
+  // ── Duplicate check ──────────────────────────────────────────────────────────
 
   const isDuplicate = (model_name: string, color_name: string, excludeId?: number) =>
     items.some(it =>
@@ -137,7 +134,7 @@ export default function StockPage() {
     }
   }
 
-  // ── Save info edits ───────────────────────────────────────────────────────────
+  // ── Save info edits ──────────────────────────────────────────────────────────
 
   const handleSaveInfo = async (id: number) => {
     const edits = rowEdits[id]
@@ -169,6 +166,17 @@ export default function StockPage() {
     }
   }
 
+  // ── Toggle show_in_booking ───────────────────────────────────────────────────
+
+  const handleToggleBooking = useCallback(async (id: number, newVal: boolean) => {
+    setItems(prev => prev.map(it => it.id === id ? { ...it, show_in_booking: newVal } : it))
+    await fetch('/api/stock', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, show_in_booking: newVal }),
+    })
+  }, [])
+
   const setEdit = (id: number, key: string, val: string) => {
     setRowEdits(p => ({ ...p, [id]: { ...p[id], [key]: val } }))
   }
@@ -176,7 +184,7 @@ export default function StockPage() {
   const editVal = (item: StockItem, key: keyof StockItem) =>
     rowEdits[item.id]?.[key] !== undefined ? String(rowEdits[item.id][key]) : String(item[key])
 
-  // ── Delete ────────────────────────────────────────────────────────────────────
+  // ── Delete ───────────────────────────────────────────────────────────────────
 
   const handleDelete = async (id: number, name: string) => {
     if (!confirm(`ลบ "${name}" ใช่หรือไม่?`)) return
@@ -188,7 +196,7 @@ export default function StockPage() {
     load()
   }
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // ── Render ───────────────────────────────────────────────────────────────────
 
   const inputCls = (pending: boolean) =>
     `w-full px-1.5 py-1 text-xs rounded border focus:outline-none focus:ring-1 focus:ring-green-400 ${pending ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200 bg-white'}`
@@ -233,6 +241,9 @@ export default function StockPage() {
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-center">จำนวนจอง</th>
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-right">ราคาโกดัง ✎</th>
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-right">ราคาลูกค้า ✎</th>
+                  <th className="px-3 py-2 border-r border-yellow-400 whitespace-nowrap text-right bg-yellow-500 text-gray-900">ราคา+9%</th>
+                  <th className="px-3 py-2 border-r border-red-500 whitespace-nowrap text-right bg-red-600">ราคา+9%+7%</th>
+                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-center">ใบจองฝอย</th>
                   <th className="px-3 py-2 whitespace-nowrap text-center">จัดการ</th>
                 </tr>
               </thead>
@@ -275,6 +286,10 @@ export default function StockPage() {
                           onChange={e => setNewRow(p => ({ ...p, retail_price: e.target.value }))}
                           className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 text-right" />
                       </td>
+                      {/* ราคา+9%, ราคา+9%+7%, ใบจอง — empty in add row */}
+                      <td className="border-r border-gray-200 bg-yellow-50" />
+                      <td className="border-r border-gray-200 bg-red-50" />
+                      <td className="border-r border-gray-200" />
                       <td className="px-2 py-1.5 text-center">
                         <button onClick={handleAddRow} disabled={!!busy.new || addDup}
                           className="px-3 py-1 text-xs rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
@@ -288,14 +303,18 @@ export default function StockPage() {
                 {/* ── Data rows ── */}
                 {items.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="text-center py-10 text-gray-400">ยังไม่มีข้อมูล กรอกแถวด้านบนเพื่อเพิ่มรุ่น</td>
+                    <td colSpan={12} className="text-center py-10 text-gray-400">ยังไม่มีข้อมูล กรอกแถวด้านบนเพื่อเพิ่มรุ่น</td>
                   </tr>
                 ) : items.map((item, i) => {
                   const hasPending = !!rowEdits[item.id] && Object.keys(rowEdits[item.id]!).length > 0
-                  const stock = parseFloat(item.stock_qty)
-                  const editModel = String(rowEdits[item.id]?.model_name ?? item.model_name)
-                  const editColor = String(rowEdits[item.id]?.color_name ?? item.color_name)
-                  const editDup = hasPending && isDuplicate(editModel, editColor, item.id)
+                  const stock      = parseFloat(item.stock_qty)
+                  const editModel  = String(rowEdits[item.id]?.model_name ?? item.model_name)
+                  const editColor  = String(rowEdits[item.id]?.color_name ?? item.color_name)
+                  const editDup    = hasPending && isDuplicate(editModel, editColor, item.id)
+
+                  const wPrice   = parseFloat(item.warehouse_price) || 0
+                  const price9   = wPrice > 0 ? wPrice * 1.09 : null
+                  const price9p7 = wPrice > 0 ? wPrice * 1.09 * 1.07 : null
 
                   return (
                     <tr key={item.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
@@ -394,21 +413,38 @@ export default function StockPage() {
                           className={`${inputCls(!!rowEdits[item.id]?.retail_price)} text-right`} />
                       </td>
 
-                      {/* Actions */}
-                      <td className="px-2 py-1.5 text-center">
-                        <div className="flex flex-col gap-1">
-                          {hasPending && (
-                            <button onClick={() => handleSaveInfo(item.id)}
-                              disabled={!!busy[`info-${item.id}`] || editDup}
-                              className={`px-2 py-1 text-xs rounded font-semibold transition-colors disabled:opacity-50 whitespace-nowrap ${editDup ? 'bg-red-100 text-red-700 border border-red-300 cursor-not-allowed' : 'bg-yellow-400 hover:bg-yellow-300 text-green-900'}`}>
-                              {editDup ? '⛔ ชื่อซ้ำ' : '💾 บันทึก'}
-                            </button>
-                          )}
-                          <button onClick={() => handleDelete(item.id, item.model_name)}
-                            className="px-2 py-1 text-xs rounded bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition-colors">
-                            ลบ
+                      {/* 9. ราคา+9% */}
+                      <td className="px-3 py-1.5 border-r border-yellow-200 bg-yellow-50 text-right text-gray-700 whitespace-nowrap font-medium">
+                        {price9 !== null ? fmtMoney(price9) : '-'}
+                      </td>
+
+                      {/* 10. ราคา+9%+7% */}
+                      <td className="px-3 py-1.5 border-r border-red-200 bg-red-50 text-right text-red-700 whitespace-nowrap font-medium">
+                        <div>{price9p7 !== null ? fmtMoney(price9p7) : '-'}</div>
+                        {hasPending && (
+                          <button onClick={() => handleSaveInfo(item.id)}
+                            disabled={!!busy[`info-${item.id}`] || editDup}
+                            className={`mt-0.5 px-2 py-0.5 text-[10px] rounded font-semibold transition-colors disabled:opacity-50 whitespace-nowrap ${editDup ? 'bg-red-100 text-red-700 border border-red-300 cursor-not-allowed' : 'bg-yellow-400 hover:bg-yellow-300 text-green-900'}`}>
+                            {editDup ? '⛔ ชื่อซ้ำ' : '💾 บันทึก'}
                           </button>
-                        </div>
+                        )}
+                      </td>
+
+                      {/* 11. ใบจองฝอย toggle */}
+                      <td className="px-2 py-1.5 border-r border-gray-200 text-center whitespace-nowrap">
+                        <button
+                          onClick={() => handleToggleBooking(item.id, !item.show_in_booking)}
+                          className={`px-2 py-0.5 text-[11px] rounded-full font-semibold transition-colors ${item.show_in_booking ? 'bg-green-500 hover:bg-green-400 text-white' : 'bg-red-500 hover:bg-red-400 text-white'}`}>
+                          {item.show_in_booking ? '● โชว์' : '● ซ่อน'}
+                        </button>
+                      </td>
+
+                      {/* 12. จัดการ */}
+                      <td className="px-2 py-1.5 text-center">
+                        <button onClick={() => handleDelete(item.id, item.model_name)}
+                          className="px-2 py-1 text-xs rounded bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition-colors">
+                          ลบ
+                        </button>
                       </td>
 
                     </tr>

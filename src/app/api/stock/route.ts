@@ -94,6 +94,11 @@ async function migrateGroup(modelTarget: string, groupSource: string) {
 export async function GET() {
   await pool.query(CREATE_TABLE)
   await pool.query(CREATE_LOG_TABLE)
+  // Add show_in_booking column to existing tables (idempotent)
+  await pool.query(`
+    ALTER TABLE paper_stock
+    ADD COLUMN IF NOT EXISTS show_in_booking BOOLEAN NOT NULL DEFAULT true
+  `)
   await migrateGroup('2 มิล พิเศษ A', 'รุ่นสีพิเศษ A')
   await migrateGroup('2 มิล พิเศษ B', 'รุ่นสีพิเศษ B')
   await migrateGroup('2 มิล สีอ่อน', 'รุ่นสีอ่อน')
@@ -160,16 +165,17 @@ export async function PATCH(request: Request) {
   }
 
   // Update info fields
-  const { model_name, color_code, color_name, warehouse_price, retail_price } = body
+  const { model_name, color_code, color_name, warehouse_price, retail_price, show_in_booking } = body
   const sets: string[] = []
   const vals: unknown[] = []
   let i = 1
 
-  if (model_name       !== undefined) { sets.push(`model_name = $${i++}`);       vals.push(model_name) }
-  if (color_code       !== undefined) { sets.push(`color_code = $${i++}`);       vals.push(color_code) }
-  if (color_name       !== undefined) { sets.push(`color_name = $${i++}`);       vals.push(color_name) }
-  if (warehouse_price  !== undefined) { sets.push(`warehouse_price = $${i++}`);  vals.push(warehouse_price) }
-  if (retail_price     !== undefined) { sets.push(`retail_price = $${i++}`);     vals.push(retail_price) }
+  if (model_name        !== undefined) { sets.push(`model_name = $${i++}`);        vals.push(model_name) }
+  if (color_code        !== undefined) { sets.push(`color_code = $${i++}`);        vals.push(color_code) }
+  if (color_name        !== undefined) { sets.push(`color_name = $${i++}`);        vals.push(color_name) }
+  if (warehouse_price   !== undefined) { sets.push(`warehouse_price = $${i++}`);   vals.push(warehouse_price) }
+  if (retail_price      !== undefined) { sets.push(`retail_price = $${i++}`);      vals.push(retail_price) }
+  if (show_in_booking   !== undefined) { sets.push(`show_in_booking = $${i++}`);   vals.push(show_in_booking) }
 
   if (sets.length === 0) return NextResponse.json({ error: 'nothing to update' }, { status: 400 })
 
