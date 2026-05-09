@@ -128,6 +128,16 @@ export default function Home() {
     })
   }, [])
 
+  const handleDelete = useCallback(async (id: number, name: string) => {
+    if (!confirm(`ลบ "${name}" ใช่หรือไม่?`)) return
+    setProducts(prev => prev.filter(p => p.id !== id))
+    await fetch('/api/catalog', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+  }, [])
+
   const handleToggleGroupBooking = useCallback(async (groupName: string, newVal: boolean) => {
     setProducts(prev => prev.map(p => p.group_name === groupName ? { ...p, show_in_booking: newVal } : p))
     await fetch('/api/catalog', {
@@ -214,6 +224,7 @@ export default function Home() {
                   <th className="px-3 py-2 border-r border-yellow-400 whitespace-nowrap text-right bg-yellow-500 text-gray-900">ราคา+9%</th>
                   <th className="px-3 py-2 border-r border-red-500 whitespace-nowrap text-right bg-red-600">ราคา+9%+7%</th>
                   <th className="px-3 py-2 whitespace-nowrap text-center bg-green-900">ใบจองสินค้า</th>
+                  <th className="px-3 py-2 whitespace-nowrap text-center bg-green-900">ลบ</th>
                 </tr>
               </thead>
               <tbody>
@@ -223,7 +234,7 @@ export default function Home() {
                     const allOn = groupProducts.length > 0 && groupProducts.every(p => p.show_in_booking)
                     return (
                       <tr key={`g-${ei}`} className="bg-green-800 text-white">
-                        <td colSpan={8} className="px-3 py-1.5 font-bold text-sm tracking-wide">
+                        <td colSpan={9} className="px-3 py-1.5 font-bold text-sm tracking-wide">
                           {entry.name}
                         </td>
                         <td className="px-2 py-1 text-center">
@@ -344,6 +355,15 @@ export default function Home() {
                           className={`px-2 py-0.5 text-[11px] rounded-full font-semibold transition-colors ${p.show_in_booking ? 'bg-green-500 hover:bg-green-400 text-white' : 'bg-red-500 hover:bg-red-400 text-white'}`}
                         >
                           {p.show_in_booking ? '● โชว์' : '● ซ่อน'}
+                        </button>
+                      </td>
+
+                      {/* 10. ลบ */}
+                      <td className="px-2 py-1 text-center whitespace-nowrap">
+                        <button
+                          onClick={() => handleDelete(p.id, p.product_name)}
+                          className="px-2 py-0.5 text-xs rounded bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition-colors">
+                          ลบ
                         </button>
                       </td>
 
