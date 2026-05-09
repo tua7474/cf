@@ -129,6 +129,7 @@ export default function Booking2Page() {
   const [loading, setLoading]       = useState(true)
   const [saving, setSaving]         = useState(false)
   const [saveMsg, setSaveMsg]       = useState<string | null>(null)
+  const [resetKey, setResetKey]     = useState(0)
   const [pending, setPending]       = useState<Record<number, number>>({})
   const [zoom, setZoom]             = useState(1)
   const [sourceType, setSourceType]   = useState<'โกดัง' | 'หน้าร้าน' | ''>('')
@@ -203,6 +204,7 @@ export default function Booking2Page() {
       })
       if (!res.ok) throw new Error()
       setPending({})
+      setResetKey(k => k + 1)
       localStorage.removeItem(DRAFT_KEY)
       setSaveMsg(`บันทึกสำเร็จ ${pendingCount} รายการ`)
     } catch {
@@ -590,7 +592,7 @@ export default function Booking2Page() {
                                   inputMode="numeric"
                                   pattern="[0-9]*"
                                   defaultValue={qty || ''}
-                                  key={`qty-${p.id}`}
+                                  key={`qty-${p.id}-${resetKey}`}
                                   onChange={e => handleQtyChange(p.id, e.target.value)}
                                   className={`w-full px-1 py-px text-[10px] text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-inset focus:ring-green-500 ${hasPending ? 'font-semibold' : ''}`}
                                 />
