@@ -186,6 +186,22 @@ function Booking2Inner() {
       .catch(() => setLoading(false))
   }, [])
 
+  // Auto-reset vehicle if total drops below 60,000
+  useEffect(() => {
+    if (vehicleType !== 'จองรถ60000') return
+    let total = 0
+    if (manualTotal !== '') {
+      total = parseFloat(manualTotal) || 0
+    } else {
+      for (const [idStr, qty] of Object.entries(pending)) {
+        const p = products.find(p => p.id === Number(idStr))
+        if (!p || qty <= 0) continue
+        total += (parseFloat(p.price ?? '0') || 0) * qty
+      }
+    }
+    if (total < 60000) setVehicleType('')
+  }, [pending, manualTotal, vehicleType, products])
+
   const handleQtyChange = useCallback((id: number, val: string) => {
     const qty = parseInt(val, 10) || 0
     setPending(prev => {
