@@ -262,7 +262,7 @@ export default function OrdersPage() {
                             />
                             <input
                               type="text"
-                              placeholder="ธนาคาร / วิธีชำระ"
+                              placeholder="ธนาคาร / ยอดเงิน"
                               value={payBank}
                               onChange={e => setPayBank(e.target.value)}
                               className="w-full px-2 py-1 text-xs rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-green-400"
