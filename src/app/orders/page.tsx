@@ -13,6 +13,9 @@ interface BookingOrder {
   quantities: Record<string, number>
   status: string
   payment_status: string
+  payment_date: string | null
+  payment_bank: string | null
+  pickup_status: string
   created_at: string
   updated_at: string
 }
@@ -49,6 +52,13 @@ function fmtDate(iso: string): string {
   })
 }
 
+function fmtPayDate(d: string | null): string {
+  if (!d) return ''
+  return new Date(d).toLocaleDateString('th-TH', {
+    day: '2-digit', month: '2-digit', year: '2-digit',
+  })
+}
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function OrdersPage() {
@@ -56,6 +66,11 @@ export default function OrdersPage() {
   const [orders, setOrders]   = useState<BookingOrder[]>([])
   const [loading, setLoading] = useState(true)
   const [msg, setMsg]         = useState<string | null>(null)
+
+  // Payment form state
+  const [payingOrderNo, setPayingOrderNo] = useState<string | null>(null)
+  const [payDate, setPayDate] = useState('')
+  const [payBank, setPayBank] = useState('')
 
   const load = useCallback(() => {
     setLoading(true)
@@ -90,9 +105,21 @@ export default function OrdersPage() {
     await patch(order.order_no, { status: 'waiting' })
   }
 
-  const handlePaid = async (order: BookingOrder) => {
-    if (!confirm(`ยืนยันการชำระเงิน ใบจอง ${order.order_no} ใช่หรือไม่?`)) return
-    await patch(order.order_no, { payment_status: 'paid' })
+  const handlePickup = async (order: BookingOrder) => {
+    if (!confirm(`ยืนยัน "ขึ้นของแล้ว" สำหรับใบจอง ${order.order_no}?`)) return
+    await patch(order.order_no, { pickup_status: 'picked_up' })
+  }
+
+  const handlePayment = async (order_no: string) => {
+    if (!payDate || !payBank.trim()) return
+    await patch(order_no, {
+      payment_status: 'paid',
+      payment_date:   payDate,
+      payment_bank:   payBank.trim(),
+    })
+    setPayingOrderNo(null)
+    setPayDate('')
+    setPayBank('')
   }
 
   return (
@@ -129,80 +156,146 @@ export default function OrdersPage() {
                   <th className="px-4 py-2 whitespace-nowrap border-r border-green-600 text-right">ยอดเงินรวม (฿)</th>
                   <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">วันเวลาอัพเดทล่าสุด</th>
                   <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">สถานะ</th>
+                  <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">ขึ้นของ</th>
                   <th className="px-4 py-2 whitespace-nowrap">สถานะการชำระเงิน</th>
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order, i) => (
-                  <tr key={order.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                {orders.map((order, i) => {
+                  const pickedUp = order.pickup_status === 'picked_up'
+                  const paid     = order.payment_status === 'paid'
+                  const isPaying = payingOrderNo === order.order_no
 
-                    {/* 1. เลขที่ใบจอง */}
-                    <td className="px-4 py-3 border-r border-gray-200 font-mono font-bold text-green-800 text-base">
-                      {order.order_no}
-                    </td>
+                  return (
+                    <tr key={order.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
 
-                    {/* 2. ยอดเงินรวม */}
-                    <td className="px-4 py-3 border-r border-gray-200 text-right font-semibold">
-                      {fmtMoney(order.total_amount)}
-                    </td>
+                      {/* 1. เลขที่ใบจอง */}
+                      <td className="px-4 py-3 border-r border-gray-200 font-mono font-bold text-green-800 text-base">
+                        {order.order_no}
+                      </td>
 
-                    {/* 3. วันเวลาอัพเดท */}
-                    <td className="px-4 py-3 border-r border-gray-200 text-gray-600 whitespace-nowrap text-xs">
-                      {fmtDate(order.updated_at)}
-                    </td>
+                      {/* 2. ยอดเงินรวม */}
+                      <td className="px-4 py-3 border-r border-gray-200 text-right font-semibold">
+                        {fmtMoney(order.total_amount)}
+                      </td>
 
-                    {/* 4. สถานะ + ปุ่มดำเนินการ */}
-                    <td className="px-4 py-3 border-r border-gray-200">
-                      <div className="flex flex-col gap-2">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLOR[order.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                          {STATUS_LABEL[order.status] ?? order.status}
-                        </span>
-                        <div className="flex gap-1 flex-wrap">
-                          <button
-                            onClick={() => router.push(`/booking2?edit=${order.order_no}`)}
-                            className="px-2 py-1 text-xs rounded bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border border-yellow-300 transition-colors"
-                          >
-                            ✎ แก้ไข
-                          </button>
-                          <button
-                            onClick={() => handleQueue(order)}
-                            className={`px-2 py-1 text-xs rounded border transition-colors ${order.status === 'queue' ? 'bg-blue-200 text-blue-900 border-blue-400 font-semibold' : 'bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-300'}`}
-                          >
-                            🚛 จองคิวรถ
-                          </button>
-                          <button
-                            onClick={() => handleWaiting(order)}
-                            className={`px-2 py-1 text-xs rounded border transition-colors ${order.status === 'waiting' ? 'bg-orange-200 text-orange-900 border-orange-400 font-semibold' : 'bg-orange-50 hover:bg-orange-100 text-orange-800 border-orange-300'}`}
-                          >
-                            ⏳ รอพ่วง
-                          </button>
-                        </div>
-                      </div>
-                    </td>
+                      {/* 3. วันเวลาอัพเดท */}
+                      <td className="px-4 py-3 border-r border-gray-200 text-gray-600 whitespace-nowrap text-xs">
+                        {fmtDate(order.updated_at)}
+                      </td>
 
-                    {/* 5. สถานะการชำระเงิน */}
-                    <td className="px-4 py-3">
-                      {order.payment_status === 'paid' ? (
-                        <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                          ✅ ชำระแล้ว
-                        </span>
-                      ) : (
-                        <div className="flex flex-col gap-1.5">
-                          <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-200">
-                            รอการชำระเงิน
+                      {/* 4. สถานะ + ปุ่มดำเนินการ */}
+                      <td className="px-4 py-3 border-r border-gray-200">
+                        <div className="flex flex-col gap-2">
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLOR[order.status] ?? 'bg-gray-100 text-gray-600'}`}>
+                            {STATUS_LABEL[order.status] ?? order.status}
                           </span>
-                          <button
-                            onClick={() => handlePaid(order)}
-                            className="px-2 py-1 text-xs rounded bg-green-50 hover:bg-green-100 text-green-800 border border-green-300 transition-colors"
-                          >
-                            ✓ ชำระแล้ว
-                          </button>
+                          <div className="flex gap-1 flex-wrap">
+                            {/* แก้ไข — disabled after pickup */}
+                            {pickedUp ? (
+                              <span className="px-2 py-1 text-xs rounded border border-red-200 bg-red-50 text-red-400 cursor-not-allowed select-none">
+                                ✎ แก้ไขไม่ได้
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => router.push(`/booking2?edit=${order.order_no}`)}
+                                className="px-2 py-1 text-xs rounded bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border border-yellow-300 transition-colors"
+                              >
+                                ✎ แก้ไข
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleQueue(order)}
+                              className={`px-2 py-1 text-xs rounded border transition-colors ${order.status === 'queue' ? 'bg-blue-200 text-blue-900 border-blue-400 font-semibold' : 'bg-blue-50 hover:bg-blue-100 text-blue-800 border-blue-300'}`}
+                            >
+                              🚛 จองคิวรถ
+                            </button>
+                            <button
+                              onClick={() => handleWaiting(order)}
+                              className={`px-2 py-1 text-xs rounded border transition-colors ${order.status === 'waiting' ? 'bg-orange-200 text-orange-900 border-orange-400 font-semibold' : 'bg-orange-50 hover:bg-orange-100 text-orange-800 border-orange-300'}`}
+                            >
+                              ⏳ รอพ่วง
+                            </button>
+                          </div>
                         </div>
-                      )}
-                    </td>
+                      </td>
 
-                  </tr>
-                ))}
+                      {/* 5. ขึ้นของ */}
+                      <td className="px-4 py-3 border-r border-gray-200 text-center">
+                        {pickedUp ? (
+                          <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                            ✅ ขึ้นของแล้ว
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handlePickup(order)}
+                            className="px-3 py-1 text-xs rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-300 transition-colors font-medium"
+                          >
+                            📦 ขึ้นของ
+                          </button>
+                        )}
+                      </td>
+
+                      {/* 6. สถานะการชำระเงิน */}
+                      <td className="px-4 py-3">
+                        {paid ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                              ✅ ชำระแล้ว
+                            </span>
+                            {order.payment_date && (
+                              <span className="text-[11px] text-gray-500">{fmtPayDate(order.payment_date)}</span>
+                            )}
+                            {order.payment_bank && (
+                              <span className="text-[11px] text-gray-500">{order.payment_bank}</span>
+                            )}
+                          </div>
+                        ) : isPaying ? (
+                          /* ── Payment form ── */
+                          <div className="flex flex-col gap-1.5 min-w-[180px]">
+                            <div className="text-[11px] text-gray-500 font-semibold">บันทึกการชำระเงิน</div>
+                            <input
+                              type="date"
+                              value={payDate}
+                              onChange={e => setPayDate(e.target.value)}
+                              className="w-full px-2 py-1 text-xs rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-green-400"
+                            />
+                            <input
+                              type="text"
+                              placeholder="ธนาคาร / วิธีชำระ"
+                              value={payBank}
+                              onChange={e => setPayBank(e.target.value)}
+                              className="w-full px-2 py-1 text-xs rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-green-400"
+                            />
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() => handlePayment(order.order_no)}
+                                disabled={!payDate || !payBank.trim()}
+                                className="flex-1 px-2 py-1 text-xs rounded bg-green-600 hover:bg-green-700 text-white font-semibold transition-colors disabled:opacity-40"
+                              >
+                                ✓ ยืนยัน
+                              </button>
+                              <button
+                                onClick={() => { setPayingOrderNo(null); setPayDate(''); setPayBank('') }}
+                                className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-300 transition-colors"
+                              >
+                                ยกเลิก
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setPayingOrderNo(order.order_no)}
+                            className="px-2 py-1 text-xs rounded bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition-colors"
+                          >
+                            รอการชำระเงิน
+                          </button>
+                        )}
+                      </td>
+
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

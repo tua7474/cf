@@ -33,6 +33,9 @@ function genOrderNo(): string {
 
 export async function GET(request: Request) {
   await pool.query(CREATE_TABLE)
+  await pool.query(`ALTER TABLE booking_orders ADD COLUMN IF NOT EXISTS pickup_status VARCHAR(20) NOT NULL DEFAULT 'pending'`).catch(() => {})
+  await pool.query(`ALTER TABLE booking_orders ADD COLUMN IF NOT EXISTS payment_date  DATE`).catch(() => {})
+  await pool.query(`ALTER TABLE booking_orders ADD COLUMN IF NOT EXISTS payment_bank  VARCHAR(100)`).catch(() => {})
   const { searchParams } = new URL(request.url)
   const no = searchParams.get('no')
 
@@ -84,7 +87,7 @@ export async function POST(request: Request) {
 // ── PATCH — update order (status / payment / quantities) ─────────────────────
 
 export async function PATCH(request: Request) {
-  const { order_no, status, payment_status, total_amount, quantities } = await request.json()
+  const { order_no, status, payment_status, payment_date, payment_bank, pickup_status, total_amount, quantities } = await request.json()
 
   const sets: string[] = ['updated_at = NOW()']
   const vals: unknown[] = []
@@ -92,6 +95,9 @@ export async function PATCH(request: Request) {
 
   if (status         !== undefined) { sets.push(`status = $${i++}`);         vals.push(status) }
   if (payment_status !== undefined) { sets.push(`payment_status = $${i++}`); vals.push(payment_status) }
+  if (payment_date   !== undefined) { sets.push(`payment_date = $${i++}`);   vals.push(payment_date) }
+  if (payment_bank   !== undefined) { sets.push(`payment_bank = $${i++}`);   vals.push(payment_bank) }
+  if (pickup_status  !== undefined) { sets.push(`pickup_status = $${i++}`);  vals.push(pickup_status) }
   if (total_amount   !== undefined) { sets.push(`total_amount = $${i++}`);   vals.push(total_amount) }
   if (quantities     !== undefined) { sets.push(`quantities = $${i++}`);     vals.push(JSON.stringify(quantities)) }
 
