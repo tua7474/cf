@@ -51,6 +51,7 @@ export default function Home() {
   const [rowEdits, setRowEdits] = useState<Record<number, { group_name?: string; product_name?: string; price?: string }>>({})
   const [busy, setBusy]   = useState<Record<string, boolean>>({})
   const [msg, setMsg]     = useState<string | null>(null)
+  const [newRow, setNewRow] = useState({ group_name: '', product_name: '', price: '' })
 
   const load = useCallback(() => {
     setLoading(true)
@@ -127,6 +128,23 @@ export default function Home() {
       body: JSON.stringify({ id, show_in_booking: newVal }),
     })
   }, [])
+
+  const handleAddProduct = async () => {
+    if (!newRow.group_name.trim() || !newRow.product_name.trim()) return
+    setBusy(b => ({ ...b, new: true }))
+    const res = await fetch('/api/catalog', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        group_name: newRow.group_name.trim(),
+        product_name: newRow.product_name.trim(),
+        price: newRow.price ? parseFloat(newRow.price) : null,
+      }),
+    })
+    setBusy(b => ({ ...b, new: false }))
+    if (res.ok) { setNewRow({ group_name: '', product_name: '', price: '' }); load(); showMsg('เพิ่มสินค้าสำเร็จ') }
+    else showMsg('❌ เพิ่มสินค้าไม่สำเร็จ')
+  }
 
   const handleDelete = useCallback(async (id: number, name: string) => {
     if (!confirm(`ลบ "${name}" ใช่หรือไม่?`)) return
@@ -224,10 +242,44 @@ export default function Home() {
                   <th className="px-3 py-2 border-r border-yellow-400 whitespace-nowrap text-right bg-yellow-500 text-gray-900">ราคา+9%</th>
                   <th className="px-3 py-2 border-r border-red-500 whitespace-nowrap text-right bg-red-600">ราคา+9%+7%</th>
                   <th className="px-3 py-2 whitespace-nowrap text-center bg-green-900">ใบจองสินค้า</th>
-                  <th className="px-3 py-2 whitespace-nowrap text-center bg-green-900">ลบ</th>
+                  <th className="px-3 py-2 whitespace-nowrap text-center bg-green-900">จัดการ</th>
                 </tr>
               </thead>
               <tbody>
+
+                {/* ── Add new product row ── */}
+                <tr className="bg-blue-50 border-b-2 border-blue-300">
+                  <td className="px-2 py-1.5 border-r border-gray-200">
+                    <input type="text" placeholder="หมวดสินค้า" value={newRow.group_name}
+                      onChange={e => setNewRow(p => ({ ...p, group_name: e.target.value }))}
+                      className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                  </td>
+                  <td className="px-2 py-1.5 border-r border-gray-200">
+                    <input type="text" placeholder="ชื่อสินค้า" value={newRow.product_name}
+                      onChange={e => setNewRow(p => ({ ...p, product_name: e.target.value }))}
+                      className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                  </td>
+                  {/* สต็อค, เพิ่มสต็อค, จำนวนจอง — empty */}
+                  <td className="border-r border-gray-200" />
+                  <td className="border-r border-gray-200" />
+                  <td className="border-r border-gray-200" />
+                  <td className="px-2 py-1.5 border-r border-orange-200 bg-orange-50">
+                    <input type="text" inputMode="numeric" placeholder="ราคาโกดัง" value={newRow.price}
+                      onChange={e => setNewRow(p => ({ ...p, price: e.target.value }))}
+                      className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400 text-right" />
+                  </td>
+                  {/* ราคา+9%, ราคา+9%+7%, ใบจอง — empty */}
+                  <td className="border-r border-gray-200 bg-yellow-50" />
+                  <td className="border-r border-gray-200 bg-red-50" />
+                  <td className="border-r border-gray-200" />
+                  <td className="px-2 py-1.5 text-center">
+                    <button onClick={handleAddProduct} disabled={!!busy.new || !newRow.group_name.trim() || !newRow.product_name.trim()}
+                      className="px-3 py-1 text-xs rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
+                      + เพิ่มสินค้า
+                    </button>
+                  </td>
+                </tr>
+
                 {entries.map((entry, ei) => {
                   if (entry.type === 'group') {
                     const groupProducts = products.filter(p => p.group_name === entry.name)
