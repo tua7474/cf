@@ -161,17 +161,19 @@ function Booking2Inner() {
     } catch { /* ignore */ }
   }, [editOrderNo])
 
-  // When editing — load existing order quantities
+  // When editing — load existing order quantities + selections
   useEffect(() => {
     if (!editOrderNo) return
     fetch(`/api/orders?no=${editOrderNo}`)
       .then(r => r.json())
-      .then((order: { quantities: Record<string, number>; total_amount: string } | null) => {
+      .then((order: { quantities: Record<string, number>; total_amount: string; source_type: string | null; vehicle_type: string | null } | null) => {
         if (!order) return
         const qty: Record<number, number> = {}
         for (const [k, v] of Object.entries(order.quantities)) qty[Number(k)] = v
         setPending(qty)
         setManualTotal(parseFloat(order.total_amount).toFixed(2))
+        if (order.source_type) setSourceType(order.source_type as 'โกดัง' | 'หน้าร้าน')
+        if (order.vehicle_type) setVehicleType(order.vehicle_type as 'จองรถ60000' | 'รอพ่วง')
       })
       .catch(() => {})
   }, [editOrderNo])
