@@ -55,6 +55,27 @@ export async function GET(request: Request) {
   return NextResponse.json(rows)
 }
 
+// ── Deduct stock from products_catalog for each booked quantity ───────────────
+
+async function deductStock(quantities: Record<string, number>) {
+  for (const [idStr, qty] of Object.entries(quantities)) {
+    if (!qty || qty <= 0) continue
+    const id = Number(idStr)
+    await pool.query(`
+      UPDATE products_catalog
+      SET quantity        = COALESCE(quantity, 0) - $1,
+          last_booked_qty = $1,
+          last_booked_at  = NOW(),
+          updated_at      = NOW()
+      WHERE id = $2
+    `, [qty, id])
+    await pool.query(
+      `INSERT INTO catalog_stock_log (product_id, action, qty) VALUES ($1, 'book', $2)`,
+      [id, qty]
+    )
+  }
+}
+
 // ── POST — create new order ───────────────────────────────────────────────────
 
 export async function POST(request: Request) {
@@ -71,6 +92,7 @@ export async function POST(request: Request) {
        VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
       [order_no, total_amount, JSON.stringify(quantities), branch_id ?? null, source_type ?? null, vehicle_type ?? null, branch_name ?? null]
     )
+    await deductStock(quantities ?? {})
     return NextResponse.json(rows[0], { status: 201 })
   } catch (e: unknown) {
     // Collision: same minute — append seconds
@@ -81,6 +103,7 @@ export async function POST(request: Request) {
          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
         [order_no, total_amount, JSON.stringify(quantities), branch_id ?? null, source_type ?? null, vehicle_type ?? null, branch_name ?? null]
       )
+      await deductStock(quantities ?? {})
       return NextResponse.json(rows[0], { status: 201 })
     }
     throw e
