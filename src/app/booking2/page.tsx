@@ -48,7 +48,7 @@ const SUBGROUP_COLOR: Record<string, SubgroupColor> = {
   '4-5': 'gray',   '4-6': 'gray',   '4-7': 'orange', '4-8': 'orange',
   '4-9': 'orange', '4-10': 'orange','4-11': 'orange', '4-12': 'orange',
   '4-13': 'light', '4-14': 'light', '4-15': 'gray',  '4-16': 'gray',
-  '4-17': 'light', '4-18': 'gray',
+  '4-17': 'light', '4-18': 'teal',
   // S5 กล่อง Thank You
   '5-1': 'light',  '5-2': 'gray',   '5-3': 'gray',   '5-4': 'gray',
   '5-5': 'orange',

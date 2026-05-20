@@ -85,9 +85,13 @@ export async function GET() {
        ORDER BY group_name, id`,
       [groupNames]
     )
-    return NextResponse.json(
-      rows.map(p => ({ ...p, ...GROUP_MAP[p.group_name] }))
+    const enriched = rows.map(p => ({ ...p, ...GROUP_MAP[p.group_name] }))
+    enriched.sort((a, b) =>
+      a.section_order - b.section_order ||
+      a.subgroup_order - b.subgroup_order ||
+      a.id - b.id
     )
+    return NextResponse.json(enriched)
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
