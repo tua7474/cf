@@ -110,10 +110,49 @@ export async function POST(request: Request) {
   }
 }
 
+// ── Adjust stock delta when editing an order ──────────────────────────────────
+// delta > 0 → deduct more, delta < 0 → return to stock
+
+async function adjustStockDelta(
+  oldQty: Record<string, number>,
+  newQty: Record<string, number>
+) {
+  const allIds = new Set([...Object.keys(oldQty), ...Object.keys(newQty)])
+  for (const idStr of allIds) {
+    const old = oldQty[idStr] ?? 0
+    const next = newQty[idStr] ?? 0
+    const delta = next - old
+    if (delta === 0) continue
+    const id = Number(idStr)
+    await pool.query(`
+      UPDATE products_catalog
+      SET quantity        = COALESCE(quantity, 0) - $1,
+          last_booked_qty = $2,
+          last_booked_at  = NOW(),
+          updated_at      = NOW()
+      WHERE id = $3
+    `, [delta, next, id])
+    const action = delta > 0 ? 'book' : 'add'
+    await pool.query(
+      `INSERT INTO catalog_stock_log (product_id, action, qty) VALUES ($1, $2, $3)`,
+      [id, action, Math.abs(delta)]
+    )
+  }
+}
+
 // ── PATCH — update order (status / payment / quantities) ─────────────────────
 
 export async function PATCH(request: Request) {
   const { order_no, status, payment_status, payment_date, payment_bank, pickup_status, total_amount, quantities, source_type, vehicle_type, branch_name } = await request.json()
+
+  // If quantities are being updated, load old quantities first to compute delta
+  let oldQuantities: Record<string, number> = {}
+  if (quantities !== undefined) {
+    const { rows: old } = await pool.query(
+      `SELECT quantities FROM booking_orders WHERE order_no = $1`, [order_no]
+    )
+    if (old.length > 0) oldQuantities = old[0].quantities ?? {}
+  }
 
   const sets: string[] = ['updated_at = NOW()']
   const vals: unknown[] = []
@@ -135,5 +174,10 @@ export async function PATCH(request: Request) {
     `UPDATE booking_orders SET ${sets.join(', ')} WHERE order_no = $${i} RETURNING *`,
     vals
   )
+
+  if (quantities !== undefined) {
+    await adjustStockDelta(oldQuantities, quantities)
+  }
+
   return NextResponse.json(rows[0])
 }
