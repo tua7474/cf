@@ -423,7 +423,7 @@ function Booking2Inner() {
               {/* Table */}
               <div className="inline-block rounded shadow overflow-hidden border border-gray-400">
                 <table
-                  className="text-[13px] border-collapse"
+                  className="text-[13px] leading-[1.35] border-collapse"
                   style={{ tableLayout: 'fixed', width: TABLE_W }}
                 >
                   <colgroup>
