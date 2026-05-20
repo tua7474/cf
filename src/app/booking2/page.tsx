@@ -423,7 +423,7 @@ function Booking2Inner() {
               {/* Table */}
               <div className="inline-block rounded shadow overflow-hidden border border-gray-400">
                 <table
-                  className="text-xs border-collapse"
+                  className="text-[13px] border-collapse"
                   style={{ tableLayout: 'fixed', width: TABLE_W }}
                 >
                   <colgroup>
@@ -438,7 +438,7 @@ function Booking2Inner() {
 
                   {/* Section name header row */}
                   <thead>
-                    <tr className="bg-green-700 text-white text-[10px]">
+                    <tr className="bg-green-700 text-white text-[12px]">
                       <th className="border border-gray-500 py-1 text-center bg-orange-500 text-white font-bold leading-tight">กล่อง</th>
                       {sections.map(sec => {
                         const secTotal = sectionTotals.get(sec.order) ?? 0
@@ -460,7 +460,7 @@ function Booking2Inner() {
                         )
                       })}
                     </tr>
-                    <tr className="bg-green-800 text-white text-[9px]">
+                    <tr className="bg-green-800 text-white text-[10px]">
                       <th className="border border-gray-500 py-0.5 text-center">#</th>
                       {sections.flatMap(sec => [
                         <th key={`${sec.order}-hn`} className="border border-gray-500 px-1 py-0.5 text-left font-medium">ชื่อสินค้า</th>,
@@ -602,7 +602,7 @@ function Booking2Inner() {
                             const sgTotal = subgroupTotals.get(`${sec.order}-${cell.name}`) ?? 0
                             return [
                               <td key={`${si}-sg`} colSpan={4}
-                                className={`border px-2 py-px text-[9px] font-bold ${SUBGROUP_BG[cell.color]}`}>
+                                className={`border px-2 py-px text-[11px] font-bold ${SUBGROUP_BG[cell.color]}`}>
                                 <div className="flex items-center justify-between gap-1">
                                   <span>{cell.name}</span>
                                   {sgTotal > 0 && (
@@ -651,7 +651,7 @@ function Booking2Inner() {
                                   defaultValue={qty || ''}
                                   key={`qty-${p.id}-${resetKey}`}
                                   onChange={e => handleQtyChange(p.id, e.target.value)}
-                                  className={`w-full px-1 py-px text-[10px] text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-inset focus:ring-green-500 ${hasPending ? 'font-semibold' : ''}`}
+                                  className={`w-full px-1 py-px text-[13px] text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-inset focus:ring-green-500 ${hasPending ? 'font-semibold' : ''}`}
                                 />
                               )}
                             </td>,
