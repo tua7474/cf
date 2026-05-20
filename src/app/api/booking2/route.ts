@@ -49,6 +49,7 @@ const GROUP_MAP: Record<string, SectionInfo> = {
   'ซองใสปะหน้า':                  { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 15, subgroup_name: 'ซองใสปะหน้า' },
   'ปากกาเขียน PP':                { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 16, subgroup_name: 'ปากกาเขียน PP' },
   'ถุงใส่กระดาษฝอย':              { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 17, subgroup_name: 'ถุงใส่กระดาษฝอย' },
+  'เบิกของ ฟรี':                  { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 18, subgroup_name: 'เบิกของ ฟรี' },
   // S5 กล่อง Thank You
   'กล่อง Thank You':              { section_order: 5, section_name: 'กล่อง Thank You', is_vat_included: false, subgroup_order: 1,  subgroup_name: 'กล่อง Thank You' },
   'กล่องผลไม้ 5 ชั้น':            { section_order: 5, section_name: 'กล่อง Thank You', is_vat_included: false, subgroup_order: 2,  subgroup_name: 'กล่องผลไม้ 5 ชั้น' },
