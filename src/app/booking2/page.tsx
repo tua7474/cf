@@ -313,7 +313,11 @@ function Booking2Inner() {
       <style>{`
         @media print {
           @page { size: A4 landscape; margin: 0; }
-          html, body { margin: 0 !important; padding: 0 !important; }
+          html, body {
+            margin: 0 !important; padding: 0 !important;
+            height: 210mm !important; max-height: 210mm !important;
+            overflow: hidden !important;
+          }
           .no-print   { display: none !important; }
 
           /* Remove screen-only zoom on outer wrapper */
