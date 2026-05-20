@@ -339,7 +339,7 @@ function Booking2Inner() {
              Unscaled height to fill A4: (210-2)mm × (96/25.4) ÷ 0.756 ≈ 1044px */
           .a4-content {
             zoom: 0.756 !important;
-            height: 1044px !important;
+            height: 1040px !important;
           }
           /* Table wrapper: fill full height */
           .a4-content > div { display: block !important; height: 100% !important; }
