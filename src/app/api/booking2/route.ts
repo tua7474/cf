@@ -67,6 +67,12 @@ const GROUP_MAP: Record<string, SectionInfo> = {
 
 export async function GET() {
   try {
+    // One-time migration: rename old group key to match current GROUP_MAP
+    await pool.query(
+      `UPDATE products_catalog SET group_name = 'เบิกฟรี', updated_at = NOW()
+       WHERE group_name = 'เบิกของ ฟรี'`
+    )
+
     const groupNames = Object.keys(GROUP_MAP)
     const { rows } = await pool.query<{
       id: number; group_name: string; product_name: string

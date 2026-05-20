@@ -41,7 +41,7 @@ const CATALOG_GROUP_TO_BOOKING: Record<string, {
   'ถุงแก้วฝากาว 60 ไมครอน/แพ็ค 100ใบ': { section_order: 5, section_name: 'กล่อง Thank You', is_vat_included: false, subgroup_order: 3,  subgroup_name: 'ถุงแก้วฝากาว 60 ไมครอน/แพ็ค 100ใบ' },
   'ถุงซิปรูด/แพ็ค 50ใบ':                { section_order: 5, section_name: 'กล่อง Thank You', is_vat_included: false, subgroup_order: 4,  subgroup_name: 'ถุงซิปรูด/แพ็ค 50ใบ' },
   'เชือกขาว / เชือกฟาง':                { section_order: 5, section_name: 'กล่อง Thank You', is_vat_included: false, subgroup_order: 5,  subgroup_name: 'เชือกขาว / เชือกฟาง' },
-  'เบิกของ ฟรี':                         { section_order: 5, section_name: 'กล่อง Thank You', is_vat_included: false, subgroup_order: 6,  subgroup_name: 'เบิกของ ฟรี' },
+  'เบิกฟรี':                             { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 18, subgroup_name: 'เบิกฟรี' },
   'ซองกันกระแทก':                        { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 1,  subgroup_name: 'ซองกันกระแทก' },
   'AirBag แผ่น /เมตรละ':                { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 2,  subgroup_name: 'AirBag แผ่น /เมตรละ' },
   'AirBag ม้วน':                         { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 3,  subgroup_name: 'AirBag ม้วน' },
