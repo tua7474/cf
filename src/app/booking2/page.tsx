@@ -328,18 +328,18 @@ function Booking2Inner() {
             width: 297mm !important;
             height: 210mm !important;
             min-height: unset !important;
-            padding: 3mm !important;
+            padding: 1mm !important;
             margin: 0 !important;
             box-shadow: none !important;
             overflow: hidden !important;
           }
 
-          /* Scale content to fill A4 width at 3mm padding:
-             (297-6)mm × (96/25.4) ÷ 1476px ≈ 0.745
-             Unscaled height to fill A4: (210-6)mm × (96/25.4) ÷ 0.745 ≈ 1035px */
+          /* Scale content to fill A4 width at 1mm padding:
+             (297-2)mm × (96/25.4) ÷ 1476px ≈ 0.756
+             Unscaled height to fill A4: (210-2)mm × (96/25.4) ÷ 0.756 ≈ 1044px */
           .a4-content {
-            zoom: 0.745 !important;
-            height: 1035px !important;
+            zoom: 0.756 !important;
+            height: 1044px !important;
           }
           /* Table wrapper: fill full height */
           .a4-content > div { display: block !important; height: 100% !important; }
@@ -435,41 +435,6 @@ function Booking2Inner() {
                       <col key={`${sec.order}-ct`} style={{ width: COL_TOTAL }} />,
                     ])}
                   </colgroup>
-
-                  {/* Section name header row */}
-                  <thead>
-                    <tr className="bg-green-700 text-white text-[12px]">
-                      <th className="border border-gray-500 py-1 text-center bg-orange-500 text-white font-bold leading-tight">กล่อง</th>
-                      {sections.map(sec => {
-                        const secTotal = sectionTotals.get(sec.order) ?? 0
-                        return (
-                          <th key={sec.order} colSpan={4}
-                            className="border border-gray-500 px-1 py-1 font-bold">
-                            <div className="flex items-center justify-between gap-1">
-                              <span>
-                                {sec.name}
-                                {sec.is_vat_included && <span className="ml-1 text-yellow-300 text-[9px]">(มีVAT)</span>}
-                              </span>
-                              {secTotal > 0 && (
-                                <span className="text-yellow-300 text-[9px] font-semibold whitespace-nowrap">
-                                  ฿{fmt2(secTotal)}
-                                </span>
-                              )}
-                            </div>
-                          </th>
-                        )
-                      })}
-                    </tr>
-                    <tr className="bg-green-800 text-white text-[10px]">
-                      <th className="border border-gray-500 py-0.5 text-center">#</th>
-                      {sections.flatMap(sec => [
-                        <th key={`${sec.order}-hn`} className="border border-gray-500 px-1 py-0.5 text-left font-medium">ชื่อสินค้า</th>,
-                        <th key={`${sec.order}-hp`} className="border border-gray-500 px-1 py-0.5 text-right font-medium">ราคา/หน่วย</th>,
-                        <th key={`${sec.order}-hq`} className="border border-gray-500 px-1 py-0.5 text-right font-medium">จำนวน</th>,
-                        <th key={`${sec.order}-ht`} className="border border-gray-500 px-1 py-0.5 text-right font-medium">รวม</th>,
-                      ])}
-                    </tr>
-                  </thead>
 
                   {/* Body */}
                   <tbody>
