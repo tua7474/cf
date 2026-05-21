@@ -531,7 +531,7 @@ function Booking2Inner() {
               )}
             </>
           )}
-          {editOrderNo && pendingCount === 0 && !hasFoyPending && (
+          {editOrderNo && pendingCount === 0 && (
             <button
               onClick={handleCancelOrder}
               disabled={saving}
