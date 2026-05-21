@@ -66,14 +66,9 @@ const SUBGROUP_BG: Record<SubgroupColor, string> = {
 }
 
 // ── กระดาษฝอย groups — link to /booking-foy ──────────────────────────────────
-const FOY_SUBGROUP_NAMES = new Set([
-  'กระดาษฝอย', 'ฝอยสีอ่อน', 'ฝอยสีพิเศษ A', 'ฝอยสีพิเศษ B',
-  'ฝอยรุ่นหยัก', 'ฝอยนุ่น', 'ฝอยหยัก',
-])
-const FOY_GROUP_NAMES = new Set([
-  'กระดาษฝอย', 'รุ่นสีอ่อน', 'รุ่นสีพิเศษ A', 'รุ่นสีพิเศษ B',
-  'รุ่นหยัก', 'ฝอยนุ่น', 'ฝอยหยัก',
-])
+// ทุก model จาก paper_stock จะมี group_name='กระดาษฝอย' และ subgroup_name='กระดาษฝอย'
+const FOY_SUBGROUP_NAMES = new Set(['กระดาษฝอย'])
+const FOY_GROUP_NAMES    = new Set(['กระดาษฝอย'])
 
 // ── Column widths ─────────────────────────────────────────────────────────────
 
@@ -145,6 +140,7 @@ function Booking2Inner() {
   const [saveMsg, setSaveMsg]       = useState<string | null>(null)
   const [resetKey, setResetKey]     = useState(0)
   const [pending, setPending]       = useState<Record<number, number>>({})
+  const [foyPending, setFoyPending] = useState<Record<string, { qty: number; amount: number }>>({})
   const [zoom, setZoom]             = useState(1)
   const [sourceType, setSourceType]   = useState<'โกดัง' | 'หน้าร้าน' | ''>('')
   const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | ''>('')
@@ -157,6 +153,14 @@ function Booking2Inner() {
     calc()
     window.addEventListener('resize', calc)
     return () => window.removeEventListener('resize', calc)
+  }, [])
+
+  // Load foy result from booking-foy
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('cf_foy_result')
+      if (stored) setFoyPending(JSON.parse(stored))
+    } catch { /* ignore */ }
   }, [])
 
   // Load draft / branch session on mount
@@ -312,7 +316,8 @@ function Booking2Inner() {
     }
     sectionTotals.set(sec.order, secTotal)
   }
-  const effectiveTotal  = manualTotal !== '' ? (parseFloat(manualTotal) || 0) : (grayTotal + orangeTotal)
+  const foyTotal = Object.values(foyPending).reduce((s, d) => s + d.amount, 0)
+  const effectiveTotal  = manualTotal !== '' ? (parseFloat(manualTotal) || 0) : (grayTotal + orangeTotal + foyTotal)
   const cannotBook60k   = vehicleType === 'จองรถ60000' && effectiveTotal < 60000
   const today = new Date().toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
@@ -585,7 +590,7 @@ function Booking2Inner() {
                               <td key={`${si}-sg`} colSpan={4}
                                 className={`border px-2 py-px text-[11px] font-bold ${SUBGROUP_BG[cell.color]}`}>
                                 {isFoy ? (
-                                  <Link href="/booking-foy" className="flex items-center justify-between gap-1 w-full">
+                                  <Link href="/booking-foy?from=booking" className="flex items-center justify-between gap-1 w-full">
                                     <span>{cell.name}</span>
                                     <span className="text-[9px] font-normal opacity-90">→ ใบจองกระดาษฝอย</span>
                                   </Link>
@@ -608,14 +613,22 @@ function Booking2Inner() {
                           const hasPending = (pending[p.id] ?? 0) > 0
 
                           if (FOY_GROUP_NAMES.has(p.group_name)) {
-                            const bg = sec.is_vat_included ? 'bg-gray-200' : 'bg-orange-50'
+                            const foyData = foyPending[p.product_name]
+                            const bg = sec.is_vat_included ? 'bg-gray-200 text-gray-800' : 'bg-orange-50 text-gray-800'
+                            const qtyBg = foyData ? 'bg-yellow-50 font-semibold' : (sec.is_vat_included ? 'bg-gray-200' : 'bg-orange-50')
                             return [
-                              <td key={`${si}-pn`} colSpan={4}
-                                className={`border border-gray-300 px-1 py-px ${bg}`}>
-                                <Link href="/booking-foy" className="flex items-center justify-between w-full">
-                                  <span className="truncate text-gray-800">{p.product_name}</span>
-                                  <span className="text-[9px] text-teal-700 ml-2 shrink-0 font-semibold">→ จองที่นี่</span>
+                              <td key={`${si}-pn`} className={`border border-gray-300 px-1 py-px ${bg} overflow-hidden`}>
+                                <Link href="/booking-foy?from=booking" className="flex items-center justify-between w-full">
+                                  <span className="truncate">{p.product_name}</span>
+                                  {!foyData && <span className="text-[9px] text-teal-700 ml-2 shrink-0">→</span>}
                                 </Link>
+                              </td>,
+                              <td key={`${si}-pp`} className={`border border-gray-300 px-1 py-px text-right ${bg}`}>{'–'}</td>,
+                              <td key={`${si}-pq`} className={`border border-gray-300 px-1 py-px text-right ${qtyBg}`}>
+                                {foyData ? foyData.qty : ''}
+                              </td>,
+                              <td key={`${si}-pt`} className={`border border-gray-300 px-1 py-px text-right ${bg}`}>
+                                {foyData ? fmt2(foyData.amount) : ''}
                               </td>,
                             ]
                           }

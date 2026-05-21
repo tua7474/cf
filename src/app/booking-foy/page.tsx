@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -53,16 +54,24 @@ function fmt2(n: number) {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function BookingFoyPage() {
+  const router = useRouter()
   const [items, setItems]         = useState<StockItem[]>([])
   const [loading, setLoading]     = useState(true)
   const [saving, setSaving]       = useState(false)
   const [saveMsg, setSaveMsg]     = useState<string | null>(null)
   const [pending, setPending]     = useState<Record<number, number>>({})
+  const [cameFromBooking, setCameFromBooking] = useState(false)
   const [zoom, setZoom]           = useState(1)
   const [sourceType, setSourceType]   = useState<'โกดัง' | 'หน้าร้าน' | ''>('')
   const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง' | ''>('')
   const [manualTotal, setManualTotal] = useState('')
   const [branchInfo, setBranchInfo]   = useState<{ name: string; phone: string } | null>(null)
+
+  // ตรวจว่าเปิดจาก booking2 หรือไม่
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    setCameFromBooking(params.get('from') === 'booking')
+  }, [])
 
   // Scale A4 portrait frame to fit narrow screens
   useEffect(() => {
@@ -115,13 +124,43 @@ export default function BookingFoyPage() {
           })
         )
       )
+
+      // คำนวณยอดรวมต่อรุ่น แล้วบันทึกลง localStorage สำหรับ booking2
+      const modelTotals: Record<string, { qty: number; amount: number }> = {}
+      for (const [idStr, qty] of entries) {
+        const item = items.find(it => it.id === Number(idStr))
+        if (!item) continue
+        const price = parseFloat(item.warehouse_price) || 0
+        const m = item.model_name
+        if (!modelTotals[m]) modelTotals[m] = { qty: 0, amount: 0 }
+        modelTotals[m].qty += qty
+        modelTotals[m].amount += qty * price
+      }
+      // รวมกับยอดเดิม (กรณีจองหลายรอบ)
+      try {
+        const prev = JSON.parse(localStorage.getItem('cf_foy_result') ?? '{}') as typeof modelTotals
+        for (const [m, d] of Object.entries(prev)) {
+          if (!modelTotals[m]) modelTotals[m] = { qty: 0, amount: 0 }
+          modelTotals[m].qty += d.qty
+          modelTotals[m].amount += d.amount
+        }
+      } catch { /* ignore */ }
+      localStorage.setItem('cf_foy_result', JSON.stringify(modelTotals))
+
       setSaveMsg(`จองสำเร็จ ${entries.length} รายการ`)
       setPending({})
+
+      // ถ้าเปิดจาก booking2 ให้กลับไปหลัง 1 วินาที
+      if (cameFromBooking) {
+        setTimeout(() => router.push('/booking2'), 800)
+      } else {
+        setTimeout(() => setSaveMsg(null), 3000)
+      }
     } catch {
       setSaveMsg('เกิดข้อผิดพลาด กรุณาลองใหม่')
+      setTimeout(() => setSaveMsg(null), 3000)
     } finally {
       setSaving(false)
-      setTimeout(() => setSaveMsg(null), 3000)
     }
   }
 

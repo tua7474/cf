@@ -167,10 +167,17 @@ export default function Home() {
 
   // ── Build grouped entries ─────────────────────────────────────────────────────
 
+  // กระดาษฝอย groups ถูกจัดการที่หน้าสต็อคกระดาษฝอยแทน
+  const FOY_HIDDEN = new Set([
+    'กระดาษฝอย', 'รุ่นสีอ่อน', 'รุ่นสีพิเศษ A', 'รุ่นสีพิเศษ B',
+    'รุ่นหยัก', 'ฝอยนุ่น', 'ฝอยหยัก',
+  ])
+
   type Entry = { type: 'group'; name: string } | { type: 'row'; product: Product }
   const entries: Entry[] = []
   let lastGroup = ''
   for (const p of products) {
+    if (FOY_HIDDEN.has(p.group_name)) continue
     if (p.group_name !== lastGroup) {
       entries.push({ type: 'group', name: p.group_name })
       lastGroup = p.group_name

@@ -39,13 +39,7 @@ const GROUP_MAP: Record<string, SectionInfo> = {
   'สายรัด PP':                    { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 5,  subgroup_name: 'สายรัด PP' },
   'กระดาษห่อ':                    { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 6,  subgroup_name: 'กระดาษห่อ' },
   'สติกเกอร์ระวังแตกม้วน':        { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 7,  subgroup_name: 'สติกเกอร์ระวังแตก' },
-  'กระดาษฝอย':                    { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 8,  subgroup_name: 'กระดาษฝอย' },
-  'รุ่นสีอ่อน':                   { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 9,  subgroup_name: 'ฝอยสีอ่อน' },
-  'รุ่นสีพิเศษ A':                { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 10, subgroup_name: 'ฝอยสีพิเศษ A' },
-  'รุ่นสีพิเศษ B':                { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 11, subgroup_name: 'ฝอยสีพิเศษ B' },
-  'รุ่นหยัก':                     { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 12, subgroup_name: 'ฝอยรุ่นหยัก' },
-  'ฝอยนุ่น':                      { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 13, subgroup_name: 'ฝอยนุ่น' },
-  'ฝอยหยัก':                      { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 14, subgroup_name: 'ฝอยหยัก' },
+  // กระดาษฝอย subgroup 8 — ดึงจาก paper_stock ใน GET handler แทน products_catalog
   'ซองใสปะหน้า':                  { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 15, subgroup_name: 'ซองใสปะหน้า' },
   'ปากกาเขียน PP':                { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 16, subgroup_name: 'ปากกาเขียน PP' },
   'ถุงใส่กระดาษฝอย':              { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 17, subgroup_name: 'ถุงใส่กระดาษฝอย' },
@@ -86,12 +80,37 @@ export async function GET() {
       [groupNames]
     )
     const enriched = rows.map(p => ({ ...p, ...GROUP_MAP[p.group_name] }))
-    enriched.sort((a, b) =>
+
+    // กระดาษฝอย models จาก paper_stock (subgroup 8)
+    const { rows: foyRows } = await pool.query<{
+      model_name: string; total_qty: string
+    }>(
+      `SELECT model_name, COALESCE(SUM(stock_qty), 0) AS total_qty
+       FROM paper_stock
+       WHERE show_in_booking = true
+       GROUP BY model_name
+       ORDER BY model_name`
+    )
+    const foyProducts = foyRows.map((r, i) => ({
+      id: -(i + 1),
+      group_name: 'กระดาษฝอย',
+      product_name: r.model_name,
+      price: null as string | null,
+      stock_qty: r.total_qty,
+      section_order: 4,
+      section_name: 'บับเบิล',
+      is_vat_included: false,
+      subgroup_order: 8,
+      subgroup_name: 'กระดาษฝอย',
+    }))
+
+    const all = [...enriched, ...foyProducts]
+    all.sort((a, b) =>
       a.section_order - b.section_order ||
       a.subgroup_order - b.subgroup_order ||
       a.id - b.id
     )
-    return NextResponse.json(enriched)
+    return NextResponse.json(all)
   } catch (e) {
     return NextResponse.json({ error: String(e) }, { status: 500 })
   }
