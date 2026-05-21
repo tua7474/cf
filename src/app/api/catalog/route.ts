@@ -50,7 +50,7 @@ const CATALOG_GROUP_TO_BOOKING: Record<string, {
   'กระบอก 1.5 inc':                      { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 6,  subgroup_name: 'กระบอก 1.5 inc' },
   'กระดาษฝอยหนา 4 มิล':                 { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 7,  subgroup_name: 'กระดาษฝอยหนา 4 มิล' },
   'กระดาษฝอย เส้นหยัก':                 { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 8,  subgroup_name: 'กระดาษฝอย เส้นหยัก' },
-  'เครื่อง Peripage /สติ๊กเกอร์ /เคส':  { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 9,  subgroup_name: 'เครื่อง Peripage /สติ๊กเกอร์ /เคส' },
+  'เครื่อง Peripage /สติ๊กเกอร์ /เคส':  { section_order: 5, section_name: 'กล่อง Thank You', is_vat_included: false, subgroup_order: 6,  subgroup_name: 'เครื่อง Peripage /สติ๊กเกอร์ /เคส' },
   'กล่อง5ชั้น':                          { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 10, subgroup_name: 'กล่อง5ชั้น' },
 }
 

@@ -62,7 +62,7 @@ const GROUP_MAP: Record<string, SectionInfo> = {
   'MINI AIR เครื่องเป่า':         { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 3,  subgroup_name: 'MINI AIR เครื่องเป่า' },
   'กล่อง 5 ชั้น':                 { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 4,  subgroup_name: 'กล่อง 5 ชั้น' },
   'กระดาษพิมพ์สลิป':              { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 7,  subgroup_name: 'กระดาษพิมพ์สลิป' },
-  'เครื่อง/สติกเกอร์/เคส':        { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 8,  subgroup_name: 'เครื่อง/สติกเกอร์/เคส' },
+  'เครื่อง/สติกเกอร์/เคส':        { section_order: 5, section_name: 'กล่อง Thank You', is_vat_included: false, subgroup_order: 6,  subgroup_name: 'เครื่อง/สติกเกอร์/เคส' },
 }
 
 export async function GET() {
