@@ -141,8 +141,9 @@ function Booking2Inner() {
   const [saveMsg, setSaveMsg]       = useState<string | null>(null)
   const [resetKey, setResetKey]     = useState(0)
   const [pending, setPending]       = useState<Record<number, number>>({})
-  const [foyPending, setFoyPending] = useState<Record<string, { qty: number; amount: number }>>({})
-  const [zoom, setZoom]             = useState(1)
+  const [foyPending, setFoyPending]         = useState<Record<string, { qty: number; amount: number }>>({})
+  const [foyItemPending, setFoyItemPending] = useState<Record<number, number>>({})
+  const [zoom, setZoom]                     = useState(1)
   const [sourceType, setSourceType]   = useState<'โกดัง' | 'หน้าร้าน' | ''>('')
   const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | ''>('')
   const [manualTotal, setManualTotal] = useState<string>('')
@@ -156,13 +157,16 @@ function Booking2Inner() {
     return () => window.removeEventListener('resize', calc)
   }, [])
 
-  // Load foy result from booking-foy
+  // Load foy result from booking-foy (new order mode only)
   useEffect(() => {
+    if (editOrderNo) return
     try {
       const stored = localStorage.getItem('cf_foy_result')
       if (stored) setFoyPending(JSON.parse(stored))
+      const storedItems = localStorage.getItem('cf_foy_items')
+      if (storedItems) setFoyItemPending(JSON.parse(storedItems))
     } catch { /* ignore */ }
-  }, [])
+  }, [editOrderNo])
 
   // Load draft / branch session on mount
   useEffect(() => {
@@ -176,17 +180,44 @@ function Booking2Inner() {
     } catch { /* ignore */ }
   }, [editOrderNo])
 
-  // When editing — load existing order quantities + selections
+  // When editing — load existing order quantities + FOY data + selections
   useEffect(() => {
     if (!editOrderNo) return
     fetch(`/api/orders?no=${editOrderNo}`)
       .then(r => r.json())
-      .then((order: { quantities: Record<string, number>; total_amount: string; source_type: string | null; vehicle_type: string | null } | null) => {
+      .then((order: {
+        quantities: Record<string, number>;
+        total_amount: string;
+        source_type: string | null;
+        vehicle_type: string | null;
+        foy_quantities?: Record<string, { qty: number; amount: number }>;
+        foy_item_quantities?: Record<string, number>;
+      } | null) => {
         if (!order) return
         const qty: Record<number, number> = {}
         for (const [k, v] of Object.entries(order.quantities)) qty[Number(k)] = v
         setPending(qty)
-        // Leave manualTotal as '' so totals recompute from quantities × current prices
+        // Restore FOY data — prefer localStorage (set by booking-foy after edit) over DB value
+        const freshFoyResult = localStorage.getItem('cf_foy_result')
+        const freshFoyItems  = localStorage.getItem('cf_foy_items')
+        if (freshFoyResult) {
+          try { setFoyPending(JSON.parse(freshFoyResult)) } catch { /* ignore */ }
+        } else if (order.foy_quantities && Object.keys(order.foy_quantities).length > 0) {
+          setFoyPending(order.foy_quantities)
+        }
+        if (freshFoyItems) {
+          try {
+            const itemQty: Record<number, number> = {}
+            for (const [k, v] of Object.entries(JSON.parse(freshFoyItems) as Record<string, number>)) itemQty[Number(k)] = v
+            setFoyItemPending(itemQty)
+          } catch { /* ignore */ }
+        } else if (order.foy_item_quantities && Object.keys(order.foy_item_quantities).length > 0) {
+          const itemQty: Record<number, number> = {}
+          for (const [k, v] of Object.entries(order.foy_item_quantities)) itemQty[Number(k)] = v
+          setFoyItemPending(itemQty)
+          // Save to localStorage so booking-foy can read when editing
+          localStorage.setItem('cf_foy_items', JSON.stringify(order.foy_item_quantities))
+        }
         if (order.source_type) setSourceType(order.source_type as 'โกดัง' | 'หน้าร้าน')
         if (order.vehicle_type) setVehicleType(order.vehicle_type as 'จองรถ60000' | 'รอพ่วง')
       })
@@ -255,11 +286,19 @@ function Booking2Inner() {
         const res = await fetch('/api/orders', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ order_no: editOrderNo, total_amount: totalToSave, quantities, source_type: sourceType || null, vehicle_type: vehicleType || null, branch_name: branchInfo?.name ?? null }),
+          body: JSON.stringify({
+            order_no: editOrderNo, total_amount: totalToSave, quantities,
+            source_type: sourceType || null, vehicle_type: vehicleType || null, branch_name: branchInfo?.name ?? null,
+            foy_quantities: foyPending, foy_item_quantities: foyItemPending,
+          }),
         })
         if (!res.ok) throw new Error()
         setPending({})
+        setFoyPending({})
+        setFoyItemPending({})
         setResetKey(k => k + 1)
+        localStorage.removeItem('cf_foy_result')
+        localStorage.removeItem('cf_foy_items')
         setSaveMsg(`อัพเดทใบจอง ${editOrderNo} สำเร็จ`)
       } else {
         // ── Create new order ──────────────────────────────────────────────────
@@ -271,14 +310,20 @@ function Booking2Inner() {
         const res = await fetch('/api/orders', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ total_amount: totalToSave, quantities, branch_id: branchId, source_type: sourceType || null, vehicle_type: vehicleType || null, branch_name: branchInfo?.name ?? null }),
+          body: JSON.stringify({
+            total_amount: totalToSave, quantities, branch_id: branchId,
+            source_type: sourceType || null, vehicle_type: vehicleType || null, branch_name: branchInfo?.name ?? null,
+            foy_quantities: foyPending, foy_item_quantities: foyItemPending,
+          }),
         })
         if (!res.ok) throw new Error()
         setPending({})
         setFoyPending({})
+        setFoyItemPending({})
         setResetKey(k => k + 1)
         localStorage.removeItem(DRAFT_KEY)
         localStorage.removeItem('cf_foy_result')
+        localStorage.removeItem('cf_foy_items')
         const totalItems = pendingCount + Object.keys(foyPending).length
         setSaveMsg(`บันทึกสำเร็จ ${totalItems} รายการ`)
       }
@@ -603,7 +648,7 @@ function Booking2Inner() {
                             const isFoy = FOY_SUBGROUP_NAMES.has(cell.name)
                             return [
                               <td key={`${si}-sg`} colSpan={4}
-                                onClick={isFoy ? () => router.push('/booking-foy?from=booking') : undefined}
+                                onClick={isFoy ? () => router.push(editOrderNo ? `/booking-foy?from=booking&edit_foy=1&order_no=${editOrderNo}` : '/booking-foy?from=booking') : undefined}
                                 className={`border px-2 py-px text-[11px] font-bold ${SUBGROUP_BG[cell.color]}${isFoy ? ' cursor-pointer' : ''}`}>
                                 {isFoy ? (
                                   <div className="flex items-center justify-between gap-1 w-full">
@@ -632,7 +677,7 @@ function Booking2Inner() {
                             const foyData = foyPending[p.product_name]
                             const bg = sec.is_vat_included ? 'bg-gray-200 text-gray-800' : 'bg-orange-50 text-gray-800'
                             const qtyBg = foyData ? 'bg-yellow-50 font-semibold' : (sec.is_vat_included ? 'bg-gray-200' : 'bg-orange-50')
-                            const foyClick = () => router.push('/booking-foy?from=booking')
+                            const foyClick = () => router.push(editOrderNo ? `/booking-foy?from=booking&edit_foy=1&order_no=${editOrderNo}` : '/booking-foy?from=booking')
                             return [
                               <td key={`${si}-pn`} onClick={foyClick} className={`border border-gray-300 px-1 py-px ${bg} overflow-hidden cursor-pointer`}>
                                 <div className="flex items-center justify-between w-full">

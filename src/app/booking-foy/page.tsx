@@ -61,16 +61,35 @@ export default function BookingFoyPage() {
   const [saveMsg, setSaveMsg]     = useState<string | null>(null)
   const [pending, setPending]     = useState<Record<number, number>>({})
   const [cameFromBooking, setCameFromBooking] = useState(false)
+  const [editFoyMode, setEditFoyMode]         = useState(false)
+  const [editOrderNo, setEditOrderNo]         = useState<string | null>(null)
+  const [originalItems, setOriginalItems]     = useState<Record<number, number>>({})
   const [zoom, setZoom]           = useState(1)
   const [sourceType, setSourceType]   = useState<'โกดัง' | 'หน้าร้าน' | ''>('')
   const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง' | ''>('')
   const [manualTotal, setManualTotal] = useState('')
   const [branchInfo, setBranchInfo]   = useState<{ name: string; phone: string } | null>(null)
 
-  // ตรวจว่าเปิดจาก booking2 หรือไม่
+  // ตรวจว่าเปิดจาก booking2 และ/หรือ edit_foy mode
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     setCameFromBooking(params.get('from') === 'booking')
+    const isEditFoy = params.get('edit_foy') === '1'
+    const orderNo   = params.get('order_no') ?? null
+    setEditFoyMode(isEditFoy)
+    setEditOrderNo(orderNo)
+    if (isEditFoy) {
+      // Pre-populate form with original booked quantities
+      try {
+        const stored = localStorage.getItem('cf_foy_items')
+        if (stored) {
+          const orig: Record<number, number> = {}
+          for (const [k, v] of Object.entries(JSON.parse(stored) as Record<string, number>)) orig[Number(k)] = v
+          setOriginalItems(orig)
+          setPending(orig)
+        }
+      } catch { /* ignore */ }
+    }
   }, [])
 
   // Scale A4 portrait frame to fit narrow screens
@@ -115,6 +134,23 @@ export default function BookingFoyPage() {
     setSaving(true)
     setSaveMsg(null)
     try {
+      if (editFoyMode) {
+        // ── Edit mode: คืนสต็อคเก่าก่อน แล้ว book ใหม่ ─────────────────────
+        const oldEntries = Object.entries(originalItems).filter(([, q]) => q > 0)
+        if (oldEntries.length > 0) {
+          await Promise.all(
+            oldEntries.map(([idStr, qty]) =>
+              fetch('/api/stock', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: Number(idStr), action: 'add', qty }),
+              })
+            )
+          )
+        }
+      }
+
+      // Book รายการใหม่
       await Promise.all(
         entries.map(([idStr, qty]) =>
           fetch('/api/stock', {
@@ -125,8 +161,9 @@ export default function BookingFoyPage() {
         )
       )
 
-      // คำนวณยอดรวมต่อรุ่น แล้วบันทึกลง localStorage สำหรับ booking2
+      // คำนวณยอดรวมต่อรุ่น
       const modelTotals: Record<string, { qty: number; amount: number }> = {}
+      const itemQty: Record<number, number> = {}
       for (const [idStr, qty] of entries) {
         const item = items.find(it => it.id === Number(idStr))
         if (!item) continue
@@ -135,24 +172,34 @@ export default function BookingFoyPage() {
         if (!modelTotals[m]) modelTotals[m] = { qty: 0, amount: 0 }
         modelTotals[m].qty += qty
         modelTotals[m].amount += qty * price
+        itemQty[Number(idStr)] = qty
       }
-      // รวมกับยอดเดิม (กรณีจองหลายรอบ)
-      try {
-        const prev = JSON.parse(localStorage.getItem('cf_foy_result') ?? '{}') as typeof modelTotals
-        for (const [m, d] of Object.entries(prev)) {
-          if (!modelTotals[m]) modelTotals[m] = { qty: 0, amount: 0 }
-          modelTotals[m].qty += d.qty
-          modelTotals[m].amount += d.amount
-        }
-      } catch { /* ignore */ }
-      localStorage.setItem('cf_foy_result', JSON.stringify(modelTotals))
+
+      if (editFoyMode) {
+        // REPLACE: ล้าง cf_foy_result เก่า แล้วบันทึกใหม่
+        localStorage.setItem('cf_foy_result', JSON.stringify(modelTotals))
+      } else {
+        // รวมกับยอดเดิม (กรณีจองหลายรอบ)
+        try {
+          const prev = JSON.parse(localStorage.getItem('cf_foy_result') ?? '{}') as typeof modelTotals
+          for (const [m, d] of Object.entries(prev)) {
+            if (!modelTotals[m]) modelTotals[m] = { qty: 0, amount: 0 }
+            modelTotals[m].qty += d.qty
+            modelTotals[m].amount += d.amount
+          }
+        } catch { /* ignore */ }
+        localStorage.setItem('cf_foy_result', JSON.stringify(modelTotals))
+      }
+      // บันทึก item-level quantities สำหรับ edit ครั้งถัดไป
+      localStorage.setItem('cf_foy_items', JSON.stringify(itemQty))
 
       setSaveMsg(`จองสำเร็จ ${entries.length} รายการ`)
       setPending({})
 
       // ถ้าเปิดจาก booking2 ให้กลับไปหลัง 1 วินาที
       if (cameFromBooking) {
-        setTimeout(() => router.push('/booking2'), 800)
+        const dest = editOrderNo ? `/booking2?edit=${editOrderNo}` : '/booking2'
+        setTimeout(() => router.push(dest), 800)
       } else {
         setTimeout(() => setSaveMsg(null), 3000)
       }
