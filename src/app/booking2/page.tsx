@@ -599,7 +599,7 @@ function Booking2Inner() {
 
                             // pr 3-4: ยอดรวม — rowSpan=2, large editable
                             if (pr === 3) {
-                              const autoVal = (grayTotal + orangeTotal)
+                              const autoVal = grayTotal + orangeTotal + foyTotal
                               const displayVal = manualTotal !== '' ? manualTotal : autoVal.toFixed(2)
                               return [
                                 <td key={`${si}-ip3`} colSpan={4} rowSpan={2} className={`${base} p-0 bg-green-50 align-middle`}>
