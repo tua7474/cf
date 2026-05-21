@@ -65,6 +65,16 @@ const SUBGROUP_BG: Record<SubgroupColor, string> = {
   maroon: 'bg-red-800    text-white    border-red-900',
 }
 
+// ── กระดาษฝอย groups — link to /booking-foy ──────────────────────────────────
+const FOY_SUBGROUP_NAMES = new Set([
+  'กระดาษฝอย', 'ฝอยสีอ่อน', 'ฝอยสีพิเศษ A', 'ฝอยสีพิเศษ B',
+  'ฝอยรุ่นหยัก', 'ฝอยนุ่น', 'ฝอยหยัก',
+])
+const FOY_GROUP_NAMES = new Set([
+  'กระดาษฝอย', 'รุ่นสีอ่อน', 'รุ่นสีพิเศษ A', 'รุ่นสีพิเศษ B',
+  'รุ่นหยัก', 'ฝอยนุ่น', 'ฝอยหยัก',
+])
+
 // ── Column widths ─────────────────────────────────────────────────────────────
 
 const COL_NAME  = 82
@@ -570,15 +580,23 @@ function Booking2Inner() {
 
                           if (cell.type === 'subgroup') {
                             const sgTotal = subgroupTotals.get(`${sec.order}-${cell.name}`) ?? 0
+                            const isFoy = FOY_SUBGROUP_NAMES.has(cell.name)
                             return [
                               <td key={`${si}-sg`} colSpan={4}
                                 className={`border px-2 py-px text-[11px] font-bold ${SUBGROUP_BG[cell.color]}`}>
-                                <div className="flex items-center justify-between gap-1">
-                                  <span>{cell.name}</span>
-                                  {sgTotal > 0 && (
-                                    <span className="text-[8px] font-semibold opacity-90 whitespace-nowrap">฿{fmt2(sgTotal)}</span>
-                                  )}
-                                </div>
+                                {isFoy ? (
+                                  <Link href="/booking-foy" className="flex items-center justify-between gap-1 w-full">
+                                    <span>{cell.name}</span>
+                                    <span className="text-[9px] font-normal opacity-90">→ ใบจองกระดาษฝอย</span>
+                                  </Link>
+                                ) : (
+                                  <div className="flex items-center justify-between gap-1">
+                                    <span>{cell.name}</span>
+                                    {sgTotal > 0 && (
+                                      <span className="text-[8px] font-semibold opacity-90 whitespace-nowrap">฿{fmt2(sgTotal)}</span>
+                                    )}
+                                  </div>
+                                )}
                               </td>,
                             ]
                           }
@@ -588,6 +606,19 @@ function Booking2Inner() {
                           const qty        = pending[p.id] ?? 0
                           const total      = qty * price
                           const hasPending = (pending[p.id] ?? 0) > 0
+
+                          if (FOY_GROUP_NAMES.has(p.group_name)) {
+                            const bg = sec.is_vat_included ? 'bg-gray-200' : 'bg-orange-50'
+                            return [
+                              <td key={`${si}-pn`} colSpan={4}
+                                className={`border border-gray-300 px-1 py-px ${bg}`}>
+                                <Link href="/booking-foy" className="flex items-center justify-between w-full">
+                                  <span className="truncate text-gray-800">{p.product_name}</span>
+                                  <span className="text-[9px] text-teal-700 ml-2 shrink-0 font-semibold">→ จองที่นี่</span>
+                                </Link>
+                              </td>,
+                            ]
+                          }
 
                           const nameBg = sec.is_vat_included ? 'bg-gray-200 text-gray-800' : 'bg-orange-50 text-gray-800'
                           const pendingRing = hasPending ? 'ring-1 ring-inset ring-yellow-400' : ''
