@@ -54,7 +54,7 @@ const SUBGROUP_COLOR: Record<string, SubgroupColor> = {
   '5-5': 'orange',
   // S6 ซองกันกระแทก
   '6-1': 'gray',   '6-2': 'orange', '6-3': 'orange', '6-4': 'gray',
-  '6-5': 'orange', '6-6': 'orange',
+  '6-5': 'gray',   '6-6': 'orange', '6-7': 'orange', '6-8': 'orange',
 }
 
 const SUBGROUP_BG: Record<SubgroupColor, string> = {

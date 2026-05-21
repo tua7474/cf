@@ -21,7 +21,7 @@ const GROUP_MAP: Record<string, SectionInfo> = {
   'เทปOPPแกนส้ม':                 { section_order: 2, section_name: 'ซองน้ำตาล',      is_vat_included: false, subgroup_order: 7,  subgroup_name: 'เทป OPP แกนส้ม' },
   'เทประวังแตก':                  { section_order: 2, section_name: 'ซองน้ำตาล',      is_vat_included: false, subgroup_order: 8,  subgroup_name: 'เทประวังแตก' },
   'เทปThankYou':                  { section_order: 2, section_name: 'ซองน้ำตาล',      is_vat_included: false, subgroup_order: 9,  subgroup_name: 'เทป Thank You' },
-  'กล่องเอกสาร':                  { section_order: 2, section_name: 'ซองน้ำตาล',      is_vat_included: false, subgroup_order: 10, subgroup_name: 'กล่องเอกสาร' },
+  'กล่องเอกสาร':                  { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 5,  subgroup_name: 'กล่องเอกสาร' },
   // S3 ซอง PP
   'ซอง PP':                       { section_order: 3, section_name: 'ซอง PP',          is_vat_included: false, subgroup_order: 1,  subgroup_name: 'ซอง PP' },
   'ซองเมทาลิค':                   { section_order: 3, section_name: 'ซอง PP',          is_vat_included: false, subgroup_order: 2,  subgroup_name: 'ซองเมทาลิค' },
@@ -30,7 +30,7 @@ const GROUP_MAP: Record<string, SectionInfo> = {
   'ฟิล์มยืด':                     { section_order: 3, section_name: 'ซอง PP',          is_vat_included: false, subgroup_order: 5,  subgroup_name: 'ฟิล์มยืด' },
   'กระบอก':                       { section_order: 3, section_name: 'ซอง PP',          is_vat_included: false, subgroup_order: 6,  subgroup_name: 'กระบอก' },
   'ฝาปิดกระบอก':                  { section_order: 3, section_name: 'ซอง PP',          is_vat_included: false, subgroup_order: 7,  subgroup_name: 'ฝาปิดกระบอก' },
-  'ถุงหิ้วบริการ':                 { section_order: 3, section_name: 'ซอง PP',          is_vat_included: false, subgroup_order: 8,  subgroup_name: 'ถุงหิ้วบริการ' },
+  'ถุงหิ้วบริการ':                 { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 6,  subgroup_name: 'ถุงหิ้วบริการ' },
   // S4 บับเบิล
   'บับเบิล':                      { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 1,  subgroup_name: 'บับเบิล' },
   'บับเบิลสี':                    { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 2,  subgroup_name: 'บับเบิลสี' },
@@ -61,8 +61,8 @@ const GROUP_MAP: Record<string, SectionInfo> = {
   'MINI AIR BAG ม้วนเปล่า':       { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 2,  subgroup_name: 'MINI AIR BAG ม้วนเปล่า' },
   'MINI AIR เครื่องเป่า':         { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 3,  subgroup_name: 'MINI AIR เครื่องเป่า' },
   'กล่อง 5 ชั้น':                 { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 4,  subgroup_name: 'กล่อง 5 ชั้น' },
-  'กระดาษพิมพ์สลิป':              { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 5,  subgroup_name: 'กระดาษพิมพ์สลิป' },
-  'เครื่อง/สติกเกอร์/เคส':        { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 6,  subgroup_name: 'เครื่อง/สติกเกอร์/เคส' },
+  'กระดาษพิมพ์สลิป':              { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 7,  subgroup_name: 'กระดาษพิมพ์สลิป' },
+  'เครื่อง/สติกเกอร์/เคส':        { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 8,  subgroup_name: 'เครื่อง/สติกเกอร์/เคส' },
 }
 
 export async function GET() {
