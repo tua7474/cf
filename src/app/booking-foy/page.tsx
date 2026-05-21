@@ -130,7 +130,8 @@ export default function BookingFoyPage() {
 
   const handleBook = async () => {
     const entries = Object.entries(pending).filter(([, q]) => q > 0)
-    if (!entries.length) return
+    // ใน edit mode อนุญาตให้จองแม้จำนวน = 0 (เพื่อยกเลิก/คืนสต็อคทั้งหมด)
+    if (!entries.length && !editFoyMode) return
     setSaving(true)
     setSaveMsg(null)
     try {
@@ -150,16 +151,18 @@ export default function BookingFoyPage() {
         }
       }
 
-      // Book รายการใหม่
-      await Promise.all(
-        entries.map(([idStr, qty]) =>
-          fetch('/api/stock', {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: Number(idStr), action: 'book', qty }),
-          })
+      // Book รายการใหม่ (ถ้ามี)
+      if (entries.length > 0) {
+        await Promise.all(
+          entries.map(([idStr, qty]) =>
+            fetch('/api/stock', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: Number(idStr), action: 'book', qty }),
+            })
+          )
         )
-      )
+      }
 
       // คำนวณยอดรวมต่อรุ่น
       const modelTotals: Record<string, { qty: number; amount: number }> = {}
@@ -176,7 +179,7 @@ export default function BookingFoyPage() {
       }
 
       if (editFoyMode) {
-        // REPLACE: ล้าง cf_foy_result เก่า แล้วบันทึกใหม่
+        // REPLACE: บันทึกยอดใหม่ (อาจเป็น {} ถ้าลดเป็น 0 ทั้งหมด)
         localStorage.setItem('cf_foy_result', JSON.stringify(modelTotals))
       } else {
         // รวมกับยอดเดิม (กรณีจองหลายรอบ)
@@ -190,10 +193,10 @@ export default function BookingFoyPage() {
         } catch { /* ignore */ }
         localStorage.setItem('cf_foy_result', JSON.stringify(modelTotals))
       }
-      // บันทึก item-level quantities สำหรับ edit ครั้งถัดไป
+      // บันทึก item-level quantities (อาจเป็น {} ถ้าลดเป็น 0)
       localStorage.setItem('cf_foy_items', JSON.stringify(itemQty))
 
-      setSaveMsg(`จองสำเร็จ ${entries.length} รายการ`)
+      setSaveMsg(entries.length > 0 ? `จองสำเร็จ ${entries.length} รายการ` : 'ยกเลิกกระดาษฝอยสำเร็จ')
       setPending({})
 
       // ถ้าเปิดจาก booking2 ให้กลับไปหลัง 1 วินาที
@@ -362,13 +365,15 @@ export default function BookingFoyPage() {
           {/* ปุ่มจอง (แสดงเมื่อมีรายการ) */}
           <button
             onClick={handleBook}
-            disabled={saving || pendingCount === 0}
+            disabled={saving || (pendingCount === 0 && !editFoyMode)}
             className={`px-4 py-1.5 text-sm rounded font-semibold transition-colors disabled:opacity-40 ${
               pendingCount > 0
                 ? 'bg-yellow-400 hover:bg-yellow-300 text-green-900'
-                : 'bg-white/20 text-white border border-white/30 cursor-not-allowed'
+                : editFoyMode
+                  ? 'bg-red-500 hover:bg-red-400 text-white'
+                  : 'bg-white/20 text-white border border-white/30 cursor-not-allowed'
             }`}>
-            {saving ? 'กำลังจอง...' : pendingCount > 0 ? `📦 จอง (${pendingCount})` : '📦 จอง'}
+            {saving ? 'กำลังจอง...' : pendingCount > 0 ? `📦 จอง (${pendingCount})` : editFoyMode ? '🗑️ ยกเลิกกระดาษฝอย' : '📦 จอง'}
           </button>
 
           {/* ปุ่มพิมพ์ */}
