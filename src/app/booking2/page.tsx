@@ -261,7 +261,7 @@ function Booking2Inner() {
   const hasFoyPending = Object.keys(foyPending).length > 0
 
   const handleSave = async () => {
-    if (!pendingCount && !hasFoyPending) return
+    if (!pendingCount && !hasFoyPending && !editOrderNo) return
     setSaving(true)
     setSaveMsg(null)
     try {
@@ -501,7 +501,8 @@ function Booking2Inner() {
               {saveMsg}
             </span>
           )}
-          {(pendingCount > 0 || hasFoyPending) && (
+          {/* ── New order: show save when has items ── */}
+          {!editOrderNo && (pendingCount > 0 || hasFoyPending) && (
             <>
               {pendingCount > 0 && (
                 <>
@@ -522,23 +523,39 @@ function Booking2Inner() {
                 disabled={saving || cannotBook60k || vehicleType === '' || sourceType === ''}
                 className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors disabled:opacity-50"
               >
-                {saving ? 'กำลังบันทึก...' : editOrderNo ? '💾 อัพเดทการจอง' : '💾 บันทึกการจอง'}
+                {saving ? 'กำลังบันทึก...' : '💾 บันทึกการจอง'}
               </button>
-              {cannotBook60k && (
-                <span className="text-red-400 text-sm font-semibold">
-                  ⛔ ยอดไม่ถึง 60,000 — จองรถไม่ได้
-                </span>
-              )}
+              {cannotBook60k && <span className="text-red-400 text-sm font-semibold">⛔ ยอดไม่ถึง 60,000 — จองรถไม่ได้</span>}
             </>
           )}
-          {editOrderNo && pendingCount === 0 && (
-            <button
-              onClick={handleCancelOrder}
-              disabled={saving}
-              className="px-4 py-1.5 text-sm rounded bg-red-600 hover:bg-red-500 text-white font-semibold transition-colors disabled:opacity-50"
-            >
-              {saving ? 'กำลังดำเนินการ...' : '🗑️ ยกเลิกใบจองนี้'}
-            </button>
+
+          {/* ── Edit mode: save always visible + cancel order when empty ── */}
+          {editOrderNo && (
+            <>
+              {pendingCount > 0 && (
+                <span className="text-yellow-300 text-sm">✎ แก้ไขค้างอยู่ {pendingCount} รายการ</span>
+              )}
+              {hasFoyPending && pendingCount === 0 && (
+                <span className="text-teal-300 text-sm">📦 กระดาษฝอย {Object.keys(foyPending).length} รุ่น</span>
+              )}
+              <button
+                onClick={handleSave}
+                disabled={saving || cannotBook60k || vehicleType === '' || sourceType === ''}
+                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors disabled:opacity-50"
+              >
+                {saving ? 'กำลังบันทึก...' : '💾 อัพเดทการจอง'}
+              </button>
+              {cannotBook60k && <span className="text-red-400 text-sm font-semibold">⛔ ยอดไม่ถึง 60,000 — จองรถไม่ได้</span>}
+              {pendingCount === 0 && (
+                <button
+                  onClick={handleCancelOrder}
+                  disabled={saving}
+                  className="px-4 py-1.5 text-sm rounded bg-red-600 hover:bg-red-500 text-white font-semibold transition-colors disabled:opacity-50"
+                >
+                  {saving ? 'กำลังดำเนินการ...' : '🗑️ ยกเลิกใบจองนี้'}
+                </button>
+              )}
+            </>
           )}
         </div>
       </header>

@@ -141,12 +141,13 @@ export default function OrdersPage() {
               </thead>
               <tbody>
                 {orders.map((order, i) => {
+                  const cancelled = order.status === 'cancelled'
                   const pickedUp = order.pickup_status === 'picked_up'
                   const paid     = order.payment_status === 'paid'
                   const isPaying = payingOrderNo === order.order_no
 
                   return (
-                    <tr key={order.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    <tr key={order.id} className={cancelled ? 'bg-red-50 opacity-60' : i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
 
                       {/* 1. เลขที่ใบจอง */}
                       <td className="px-4 py-3 border-r border-gray-200 font-mono font-bold text-green-800 text-base">
@@ -175,8 +176,12 @@ export default function OrdersPage() {
                               {order.source_type ?? '—'}
                             </span>
                           </div>
-                          {/* แก้ไข — disabled after pickup */}
-                          {pickedUp ? (
+                          {/* แก้ไข — disabled after pickup or cancelled */}
+                          {cancelled ? (
+                            <span className="inline-block px-2 py-1 text-xs rounded border border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed select-none w-fit">
+                              ✕ ยกเลิกแล้ว
+                            </span>
+                          ) : pickedUp ? (
                             <span className="inline-block px-2 py-1 text-xs rounded border border-red-200 bg-red-50 text-red-400 cursor-not-allowed select-none w-fit">
                               ✎ แก้ไขไม่ได้
                             </span>
