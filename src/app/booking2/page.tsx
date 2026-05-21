@@ -2,7 +2,7 @@
 
 import { Fragment, useState, useEffect, useCallback, Suspense } from 'react'
 import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -132,6 +132,7 @@ function fmt2(n: number) {
 
 function Booking2Inner() {
   const searchParams  = useSearchParams()
+  const router        = useRouter()
   const editOrderNo   = searchParams.get('edit')   // null = new order, string = edit mode
 
   const [products, setProducts]     = useState<CatalogProduct[]>([])
@@ -588,12 +589,13 @@ function Booking2Inner() {
                             const isFoy = FOY_SUBGROUP_NAMES.has(cell.name)
                             return [
                               <td key={`${si}-sg`} colSpan={4}
-                                className={`border px-2 py-px text-[11px] font-bold ${SUBGROUP_BG[cell.color]}`}>
+                                onClick={isFoy ? () => router.push('/booking-foy?from=booking') : undefined}
+                                className={`border px-2 py-px text-[11px] font-bold ${SUBGROUP_BG[cell.color]}${isFoy ? ' cursor-pointer' : ''}`}>
                                 {isFoy ? (
-                                  <Link href="/booking-foy?from=booking" className="flex items-center justify-between gap-1 w-full">
+                                  <div className="flex items-center justify-between gap-1 w-full">
                                     <span>{cell.name}</span>
                                     <span className="text-[9px] font-normal opacity-90">→ ใบจองกระดาษฝอย</span>
-                                  </Link>
+                                  </div>
                                 ) : (
                                   <div className="flex items-center justify-between gap-1">
                                     <span>{cell.name}</span>
@@ -616,18 +618,19 @@ function Booking2Inner() {
                             const foyData = foyPending[p.product_name]
                             const bg = sec.is_vat_included ? 'bg-gray-200 text-gray-800' : 'bg-orange-50 text-gray-800'
                             const qtyBg = foyData ? 'bg-yellow-50 font-semibold' : (sec.is_vat_included ? 'bg-gray-200' : 'bg-orange-50')
+                            const foyClick = () => router.push('/booking-foy?from=booking')
                             return [
-                              <td key={`${si}-pn`} className={`border border-gray-300 px-1 py-px ${bg} overflow-hidden`}>
-                                <Link href="/booking-foy?from=booking" className="flex items-center justify-between w-full">
+                              <td key={`${si}-pn`} onClick={foyClick} className={`border border-gray-300 px-1 py-px ${bg} overflow-hidden cursor-pointer`}>
+                                <div className="flex items-center justify-between w-full">
                                   <span className="truncate">{p.product_name}</span>
                                   {!foyData && <span className="text-[9px] text-teal-700 ml-2 shrink-0">→</span>}
-                                </Link>
+                                </div>
                               </td>,
-                              <td key={`${si}-pp`} className={`border border-gray-300 px-1 py-px text-right ${bg}`}>{'–'}</td>,
-                              <td key={`${si}-pq`} className={`border border-gray-300 px-1 py-px text-right ${qtyBg}`}>
+                              <td key={`${si}-pp`} onClick={foyClick} className={`border border-gray-300 px-1 py-px text-right ${bg} cursor-pointer`}>{'–'}</td>,
+                              <td key={`${si}-pq`} onClick={foyClick} className={`border border-gray-300 px-1 py-px text-right ${qtyBg} cursor-pointer`}>
                                 {foyData ? foyData.qty : ''}
                               </td>,
-                              <td key={`${si}-pt`} className={`border border-gray-300 px-1 py-px text-right ${bg}`}>
+                              <td key={`${si}-pt`} onClick={foyClick} className={`border border-gray-300 px-1 py-px text-right ${bg} cursor-pointer`}>
                                 {foyData ? fmt2(foyData.amount) : ''}
                               </td>,
                             ]
