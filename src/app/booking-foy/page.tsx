@@ -73,23 +73,30 @@ export default function BookingFoyPage() {
   // ตรวจว่าเปิดจาก booking2 และ/หรือ edit_foy mode
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    setCameFromBooking(params.get('from') === 'booking')
+    const fromBooking = params.get('from') === 'booking'
+    setCameFromBooking(fromBooking)
     const isEditFoy = params.get('edit_foy') === '1'
     const orderNo   = params.get('order_no') ?? null
-    setEditFoyMode(isEditFoy)
     setEditOrderNo(orderNo)
-    if (isEditFoy) {
-      // Pre-populate form with original booked quantities
-      try {
-        const stored = localStorage.getItem('cf_foy_items')
-        if (stored) {
+
+    // Pre-populate ถ้ามียอดเดิมใน localStorage (ทั้ง edit mode และ new order ที่จองไปแล้วรอบหนึ่ง)
+    try {
+      const stored = localStorage.getItem('cf_foy_items')
+      if (stored) {
+        const parsed = JSON.parse(stored) as Record<string, number>
+        const hasPrev = Object.values(parsed).some(v => v > 0)
+        if (hasPrev) {
           const orig: Record<number, number> = {}
-          for (const [k, v] of Object.entries(JSON.parse(stored) as Record<string, number>)) orig[Number(k)] = v
+          for (const [k, v] of Object.entries(parsed)) orig[Number(k)] = v
           setOriginalItems(orig)
           setPending(orig)
+          // ถ้าเปิดจาก booking2 และมียอดเดิม → ใช้ replace flow เสมอ
+          setEditFoyMode(true)
+          return
         }
-      } catch { /* ignore */ }
-    }
+      }
+    } catch { /* ignore */ }
+    setEditFoyMode(isEditFoy)
   }, [])
 
   // Scale A4 portrait frame to fit narrow screens
