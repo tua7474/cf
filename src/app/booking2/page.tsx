@@ -335,6 +335,51 @@ function Booking2Inner() {
     }
   }
 
+  // ── Cancel order ──────────────────────────────────────────────────────────
+
+  const handleCancelOrder = async () => {
+    if (!editOrderNo) return
+    if (!confirm(`ยืนยันยกเลิกใบจอง ${editOrderNo} ?`)) return
+    setSaving(true)
+    setSaveMsg(null)
+    try {
+      // คืนสต็อค FOY ถ้ายังมี (กรณีที่ยังไม่ได้ล้างผ่านหน้า booking-foy)
+      const foyItemEntries = Object.entries(foyItemPending).filter(([, q]) => q > 0)
+      if (foyItemEntries.length > 0) {
+        await Promise.all(
+          foyItemEntries.map(([idStr, qty]) =>
+            fetch('/api/stock', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: Number(idStr), action: 'add', qty }),
+            })
+          )
+        )
+      }
+      // อัพเดทสถานะเป็น cancelled + quantities={} เพื่อคืนสต็อคสินค้าปกติ
+      const res = await fetch('/api/orders', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          order_no: editOrderNo,
+          status: 'cancelled',
+          quantities: {},
+          foy_quantities: {},
+          foy_item_quantities: {},
+        }),
+      })
+      if (!res.ok) throw new Error()
+      localStorage.removeItem('cf_foy_result')
+      localStorage.removeItem('cf_foy_items')
+      setSaveMsg(`ยกเลิกใบจอง ${editOrderNo} สำเร็จ`)
+      setTimeout(() => { window.location.href = '/orders' }, 1500)
+    } catch {
+      setSaveMsg('เกิดข้อผิดพลาด กรุณาลองใหม่')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   // ── Derived ────────────────────────────────────────────────────────────────
 
   const sections    = buildSections(products)
@@ -485,6 +530,15 @@ function Booking2Inner() {
                 </span>
               )}
             </>
+          )}
+          {editOrderNo && pendingCount === 0 && !hasFoyPending && (
+            <button
+              onClick={handleCancelOrder}
+              disabled={saving}
+              className="px-4 py-1.5 text-sm rounded bg-red-600 hover:bg-red-500 text-white font-semibold transition-colors disabled:opacity-50"
+            >
+              {saving ? 'กำลังดำเนินการ...' : '🗑️ ยกเลิกใบจองนี้'}
+            </button>
           )}
         </div>
       </header>
