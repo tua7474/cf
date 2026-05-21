@@ -227,9 +227,10 @@ function Booking2Inner() {
   }, [editOrderNo])
 
   const pendingCount = Object.values(pending).filter(q => q > 0).length
+  const hasFoyPending = Object.keys(foyPending).length > 0
 
   const handleSave = async () => {
-    if (!pendingCount) return
+    if (!pendingCount && !hasFoyPending) return
     setSaving(true)
     setSaveMsg(null)
     try {
@@ -244,7 +245,10 @@ function Booking2Inner() {
         const price = parseFloat(p.price ?? '0') || 0
         computedTotal += price * qty
       }
-      const totalToSave = manualTotal !== '' ? (parseFloat(manualTotal) || computedTotal) : computedTotal
+      // รวมยอด FOY เข้าใน total ที่บันทึก
+      const foyTotalAmt = Object.values(foyPending).reduce((s, d) => s + d.amount, 0)
+      const computedWithFoy = computedTotal + foyTotalAmt
+      const totalToSave = manualTotal !== '' ? (parseFloat(manualTotal) || computedWithFoy) : computedWithFoy
 
       if (editOrderNo) {
         // ── Edit existing order ───────────────────────────────────────────────
@@ -271,9 +275,12 @@ function Booking2Inner() {
         })
         if (!res.ok) throw new Error()
         setPending({})
+        setFoyPending({})
         setResetKey(k => k + 1)
         localStorage.removeItem(DRAFT_KEY)
-        setSaveMsg(`บันทึกสำเร็จ ${pendingCount} รายการ`)
+        localStorage.removeItem('cf_foy_result')
+        const totalItems = pendingCount + Object.keys(foyPending).length
+        setSaveMsg(`บันทึกสำเร็จ ${totalItems} รายการ`)
       }
     } catch {
       setSaveMsg('เกิดข้อผิดพลาด กรุณาลองใหม่')
@@ -404,15 +411,22 @@ function Booking2Inner() {
               {saveMsg}
             </span>
           )}
-          {pendingCount > 0 && (
+          {(pendingCount > 0 || hasFoyPending) && (
             <>
-              <span className="text-yellow-300 text-sm">✎ แก้ไขค้างอยู่ {pendingCount} รายการ</span>
-              <button
-                onClick={() => { setPending({}); localStorage.removeItem(DRAFT_KEY) }}
-                className="px-3 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white transition-colors"
-              >
-                ยกเลิก
-              </button>
+              {pendingCount > 0 && (
+                <>
+                  <span className="text-yellow-300 text-sm">✎ แก้ไขค้างอยู่ {pendingCount} รายการ</span>
+                  <button
+                    onClick={() => { setPending({}); localStorage.removeItem(DRAFT_KEY) }}
+                    className="px-3 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white transition-colors"
+                  >
+                    ยกเลิก
+                  </button>
+                </>
+              )}
+              {hasFoyPending && pendingCount === 0 && (
+                <span className="text-teal-300 text-sm">📦 กระดาษฝอย {Object.keys(foyPending).length} รุ่น พร้อมจอง</span>
+              )}
               <button
                 onClick={handleSave}
                 disabled={saving || cannotBook60k || vehicleType === '' || sourceType === ''}
