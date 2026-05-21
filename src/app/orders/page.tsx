@@ -198,7 +198,9 @@ export default function OrdersPage() {
 
                       {/* 5. ขึ้นของ */}
                       <td className="px-4 py-3 border-r border-gray-200 text-center">
-                        {pickedUp ? (
+                        {cancelled ? (
+                          <span className="text-gray-300 text-xs">—</span>
+                        ) : pickedUp ? (
                           <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
                             ✅ ขึ้นของแล้ว
                           </span>
@@ -219,7 +221,9 @@ export default function OrdersPage() {
 
                       {/* 7. สถานะการชำระเงิน */}
                       <td className="px-4 py-3">
-                        {paid ? (
+                        {cancelled ? (
+                          <span className="text-gray-300 text-xs">—</span>
+                        ) : paid ? (
                           <div className="flex flex-col gap-0.5">
                             <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
                               ✅ ชำระแล้ว

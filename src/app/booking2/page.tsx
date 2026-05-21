@@ -546,7 +546,7 @@ function Booking2Inner() {
                 {saving ? 'กำลังบันทึก...' : '💾 อัพเดทการจอง'}
               </button>
               {cannotBook60k && <span className="text-red-400 text-sm font-semibold">⛔ ยอดไม่ถึง 60,000 — จองรถไม่ได้</span>}
-              {pendingCount === 0 && (
+              {pendingCount === 0 && !hasFoyPending && (
                 <button
                   onClick={handleCancelOrder}
                   disabled={saving}
