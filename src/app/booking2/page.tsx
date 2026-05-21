@@ -137,7 +137,7 @@ function Booking2Inner() {
   const [pending, setPending]       = useState<Record<number, number>>({})
   const [zoom, setZoom]             = useState(1)
   const [sourceType, setSourceType]   = useState<'โกดัง' | 'หน้าร้าน' | ''>('')
-  const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง' | ''>('')
+  const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | ''>('')
   const [manualTotal, setManualTotal] = useState<string>('')
   const [branchInfo, setBranchInfo] = useState<{ name: string; phone: string } | null>(null)
 
@@ -539,11 +539,12 @@ function Booking2Inner() {
                                 <div className="flex flex-col justify-center h-full gap-0.5">
                                   <div className="text-[7px] text-gray-500 font-semibold leading-none">รถ</div>
                                   <select value={vehicleType}
-                                    onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง')}
+                                    onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง')}
                                     className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 bg-white focus:outline-none ${(vehicleType === '' || cannotBook60k) ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-800'}`}>
                                     <option value="" disabled>— เลือก —</option>
                                     <option value="จองรถ60000">จองรถ 60,000</option>
                                     <option value="รอพ่วง">รอพ่วง</option>
+                                    <option value="รับเอง">รับเอง</option>
                                   </select>
                                   {vehicleType === '' && <div className="text-[7px] text-red-500 leading-none">กรุณาเลือก</div>}
                                   {cannotBook60k && (
