@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { Fragment, useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -234,7 +234,7 @@ export default function StockPage() {
             <table className="min-w-full text-xs">
               <thead className="sticky top-0 z-20">
                 <tr className="bg-green-700 text-white text-left">
-                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap">ชื่อรุ่น ✎</th>
+                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap min-w-[180px]">ชื่อรุ่น ✎</th>
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap">รหัสสี ✎</th>
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap">ชื่อสี ✎</th>
                   <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-center">สต็อคล่าสุด</th>
@@ -253,7 +253,7 @@ export default function StockPage() {
                   const addDup = !!(newRow.model_name && isDuplicate(newRow.model_name, newRow.color_name))
                   return (
                     <tr className="bg-blue-50 border-b-2 border-blue-300">
-                      <td className="px-2 py-1.5 border-r border-gray-200">
+                      <td className="px-2 py-1.5 border-r border-gray-200 min-w-[180px]">
                         <select value={newRow.model_name}
                           onChange={e => setNewRow(p => ({ ...p, model_name: e.target.value }))}
                           className="w-full px-1.5 py-1 text-xs rounded border border-blue-300 bg-white focus:outline-none focus:ring-1 focus:ring-blue-400">
@@ -307,6 +307,7 @@ export default function StockPage() {
                     <td colSpan={12} className="text-center py-10 text-gray-400">ยังไม่มีข้อมูล กรอกแถวด้านบนเพื่อเพิ่มรุ่น</td>
                   </tr>
                 ) : items.map((item, i) => {
+                  const isFirstOfModel = i === 0 || items[i - 1].model_name !== item.model_name
                   const hasPending = !!rowEdits[item.id] && Object.keys(rowEdits[item.id]!).length > 0
                   const stock      = parseFloat(item.stock_qty)
                   const editModel  = String(rowEdits[item.id]?.model_name ?? item.model_name)
@@ -318,10 +319,18 @@ export default function StockPage() {
                   const price9p7 = wPrice > 0 ? wPrice * 1.09 * 1.07 : null
 
                   return (
-                    <tr key={item.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                    <Fragment key={item.id}>
+                    {isFirstOfModel && (
+                      <tr className="bg-green-800 text-white">
+                        <td colSpan={12} className="px-3 py-1 text-[11px] font-bold tracking-wide">
+                          {item.model_name}
+                        </td>
+                      </tr>
+                    )}
+                    <tr className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
 
                       {/* 1. ชื่อรุ่น */}
-                      <td className="px-2 py-1.5 border-r border-gray-200">
+                      <td className="px-2 py-1.5 border-r border-gray-200 min-w-[180px]">
                         <select value={editVal(item, 'model_name')}
                           onChange={e => setEdit(item.id, 'model_name', e.target.value)}
                           className={inputCls(!!rowEdits[item.id]?.model_name)}>
@@ -449,6 +458,7 @@ export default function StockPage() {
                       </td>
 
                     </tr>
+                    </Fragment>
                   )
                 })}
               </tbody>
