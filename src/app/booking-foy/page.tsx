@@ -28,11 +28,10 @@ interface ModelGroup {
 // 3 columns with 4px gap each → COL_W = (733 − 8) / 3 ≈ 241px
 //
 const NUM_COLS   = 3
-const MCOL_COLOR = 90          // ชื่อสี
-const MCOL_PRICE = 54          // ราคา
+const MCOL_COLOR = 144         // ชื่อสี (รวม space ที่เคยเป็นราคา)
 const MCOL_QTY   = 42          // จำนวน
 const MCOL_TOTAL = 55          // รวม
-const COL_W      = MCOL_COLOR + MCOL_PRICE + MCOL_QTY + MCOL_TOTAL  // 241
+const COL_W      = MCOL_COLOR + MCOL_QTY + MCOL_TOTAL  // 241
 const COL_GAP    = 4
 const TOTAL_W    = NUM_COLS * COL_W + (NUM_COLS - 1) * COL_GAP      // 731
 
@@ -253,26 +252,33 @@ export default function BookingFoyPage() {
 
   // ── Model section renderer ─────────────────────────────────────────────────
 
-  const renderModelSection = (g: ModelGroup, ci: number, mi: number) => (
+  const renderModelSection = (g: ModelGroup, ci: number, mi: number) => {
+    const modelPrice = parseFloat(g.items[0]?.warehouse_price ?? '0') || 0
+    return (
     <div key={`c${ci}m${mi}`} className="mb-1.5">
       <table className="border-collapse" style={{ tableLayout: 'fixed', width: COL_W }}>
         <colgroup>
           <col style={{ width: MCOL_COLOR }} />
-          <col style={{ width: MCOL_PRICE }} />
           <col style={{ width: MCOL_QTY }} />
           <col style={{ width: MCOL_TOTAL }} />
         </colgroup>
         <thead>
-          {/* รุ่น header */}
+          {/* รุ่น header — แสดงชื่อรุ่น + ราคาโกดัง */}
           <tr className="bg-green-700 text-white">
-            <th colSpan={4} className="border border-gray-500 px-1 py-0.5 text-center font-bold overflow-hidden text-[10px]">
-              <div className="truncate">{g.name}</div>
+            <th colSpan={3} className="border border-gray-500 px-1 py-0.5 font-bold overflow-hidden text-[10px]">
+              <div className="flex items-center justify-between gap-1">
+                <span className="truncate">{g.name}</span>
+                {modelPrice > 0 && (
+                  <span className="shrink-0 font-semibold text-yellow-200">
+                    ฿{modelPrice.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
+                  </span>
+                )}
+              </div>
             </th>
           </tr>
           {/* sub-column header */}
           <tr className="bg-green-800 text-white text-[9px]">
             <th className="border border-gray-500 px-1 py-0.5 text-left font-medium">ชื่อสี</th>
-            <th className="border border-gray-500 px-1 py-0.5 text-right font-medium">ราคา</th>
             <th className="border border-gray-500 px-1 py-0.5 text-right font-medium">จำนวน</th>
             <th className="border border-gray-500 px-1 py-0.5 text-right font-medium">รวม</th>
           </tr>
@@ -288,10 +294,6 @@ export default function BookingFoyPage() {
                 {/* ชื่อสี */}
                 <td className={`border border-gray-300 px-1 py-px bg-gray-100 overflow-hidden ${hasPending ? 'ring-1 ring-inset ring-yellow-400' : ''}`}>
                   <div className="truncate text-[9px] text-gray-800">{item.color_name || item.color_code || '–'}</div>
-                </td>
-                {/* ราคา */}
-                <td className="border border-gray-300 px-1 py-px text-right bg-gray-100 text-[9px] text-gray-800">
-                  {price ? price.toLocaleString('th-TH', { minimumFractionDigits: 2 }) : '–'}
                 </td>
                 {/* จำนวน */}
                 <td className={`border border-gray-300 p-0 ${hasPending ? 'bg-yellow-50' : 'bg-white'}`}>
@@ -316,6 +318,7 @@ export default function BookingFoyPage() {
       </table>
     </div>
   )
+  }
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
