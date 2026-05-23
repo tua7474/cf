@@ -756,7 +756,9 @@ function Booking2Inner() {
                                   {!foyData && <span className="text-[9px] text-teal-700 ml-2 shrink-0">→</span>}
                                 </div>
                               </td>,
-                              <td key={`${si}-pp`} onClick={foyClick} className={`border border-gray-300 px-1 py-px text-right ${bg} cursor-pointer`}>{'–'}</td>,
+                              <td key={`${si}-pp`} onClick={foyClick} className={`border border-gray-300 px-1 py-px text-right ${bg} cursor-pointer`}>
+                                {price ? price.toLocaleString('th-TH', { minimumFractionDigits: 2 }) : '–'}
+                              </td>,
                               <td key={`${si}-pq`} onClick={foyClick} className={`border border-gray-300 px-1 py-px text-right ${qtyBg} cursor-pointer`}>
                                 {foyData ? foyData.qty : ''}
                               </td>,

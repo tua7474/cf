@@ -83,9 +83,11 @@ export async function GET() {
 
     // กระดาษฝอย models จาก paper_stock (subgroup 8)
     const { rows: foyRows } = await pool.query<{
-      model_name: string; total_qty: string
+      model_name: string; total_qty: string; warehouse_price: string
     }>(
-      `SELECT model_name, COALESCE(SUM(stock_qty), 0) AS total_qty
+      `SELECT model_name,
+              COALESCE(SUM(stock_qty), 0)  AS total_qty,
+              MAX(warehouse_price)          AS warehouse_price
        FROM paper_stock
        WHERE show_in_booking = true
        GROUP BY model_name
@@ -95,7 +97,7 @@ export async function GET() {
       id: -(i + 1),
       group_name: 'กระดาษฝอย',
       product_name: r.model_name,
-      price: null as string | null,
+      price: r.warehouse_price ?? null,
       stock_qty: r.total_qty,
       section_order: 4,
       section_name: 'บับเบิล',
