@@ -89,6 +89,25 @@ export default function Home() {
     }
   }
 
+  // ── Bulk add all rows that have addInputs filled ─────────────────────────────
+
+  const handleAddAll = async () => {
+    const entries = Object.entries(addInputs).filter(([, v]) => parseFloat(v) > 0)
+    if (!entries.length) return
+    setBusy(b => ({ ...b, addAll: true }))
+    await Promise.all(entries.map(([idStr, v]) =>
+      fetch('/api/catalog', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: Number(idStr), action: 'add', qty: parseFloat(v) }),
+      })
+    ))
+    setAddInputs({})
+    load()
+    showMsg(`เพิ่มสต็อคสำเร็จ ${entries.length} รายการ`)
+    setBusy(b => ({ ...b, addAll: false }))
+  }
+
   // ── Save info edits ───────────────────────────────────────────────────────────
 
   const handleSaveInfo = async (id: number) => {
@@ -202,6 +221,10 @@ export default function Home() {
           <p className="text-green-200 text-xs mt-0.5">ข้อมูลจาก Railway PostgreSQL</p>
         </div>
         <div className="flex items-center gap-3">
+          <button onClick={handleAddAll} disabled={!!busy.addAll}
+            className="px-4 py-1.5 text-sm rounded bg-green-500 hover:bg-green-400 text-white font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
+            {busy.addAll ? 'กำลังเพิ่ม...' : '+ เพิ่มสต็อคทั้งหมด'}
+          </button>
           <Link href="/booking2"
             className="px-4 py-1.5 text-sm rounded bg-yellow-500 hover:bg-yellow-400 text-green-900 font-medium transition-colors border border-yellow-400">
             📝 ใบจองสินค้า
@@ -345,11 +368,6 @@ export default function Home() {
                             value={addInputs[p.id] ?? ''}
                             onChange={e => setAddInputs(prev => ({ ...prev, [p.id]: e.target.value }))}
                             className="w-16 px-1.5 py-1 text-xs rounded border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-green-400 text-right" />
-                          <button onClick={() => handleStock(p.id, 'add')}
-                            disabled={!!busy[`add-${p.id}`]}
-                            className="px-2 py-1 text-xs rounded bg-green-100 hover:bg-green-200 text-green-800 border border-green-300 transition-colors disabled:opacity-50 whitespace-nowrap">
-                            + เพิ่ม
-                          </button>
                           <Link href={`/history?id=${p.id}&type=add&name=${encodeURIComponent(p.product_name)}`}
                             className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-300 transition-colors whitespace-nowrap">
                             ประวัติ

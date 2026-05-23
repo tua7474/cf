@@ -134,6 +134,25 @@ export default function StockPage() {
     }
   }
 
+  // ── Bulk add all rows that have addInputs filled ─────────────────────────────
+
+  const handleAddAll = async () => {
+    const entries = Object.entries(addInputs).filter(([, v]) => parseFloat(v) > 0)
+    if (!entries.length) return
+    setBusy(b => ({ ...b, addAll: true }))
+    await Promise.all(entries.map(([idStr, v]) =>
+      fetch('/api/stock', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: Number(idStr), action: 'add', qty: parseFloat(v) }),
+      })
+    ))
+    setAddInputs({})
+    load()
+    showMsg(`เพิ่มสต็อคสำเร็จ ${entries.length} รายการ`)
+    setBusy(b => ({ ...b, addAll: false }))
+  }
+
   // ── Save info edits ──────────────────────────────────────────────────────────
 
   const handleSaveInfo = async (id: number) => {
@@ -218,10 +237,16 @@ export default function StockPage() {
         {msg && (
           <span className={`text-sm px-3 py-1 rounded-full text-white ${msg.startsWith('❌') ? 'bg-red-500' : 'bg-green-500'}`}>{msg}</span>
         )}
-        <Link href="/booking-foy"
-          className="ml-auto px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors">
-          📋 ใบจองกระดาษฝอย
-        </Link>
+        <div className="ml-auto flex items-center gap-2">
+          <button onClick={handleAddAll} disabled={!!busy.addAll}
+            className="px-4 py-1.5 text-sm rounded bg-green-500 hover:bg-green-400 text-white font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
+            {busy.addAll ? 'กำลังเพิ่ม...' : '+ เพิ่มสต็อคทั้งหมด'}
+          </button>
+          <Link href="/booking-foy"
+            className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors">
+            📋 ใบจองกระดาษฝอย
+          </Link>
+        </div>
       </header>
 
       {/* Main */}
@@ -372,11 +397,6 @@ export default function StockPage() {
                             value={addInputs[item.id] ?? ''}
                             onChange={e => setAddInputs(p => ({ ...p, [item.id]: e.target.value }))}
                             className="w-16 px-1.5 py-1 text-xs rounded border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-green-400 text-right" />
-                          <button onClick={() => handleStock(item.id, 'add')}
-                            disabled={!!busy[`add-${item.id}`]}
-                            className="px-2 py-1 text-xs rounded bg-green-100 hover:bg-green-200 text-green-800 border border-green-300 transition-colors disabled:opacity-50 whitespace-nowrap">
-                            + เพิ่ม
-                          </button>
                           <Link href={`/stock-history?id=${item.id}&type=add&name=${encodeURIComponent(item.model_name + ' ' + item.color_name)}`}
                             className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-300 transition-colors whitespace-nowrap">
                             ประวัติ
