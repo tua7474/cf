@@ -54,17 +54,12 @@ export default function Home() {
   const [newRow, setNewRow] = useState({ group_name: '', product_name: '', price: '' })
   const [now, setNow] = useState<Date | null>(null)
 
-  useEffect(() => {
-    setNow(new Date())
-    const t = setInterval(() => setNow(new Date()), 60_000)
-    return () => clearInterval(t)
-  }, [])
 
   const load = useCallback(() => {
     setLoading(true)
     fetch('/api/catalog')
       .then(r => r.json())
-      .then((data: Product[]) => { setProducts(data); setLoading(false) })
+      .then((data: Product[]) => { setProducts(data); setLoading(false); setNow(new Date()) })
       .catch(() => setLoading(false))
   }, [])
 

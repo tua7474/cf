@@ -56,17 +56,12 @@ export default function StockPage() {
   const [msg, setMsg]                   = useState<string | null>(null)
   const [now, setNow]                   = useState<Date | null>(null)
 
-  useEffect(() => {
-    setNow(new Date())
-    const t = setInterval(() => setNow(new Date()), 60_000)
-    return () => clearInterval(t)
-  }, [])
 
   const load = useCallback(() => {
     setLoading(true)
     fetch('/api/stock')
       .then(r => r.json())
-      .then((data: StockItem[]) => { setItems(data); setLoading(false) })
+      .then((data: StockItem[]) => { setItems(data); setLoading(false); setNow(new Date()) })
       .catch(() => setLoading(false))
   }, [])
 
