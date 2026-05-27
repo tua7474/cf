@@ -225,22 +225,27 @@ export default function StockPage() {
     return sum + (isNaN(qty) || isNaN(price) ? 0 : qty * price)
   }, 0)
 
-  const fmtNowBE = now ? now.toLocaleString('th-TH', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok',
-  }) : ''
-  const fmtNowCE = now ? now.toLocaleString('th-TH-u-ca-gregory', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok',
-  }) : ''
+  const dateBE  = now ? now.toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Bangkok' }) : ''
+  const dateCEY = now ? now.toLocaleDateString('th-TH-u-ca-gregory', { year: 'numeric', timeZone: 'Asia/Bangkok' }) : ''
+  const dateStr = now ? `${dateBE} (ค.ศ. ${dateCEY})` : ''
+
+  const handlePrint = () => window.print()
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
   const inputCls = (pending: boolean) =>
     `w-full px-1.5 py-1 text-xs rounded border focus:outline-none focus:ring-1 focus:ring-green-400 ${pending ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200 bg-white'}`
 
+  const printItems = items.filter(it => it.show_in_booking)
+  const printTotal = printItems.reduce((sum, it) => {
+    const qty = parseFloat(it.stock_qty)
+    const pr  = parseFloat(it.warehouse_price)
+    return sum + (isNaN(qty) || isNaN(pr) ? 0 : qty * pr)
+  }, 0)
+
   return (
-    <div className="min-h-screen bg-gray-100">
+    <>
+    <div className="min-h-screen bg-gray-100 print:hidden">
 
       {/* Header */}
       <header className="bg-green-800 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
@@ -260,6 +265,10 @@ export default function StockPage() {
           <button onClick={handleAddAll} disabled={!!busy.addAll}
             className="px-4 py-1.5 text-sm rounded bg-green-500 hover:bg-green-400 text-white font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
             {busy.addAll ? 'กำลังเพิ่ม...' : '+ เพิ่มสต็อคทั้งหมด'}
+          </button>
+          <button onClick={handlePrint}
+            className="px-4 py-1.5 text-sm rounded bg-white hover:bg-gray-100 text-green-900 font-semibold transition-colors border border-white/50 whitespace-nowrap">
+            🖨️ พิมพ์
           </button>
           <Link href="/booking-foy"
             className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors">
@@ -501,27 +510,68 @@ export default function StockPage() {
                   )
                 })}
               </tbody>
+              <tfoot>
+                <tr className="bg-green-900 text-white text-xs">
+                  <td colSpan={9} className="px-3 py-2 text-right font-semibold">
+                    มูลค่าสต็อครวมทั้งหมด
+                  </td>
+                  <td colSpan={3} className="px-3 py-2 text-right font-bold text-base whitespace-nowrap">
+                    ฿{totalValue.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                </tr>
+                {dateStr && (
+                  <tr className="bg-green-800 text-green-200 text-[11px]">
+                    <td colSpan={12} className="px-3 py-1 text-right">{dateStr}</td>
+                  </tr>
+                )}
+              </tfoot>
             </table>
             </div>
           </div>
         )}
       </main>
-
-      {/* ── Stock value summary (bottom-right) ── */}
-      {!loading && (
-        <div className="fixed bottom-4 right-4 z-50 bg-green-900 text-white rounded-xl shadow-2xl px-5 py-3 min-w-[260px] text-right">
-          <div className="text-[11px] text-green-300 mb-1 font-medium">มูลค่าสต็อครวมทั้งหมด</div>
-          <div className="text-2xl font-bold tracking-tight">
-            ฿{totalValue.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-          {now && (
-            <div className="mt-2 border-t border-green-700 pt-2 space-y-0.5">
-              <div className="text-[11px] text-green-200">🕐 พ.ศ. {fmtNowBE}</div>
-              <div className="text-[11px] text-green-300">ค.ศ. {fmtNowCE}</div>
-            </div>
-          )}
-        </div>
-      )}
     </div>
+
+    {/* ── Print view (A4) ── */}
+    <div className="hidden print:block p-10 font-sans text-black bg-white">
+      <h1 className="text-xl font-bold mb-0.5">รายงานสต็อคกระดาษฝอย</h1>
+      <p className="text-sm text-gray-500 mb-5">{dateStr}</p>
+      <table className="w-full text-sm border-collapse">
+        <thead>
+          <tr className="border-b-2 border-black">
+            <th className="text-left py-1.5 pr-4">ชื่อรุ่น</th>
+            <th className="text-left py-1.5 pr-4">ชื่อสี</th>
+            <th className="text-right py-1.5 pr-4">จำนวนสต็อค</th>
+            <th className="text-right py-1.5 pr-4">ราคาโกดัง (฿)</th>
+            <th className="text-right py-1.5">มูลค่า (฿)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {printItems.map(item => {
+            const qty = parseFloat(item.stock_qty)
+            const pr  = parseFloat(item.warehouse_price)
+            const val = isNaN(qty) || isNaN(pr) ? 0 : qty * pr
+            return (
+              <tr key={item.id} className="border-b border-gray-200">
+                <td className="py-1 pr-4">{item.model_name}</td>
+                <td className="py-1 pr-4 text-gray-600">{item.color_name || item.color_code || '-'}</td>
+                <td className="py-1 pr-4 text-right">{fmtQty(item.stock_qty)}</td>
+                <td className="py-1 pr-4 text-right">{fmtMoney(parseFloat(item.warehouse_price))}</td>
+                <td className="py-1 text-right">{val > 0 ? val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+        <tfoot>
+          <tr className="border-t-2 border-black font-bold">
+            <td colSpan={4} className="text-right pt-2 pr-4">รวมมูลค่าทั้งหมด</td>
+            <td className="text-right pt-2">
+              {printTotal.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    </>
   )
 }
