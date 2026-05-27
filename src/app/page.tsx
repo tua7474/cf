@@ -52,6 +52,13 @@ export default function Home() {
   const [busy, setBusy]   = useState<Record<string, boolean>>({})
   const [msg, setMsg]     = useState<string | null>(null)
   const [newRow, setNewRow] = useState({ group_name: '', product_name: '', price: '' })
+  const [now, setNow] = useState<Date | null>(null)
+
+  useEffect(() => {
+    setNow(new Date())
+    const t = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(t)
+  }, [])
 
   const load = useCallback(() => {
     setLoading(true)
@@ -203,6 +210,25 @@ export default function Home() {
     }
     entries.push({ type: 'row', product: p })
   }
+
+  // ── Stock total value ────────────────────────────────────────────────────────
+
+  const totalValue = products
+    .filter(p => !FOY_HIDDEN.has(p.group_name))
+    .reduce((sum, p) => {
+      const qty   = parseFloat(String(p.quantity ?? 0))
+      const price = parseFloat(String(p.price ?? 0))
+      return sum + (isNaN(qty) || isNaN(price) ? 0 : qty * price)
+    }, 0)
+
+  const fmtNowBE = now ? now.toLocaleString('th-TH', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok',
+  }) : ''
+  const fmtNowCE = now ? now.toLocaleString('th-TH-u-ca-gregory', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok',
+  }) : ''
 
   // ── Input styles ─────────────────────────────────────────────────────────────
 
@@ -449,6 +475,22 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      {/* ── Stock value summary (bottom-right) ── */}
+      {!loading && (
+        <div className="fixed bottom-4 right-4 z-50 bg-green-900 text-white rounded-xl shadow-2xl px-5 py-3 min-w-[260px] text-right">
+          <div className="text-[11px] text-green-300 mb-1 font-medium">มูลค่าสต็อครวมทั้งหมด</div>
+          <div className="text-2xl font-bold tracking-tight">
+            ฿{totalValue.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          {now && (
+            <div className="mt-2 border-t border-green-700 pt-2 space-y-0.5">
+              <div className="text-[11px] text-green-200">🕐 พ.ศ. {fmtNowBE}</div>
+              <div className="text-[11px] text-green-300">ค.ศ. {fmtNowCE}</div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

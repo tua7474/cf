@@ -54,6 +54,13 @@ export default function StockPage() {
   const [rowEdits, setRowEdits]         = useState<Record<number, Partial<StockItem>>>({})
   const [busy, setBusy]                 = useState<Record<number | string, boolean>>({})
   const [msg, setMsg]                   = useState<string | null>(null)
+  const [now, setNow]                   = useState<Date | null>(null)
+
+  useEffect(() => {
+    setNow(new Date())
+    const t = setInterval(() => setNow(new Date()), 60_000)
+    return () => clearInterval(t)
+  }, [])
 
   const load = useCallback(() => {
     setLoading(true)
@@ -214,6 +221,23 @@ export default function StockPage() {
     })
     load()
   }
+
+  // ── Stock total value ────────────────────────────────────────────────────────
+
+  const totalValue = items.reduce((sum, item) => {
+    const qty   = parseFloat(item.stock_qty)
+    const price = parseFloat(item.warehouse_price)
+    return sum + (isNaN(qty) || isNaN(price) ? 0 : qty * price)
+  }, 0)
+
+  const fmtNowBE = now ? now.toLocaleString('th-TH', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok',
+  }) : ''
+  const fmtNowCE = now ? now.toLocaleString('th-TH-u-ca-gregory', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Bangkok',
+  }) : ''
 
   // ── Render ───────────────────────────────────────────────────────────────────
 
@@ -487,6 +511,22 @@ export default function StockPage() {
           </div>
         )}
       </main>
+
+      {/* ── Stock value summary (bottom-right) ── */}
+      {!loading && (
+        <div className="fixed bottom-4 right-4 z-50 bg-green-900 text-white rounded-xl shadow-2xl px-5 py-3 min-w-[260px] text-right">
+          <div className="text-[11px] text-green-300 mb-1 font-medium">มูลค่าสต็อครวมทั้งหมด</div>
+          <div className="text-2xl font-bold tracking-tight">
+            ฿{totalValue.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          {now && (
+            <div className="mt-2 border-t border-green-700 pt-2 space-y-0.5">
+              <div className="text-[11px] text-green-200">🕐 พ.ศ. {fmtNowBE}</div>
+              <div className="text-[11px] text-green-300">ค.ศ. {fmtNowCE}</div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
