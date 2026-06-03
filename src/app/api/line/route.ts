@@ -628,13 +628,13 @@ async function handleText(text: string, userId: string, replyToken: string, sour
           ]
         },
         body: {
-          type: 'box', layout: 'vertical', paddingAll: '16px',
+          type: 'box', layout: 'vertical', paddingAll: '16px', backgroundColor: '#F5EED8',
           contents: [
             { type: 'text', text: 'กดปุ่มด้านล่างเพื่อเปิดหน้าจองสินค้า สามารถเลือกสินค้า บันทึกใบจอง และดูประวัติได้ทันทีครับ', wrap: true, size: 'sm', color: '#6b7280' }
           ]
         },
         footer: {
-          type: 'box', layout: 'vertical', paddingAll: '12px', spacing: 'sm',
+          type: 'box', layout: 'vertical', paddingAll: '12px', spacing: 'sm', backgroundColor: '#F5EED8',
           contents: [
             {
               type: 'button',
