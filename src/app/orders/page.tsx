@@ -465,7 +465,7 @@ export default function OrdersPage() {
           ) : orders.length === 0 ? (
             <div className="flex items-center justify-center h-40 text-gray-400">ยังไม่มีใบจอง</div>
           ) : (
-            <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden min-w-max">
               <table className="min-w-full text-sm">
                 <thead>
                   <tr className="bg-green-700 text-white text-left text-xs">
