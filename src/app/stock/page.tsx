@@ -267,11 +267,11 @@ export default function StockPage() {
             {busy.addAll ? 'กำลังเพิ่ม...' : '+ เพิ่มสต็อคทั้งหมด'}
           </button>
           <button onClick={handlePrint}
-            className="px-4 py-1.5 text-sm rounded bg-white hover:bg-gray-100 text-green-300 font-semibold transition-colors border border-white/50 whitespace-nowrap">
+            className="px-4 py-1.5 text-sm rounded bg-white hover:bg-gray-100 text-green-400 font-semibold transition-colors border border-white/50 whitespace-nowrap">
             🖨️ พิมพ์
           </button>
           <Link href="/booking-foy"
-            className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-300 font-semibold transition-colors">
+            className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-400 font-semibold transition-colors">
             📋 ใบจองกระดาษฝอย
           </Link>
         </div>
@@ -408,7 +408,7 @@ export default function StockPage() {
 
                       {/* 4. สต็อคล่าสุด */}
                       <td className="px-3 py-1.5 border-r border-gray-200 text-center">
-                        <div className={`text-base font-bold ${stock < 0 ? 'text-red-600' : 'text-green-300'}`}>
+                        <div className={`text-base font-bold ${stock < 0 ? 'text-red-600' : 'text-green-400'}`}>
                           {fmtQty(item.stock_qty)}
                         </div>
                         <div className="text-[10px] text-gray-400">หน่วย</div>
@@ -417,7 +417,7 @@ export default function StockPage() {
                       {/* 5. เพิ่มเข้าสต็อค */}
                       <td className="px-2 py-1.5 border-r border-gray-200 min-w-[160px]">
                         <div className="text-[10px] text-gray-500 mb-1">
-                          ล่าสุด: <span className="font-semibold text-green-300">{fmtQty(item.last_added_qty)}</span>
+                          ล่าสุด: <span className="font-semibold text-green-400">{fmtQty(item.last_added_qty)}</span>
                           <span className="ml-1 text-gray-400">({fmtDate(item.last_added_at)})</span>
                         </div>
                         <div className="flex gap-1">
@@ -435,7 +435,7 @@ export default function StockPage() {
                       {/* 6. จำนวนจอง */}
                       <td className="px-2 py-1.5 border-r border-gray-200 min-w-[160px]">
                         <div className="text-[10px] text-gray-500 mb-1">
-                          ล่าสุด: <span className="font-semibold text-green-300">{fmtQty(item.last_booked_qty)}</span>
+                          ล่าสุด: <span className="font-semibold text-green-400">{fmtQty(item.last_booked_qty)}</span>
                           <span className="ml-1 text-gray-400">({fmtDate(item.last_booked_at)})</span>
                         </div>
                         <div className="flex gap-1">
@@ -482,7 +482,7 @@ export default function StockPage() {
                         {hasPending && (
                           <button onClick={() => handleSaveInfo(item.id)}
                             disabled={!!busy[`info-${item.id}`] || editDup}
-                            className={`mt-0.5 px-2 py-0.5 text-[10px] rounded font-semibold transition-colors disabled:opacity-50 whitespace-nowrap ${editDup ? 'bg-red-100 text-red-700 border border-red-300 cursor-not-allowed' : 'bg-yellow-400 hover:bg-yellow-300 text-green-300'}`}>
+                            className={`mt-0.5 px-2 py-0.5 text-[10px] rounded font-semibold transition-colors disabled:opacity-50 whitespace-nowrap ${editDup ? 'bg-red-100 text-red-700 border border-red-300 cursor-not-allowed' : 'bg-yellow-400 hover:bg-yellow-300 text-green-400'}`}>
                             {editDup ? '⛔ ชื่อซ้ำ' : '💾 บันทึก'}
                           </button>
                         )}

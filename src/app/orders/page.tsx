@@ -205,7 +205,7 @@ export default function OrdersPage() {
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '3mm' }}>
-          <div style={{ fontSize: '16pt', fontWeight: 'bold', color: '#86efac' }}>ใบจองสินค้า</div>
+          <div style={{ fontSize: '16pt', fontWeight: 'bold', color: '#4ade80' }}>ใบจองสินค้า</div>
           <div style={{ fontSize: '9pt', color: '#555' }}>เลขที่: {order.order_no}</div>
         </div>
 
@@ -363,7 +363,7 @@ export default function OrdersPage() {
                   items.map((item, idx) => (
                     <tr key={`${modelName}-${idx}`} style={{ backgroundColor: idx % 2 === 0 ? 'white' : '#f5f5f5' }}>
                       {idx === 0 && (
-                        <td rowSpan={items.length} style={{ ...tdBase, fontWeight: 'bold', color: '#86efac', textAlign: 'center', verticalAlign: 'middle', backgroundColor: '#ccfbf1', fontSize: '7.5pt' }}>
+                        <td rowSpan={items.length} style={{ ...tdBase, fontWeight: 'bold', color: '#4ade80', textAlign: 'center', verticalAlign: 'middle', backgroundColor: '#ccfbf1', fontSize: '7.5pt' }}>
                           {modelName}
                         </td>
                       )}
@@ -380,7 +380,7 @@ export default function OrdersPage() {
               <tfoot>
                 <tr style={{ backgroundColor: '#ccfbf1' }}>
                   <td colSpan={4} style={{ ...tdBase, textAlign: 'right', fontWeight: 'bold', fontSize: '10pt', borderColor: '#888' }}>ยอดเงินรวม</td>
-                  <td style={{ ...tdBase, textAlign: 'right', fontWeight: 'bold', fontSize: '10pt', color: '#86efac', borderColor: '#888' }}>
+                  <td style={{ ...tdBase, textAlign: 'right', fontWeight: 'bold', fontSize: '10pt', color: '#4ade80', borderColor: '#888' }}>
                     {grandTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 })} บาท
                   </td>
                 </tr>
@@ -408,7 +408,7 @@ export default function OrdersPage() {
               <tfoot>
                 <tr style={{ backgroundColor: '#ccfbf1' }}>
                   <td style={{ ...tdBase, textAlign: 'right', fontWeight: 'bold', fontSize: '10pt', borderColor: '#888' }} colSpan={2}>ยอดเงินรวม</td>
-                  <td style={{ ...tdBase, textAlign: 'right', fontWeight: 'bold', fontSize: '10pt', color: '#86efac', borderColor: '#888' }}>
+                  <td style={{ ...tdBase, textAlign: 'right', fontWeight: 'bold', fontSize: '10pt', color: '#4ade80', borderColor: '#888' }}>
                     {grandTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 })} บาท
                   </td>
                 </tr>
@@ -508,7 +508,7 @@ export default function OrdersPage() {
                       <tr key={order.id} className={cancelled ? 'bg-red-50 opacity-60' : i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
 
                         {/* 1. เลขที่ใบจอง */}
-                        <td className="px-4 py-3 border-r border-gray-200 font-mono font-bold text-green-300 text-base">
+                        <td className="px-4 py-3 border-r border-gray-200 font-mono font-bold text-green-400 text-base">
                           {order.order_no}
                         </td>
 
@@ -526,7 +526,7 @@ export default function OrdersPage() {
                         <td className="px-4 py-3 border-r border-gray-200">
                           <div className="flex flex-col gap-1.5">
                             <div className="flex justify-between items-center gap-2 text-[11px]">
-                              <span className={order.vehicle_type ? (order.vehicle_type === 'จองรถ60000' ? 'text-blue-700 font-medium' : 'text-green-300 font-medium') : 'text-gray-300'}>
+                              <span className={order.vehicle_type ? (order.vehicle_type === 'จองรถ60000' ? 'text-blue-700 font-medium' : 'text-green-400 font-medium') : 'text-gray-300'}>
                                 {order.vehicle_type === 'จองรถ60000' ? 'จองรถ' : order.vehicle_type === 'รอพ่วง' ? 'รอพ่วง' : '—'}
                               </span>
                               <span className={order.source_type ? 'text-gray-500 font-medium' : 'text-gray-300'}>
@@ -557,7 +557,7 @@ export default function OrdersPage() {
                           {cancelled ? (
                             <span className="text-gray-300 text-xs">—</span>
                           ) : pickedUp ? (
-                            <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-300">
+                            <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-400">
                               ✅ ขึ้นของแล้ว
                             </span>
                           ) : isAdmin ? (
@@ -583,7 +583,7 @@ export default function OrdersPage() {
                             <span className="text-gray-300 text-xs">—</span>
                           ) : paid ? (
                             <div className="flex flex-col gap-0.5">
-                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-300">
+                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-400">
                                 ✅ ชำระแล้ว
                               </span>
                               {order.payment_date && (
