@@ -95,7 +95,8 @@ export default function OrdersPage() {
   const [printType, setPrintType]   = useState<'booking' | 'foy' | null>(null)
 
   // Role
-  const [isAdmin, setIsAdmin] = useState(true)
+  const [isAdmin, setIsAdmin]       = useState(true)
+  const [branchName, setBranchName] = useState<string | null>(null)
 
   const load = useCallback(() => {
     setLoading(true)
@@ -113,13 +114,14 @@ export default function OrdersPage() {
     fetch('/api/stock').then(r => r.json()).then(setStockItems).catch(() => {})
   }, [])
 
-  // Read role from branch_session
+  // Read role + branch from branch_session
   useEffect(() => {
     try {
       const bs = localStorage.getItem('branch_session')
       if (bs) {
         const s = JSON.parse(bs)
         setIsAdmin(s?.is_admin !== false)
+        if (s?.branch_name) setBranchName(s.branch_name)
       }
     } catch { /* ignore */ }
   }, [])
@@ -494,7 +496,7 @@ export default function OrdersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {orders.map((order, i) => {
+                  {(isAdmin ? orders : orders.filter(o => o.branch_name === branchName)).map((order, i) => {
                     const cancelled = order.status === 'cancelled'
                     const pickedUp  = order.pickup_status === 'picked_up'
                     const paid      = order.payment_status === 'paid'
