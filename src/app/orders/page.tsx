@@ -110,7 +110,7 @@ export default function OrdersPage() {
             ← กลับหน้าใบจองสินค้า
           </Link>
           <div>
-            <h1 className="text-xl font-bold">บันทึกใบจอง</h1>
+            <h1 className="text-xl font-bold">ประวัติใบจอง</h1>
             <p className="text-green-200 text-xs mt-0.5">ประวัติรายการทั้งหมด</p>
           </div>
         </div>
