@@ -336,6 +336,17 @@ function ManageModal({ branch, onClose, onSaved }: { branch: Branch; onClose: ()
   const [newPhone, setNewPhone] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+
+  const deleteBranch = async () => {
+    await fetch('/api/branches', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: branch.id }),
+    })
+    onSaved()
+    onClose()
+  }
 
   const addPhone = async () => {
     const p = newPhone.replace(/\D/g, '')
@@ -402,6 +413,33 @@ function ManageModal({ branch, onClose, onSaved }: { branch: Branch; onClose: ()
           className="mt-3 w-full py-1.5 text-sm rounded bg-gray-100 hover:bg-gray-200 text-gray-700">
           ปิด
         </button>
+
+        {/* Delete branch */}
+        <div className="mt-4 pt-3 border-t border-gray-200">
+          {!confirmDelete ? (
+            <button onClick={() => setConfirmDelete(true)}
+              className="w-full py-1.5 text-sm rounded border border-red-300 text-red-500 hover:bg-red-50 transition-colors">
+              🗑 ลบสาขา
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-xs text-red-600 text-center font-medium">
+                ยืนยันลบสาขา "{branch.name}" ?<br/>
+                <span className="font-normal text-gray-500">ข้อมูลจะถูกลบออกถาวร ไม่สามารถกู้คืนได้</span>
+              </p>
+              <div className="flex gap-2">
+                <button onClick={deleteBranch}
+                  className="flex-1 py-1.5 text-sm rounded bg-red-600 hover:bg-red-700 text-white font-medium">
+                  ยืนยันลบ
+                </button>
+                <button onClick={() => setConfirmDelete(false)}
+                  className="flex-1 py-1.5 text-sm rounded bg-gray-100 hover:bg-gray-200 text-gray-700">
+                  ยกเลิก
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )
