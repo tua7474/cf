@@ -149,6 +149,7 @@ function Booking2Inner() {
   const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | ''>('')
   const [manualTotal, setManualTotal] = useState<string>('')
   const [branchInfo, setBranchInfo] = useState<{ name: string; phone: string } | null>(null)
+  const [isAdmin, setIsAdmin]       = useState(true)   // false = non-admin branch (LINE group)
 
   // Load foy result from booking-foy (new order mode only)
   useEffect(() => {
@@ -166,8 +167,9 @@ function Booking2Inner() {
   useEffect(() => {
     if (!editOrderNo) setPending(loadDraft())
     if (branchNameParam) {
-      // มาจาก LINE group → auto-fill branch และ save ลง localStorage
+      // มาจาก LINE group → auto-fill branch, non-admin
       setBranchInfo({ name: branchNameParam, phone: '' })
+      setIsAdmin(false)
       if (branchIdParam) {
         try {
           localStorage.setItem('branch_session', JSON.stringify({
@@ -184,6 +186,7 @@ function Booking2Inner() {
         if (bs) {
           const s = JSON.parse(bs)
           if (s?.branch_name) setBranchInfo({ name: s.branch_name, phone: s.phone ?? '' })
+          setIsAdmin(s?.is_admin !== false)  // false เฉพาะเมื่อ is_admin = false อย่างชัดเจน
         }
       } catch { /* ignore */ }
     }
@@ -480,9 +483,11 @@ function Booking2Inner() {
       {/* Header */}
       <header className="no-print bg-green-800 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/" className="text-green-200 hover:text-white text-sm transition-colors">
-            ← กลับหน้าหลัก
-          </Link>
+          {isAdmin && (
+            <Link href="/" className="text-green-200 hover:text-white text-sm transition-colors">
+              ← กลับหน้าหลัก
+            </Link>
+          )}
           <div>
             <h1 className="text-xl font-bold">
               {editOrderNo ? `แก้ไขใบจอง — ${editOrderNo}` : 'ใบจองสินค้า'}
@@ -498,11 +503,13 @@ function Booking2Inner() {
           📋 ประวัติใบจอง
         </Link>
 
-        <button
-          onClick={() => window.print()}
-          className="px-3 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white transition-colors border border-white/30">
-          🖨️ พิมพ์
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => window.print()}
+            className="px-3 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white transition-colors border border-white/30">
+            🖨️ พิมพ์
+          </button>
+        )}
 
         <div className="flex items-center gap-3">
           {saveMsg && (

@@ -68,6 +68,7 @@ export default function BookingFoyPage() {
   const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง' | ''>('')
   const [manualTotal, setManualTotal] = useState('')
   const [branchInfo, setBranchInfo]   = useState<{ name: string; phone: string } | null>(null)
+  const [isAdmin, setIsAdmin]         = useState(true)
 
   // ตรวจว่าเปิดจาก booking2 และ/หรือ edit_foy mode
   useEffect(() => {
@@ -112,6 +113,7 @@ export default function BookingFoyPage() {
       if (bs) {
         const s = JSON.parse(bs)
         if (s?.branch_name) setBranchInfo({ name: s.branch_name, phone: s.phone ?? '' })
+        setIsAdmin(s?.is_admin !== false)
       }
     } catch { /* ignore */ }
   }, [])
@@ -386,12 +388,14 @@ export default function BookingFoyPage() {
             {saving ? 'กำลังจอง...' : pendingCount > 0 ? `📦 จอง (${pendingCount})` : editFoyMode ? '🗑️ ยกเลิกกระดาษฝอย' : '📦 จอง'}
           </button>
 
-          {/* ปุ่มพิมพ์ */}
-          <button
-            onClick={() => window.print()}
-            className="px-3 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white transition-colors border border-white/30">
-            🖨️ พิมพ์
-          </button>
+          {/* ปุ่มพิมพ์ — admin only */}
+          {isAdmin && (
+            <button
+              onClick={() => window.print()}
+              className="px-3 py-1.5 text-sm rounded bg-white/20 hover:bg-white/30 text-white transition-colors border border-white/30">
+              🖨️ พิมพ์
+            </button>
+          )}
         </div>
       </header>
 

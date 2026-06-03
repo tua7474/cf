@@ -94,6 +94,9 @@ export default function OrdersPage() {
   const [printOrder, setPrintOrder] = useState<BookingOrder | null>(null)
   const [printType, setPrintType]   = useState<'booking' | 'foy' | null>(null)
 
+  // Role
+  const [isAdmin, setIsAdmin] = useState(true)
+
   const load = useCallback(() => {
     setLoading(true)
     fetch('/api/orders')
@@ -108,6 +111,17 @@ export default function OrdersPage() {
   useEffect(() => {
     fetch('/api/booking2').then(r => r.json()).then(setProducts).catch(() => {})
     fetch('/api/stock').then(r => r.json()).then(setStockItems).catch(() => {})
+  }, [])
+
+  // Read role from branch_session
+  useEffect(() => {
+    try {
+      const bs = localStorage.getItem('branch_session')
+      if (bs) {
+        const s = JSON.parse(bs)
+        setIsAdmin(s?.is_admin !== false)
+      }
+    } catch { /* ignore */ }
   }, [])
 
   // Auto-print when print order is set
@@ -544,13 +558,15 @@ export default function OrdersPage() {
                             <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
                               ✅ ขึ้นของแล้ว
                             </span>
-                          ) : (
+                          ) : isAdmin ? (
                             <button
                               onClick={() => handlePickup(order)}
                               className="px-3 py-1 text-xs rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-300 transition-colors font-medium"
                             >
                               📦 ขึ้นของ
                             </button>
+                          ) : (
+                            <span className="text-gray-300 text-xs">รอดำเนินการ</span>
                           )}
                         </td>
 
@@ -607,13 +623,17 @@ export default function OrdersPage() {
                                 </button>
                               </div>
                             </div>
-                          ) : (
+                          ) : isAdmin ? (
                             <button
                               onClick={() => setPayingOrderNo(order.order_no)}
                               className="px-2 py-1 text-xs rounded bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition-colors"
                             >
                               รอการชำระเงิน
                             </button>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200">
+                              รอการชำระเงิน
+                            </span>
                           )}
                         </td>
 
