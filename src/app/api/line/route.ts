@@ -163,7 +163,7 @@ async function mainMenu(userId: string) {
 
   const rows = sections.map(sec => {
     const cnt = secCounts[sec.section_order] ?? 0
-    const color = sec.is_vat_included ? '#6b7280' : '#fb923c'
+    const color = sec.is_vat_included ? '#6b7280' : '#86efac'
     return {
       type: 'box', layout: 'horizontal', paddingAll: '10px',
       borderWidth: '1px', borderColor: '#eeeeee', cornerRadius: '8px', margin: 'sm',
@@ -176,7 +176,7 @@ async function mainMenu(userId: string) {
           type: 'box', layout: 'vertical', flex: 5, paddingStart: '8px',
           contents: [
             { type: 'text', text: sec.section_name, weight: 'bold', size: 'sm', color: '#222222' },
-            { type: 'text', text: cnt ? `✅ จอง ${cnt} รายการแล้ว` : 'ยังไม่ได้จอง', size: 'xs', color: cnt ? '#fb923c' : '#aaaaaa' }
+            { type: 'text', text: cnt ? `✅ จอง ${cnt} รายการแล้ว` : 'ยังไม่ได้จอง', size: 'xs', color: cnt ? '#86efac' : '#aaaaaa' }
           ]
         },
         {
@@ -241,19 +241,19 @@ async function sectionMenu(sectionOrder: number, userId: string) {
           type: 'box', layout: 'vertical', flex: 4, justifyContent: 'center',
           contents: [
             { type: 'text', text: sg.subgroup_name, size: 'sm', wrap: true, color: '#222222' },
-            ...(cnt ? [{ type: 'text', text: `✅ ${cnt} รายการ`, size: 'xs', color: '#fb923c' }] : [])
+            ...(cnt ? [{ type: 'text', text: `✅ ${cnt} รายการ`, size: 'xs', color: '#86efac' }] : [])
           ]
         },
         {
           type: 'button', flex: 2,
           action: { type: 'postback', label: 'เลือก', data: `SG:${sectionOrder}:${sg.subgroup_order}:0` },
-          style: 'primary', color: '#fb923c', height: 'sm'
+          style: 'primary', color: '#86efac', height: 'sm'
         }
       ]
     }
   })
 
-  const headerColor = sec?.is_vat_included ? '#6b7280' : '#fb923c'
+  const headerColor = sec?.is_vat_included ? '#6b7280' : '#86efac'
   return {
     type: 'flex', altText: `${sec?.section_name} — เลือกหมวดย่อย`,
     contents: {
@@ -303,7 +303,7 @@ async function productsView(sectionOrder: number, subgroupOrder: number, page: n
           type: 'box', layout: 'horizontal', alignItems: 'center',
           contents: [
             { type: 'text', text: p.product_name, size: 'sm', flex: 5, wrap: true, color: '#222222', weight: qty > 0 ? 'bold' : 'regular' },
-            { type: 'text', text: qty > 0 ? `×${qty}` : '', size: 'sm', flex: 1, align: 'end', color: '#fb923c', weight: 'bold' }
+            { type: 'text', text: qty > 0 ? `×${qty}` : '', size: 'sm', flex: 1, align: 'end', color: '#86efac', weight: 'bold' }
           ]
         },
         // Price + total row
@@ -311,7 +311,7 @@ async function productsView(sectionOrder: number, subgroupOrder: number, page: n
           type: 'box', layout: 'horizontal', margin: 'xs',
           contents: [
             { type: 'text', text: `฿${fmt(p.unit_price)}/ชิ้น`, size: 'xs', flex: 3, color: '#888888' },
-            { type: 'text', text: qty > 0 ? `รวม ฿${fmt(total)}` : '', size: 'xs', flex: 3, align: 'end', color: '#fb923c', weight: 'bold' }
+            { type: 'text', text: qty > 0 ? `รวม ฿${fmt(total)}` : '', size: 'xs', flex: 3, align: 'end', color: '#86efac', weight: 'bold' }
           ]
         },
         // Buttons row: ⌨️ ระบุจำนวน + ✕
@@ -341,7 +341,7 @@ async function productsView(sectionOrder: number, subgroupOrder: number, page: n
     navBtns.push({ type: 'button', action: { type: 'postback', label: 'หน้าถัดไป →', data: `SG:${sectionOrder}:${subgroupOrder}:${page+1}` }, style: 'secondary', height: 'sm', flex: 1 })
 
   const backData = subgroupOrder === 0 ? 'M' : `S:${sectionOrder}`
-  const headerBg = isVat ? '#6b7280' : '#fb923c'
+  const headerBg = isVat ? '#6b7280' : '#86efac'
   const title    = sgName ? `${secName} › ${sgName}` : secName
 
   return {
@@ -418,7 +418,7 @@ async function summaryView(userId: string) {
         contents: [
           { type: 'text', text: item.name, size: 'xs', flex: 5, wrap: false, color: '#333333' },
           { type: 'text', text: `×${item.qty}`, size: 'xs', flex: 2, align: 'end', color: '#666666' },
-          { type: 'text', text: fmt(item.total), size: 'xs', flex: 3, align: 'end', color: '#fb923c' }
+          { type: 'text', text: fmt(item.total), size: 'xs', flex: 3, align: 'end', color: '#86efac' }
         ]
       })
     })
@@ -427,8 +427,8 @@ async function summaryView(userId: string) {
   bodyContents.push(
     { type: 'separator', margin: 'lg' },
     { type: 'box', layout: 'horizontal', margin: 'sm', contents: [
-      { type: 'text', text: '🟠 ไม่มีใบกำกับภาษี', size: 'sm', flex: 5, weight: 'bold', color: '#fb923c' },
-      { type: 'text', text: `${fmt(noVat)} ฿`, size: 'sm', flex: 5, align: 'end', weight: 'bold', color: '#fb923c' }
+      { type: 'text', text: '🟠 ไม่มีใบกำกับภาษี', size: 'sm', flex: 5, weight: 'bold', color: '#86efac' },
+      { type: 'text', text: `${fmt(noVat)} ฿`, size: 'sm', flex: 5, align: 'end', weight: 'bold', color: '#86efac' }
     ]},
     { type: 'box', layout: 'horizontal', contents: [
       { type: 'text', text: '🔘 มีใบกำกับภาษี', size: 'sm', flex: 5, weight: 'bold', color: '#6b7280' },
