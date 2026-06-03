@@ -150,6 +150,7 @@ function Booking2Inner() {
   const [manualTotal, setManualTotal] = useState<string>('')
   const [branchInfo, setBranchInfo] = useState<{ name: string; phone: string } | null>(null)
   const [isAdmin, setIsAdmin]       = useState(true)   // false = non-admin branch (LINE group)
+  const [branchReady, setBranchReady] = useState<boolean | null>(null) // null=loading, false=ไม่มีสาขา, true=เข้าได้
 
   // Load foy result from booking-foy (new order mode only)
   useEffect(() => {
@@ -167,9 +168,10 @@ function Booking2Inner() {
   useEffect(() => {
     if (!editOrderNo) setPending(loadDraft())
     if (branchNameParam) {
-      // มาจาก LINE group → auto-fill branch, non-admin
+      // มาจาก LINE group → ระบุสาขาได้, non-admin
       setBranchInfo({ name: branchNameParam, phone: '' })
       setIsAdmin(false)
+      setBranchReady(true)
       if (branchIdParam) {
         try {
           localStorage.setItem('branch_session', JSON.stringify({
@@ -185,10 +187,19 @@ function Booking2Inner() {
         const bs = localStorage.getItem('branch_session')
         if (bs) {
           const s = JSON.parse(bs)
-          if (s?.branch_name) setBranchInfo({ name: s.branch_name, phone: s.phone ?? '' })
-          setIsAdmin(s?.is_admin !== false)  // false เฉพาะเมื่อ is_admin = false อย่างชัดเจน
+          if (s?.branch_name) {
+            setBranchInfo({ name: s.branch_name, phone: s.phone ?? '' })
+            setIsAdmin(s?.is_admin !== false)
+            setBranchReady(true)
+          } else {
+            setBranchReady(false)
+          }
+        } else {
+          setBranchReady(false)
         }
-      } catch { /* ignore */ }
+      } catch {
+        setBranchReady(false)
+      }
     }
   }, [editOrderNo, branchIdParam, branchNameParam])
 
@@ -579,7 +590,23 @@ function Booking2Inner() {
       {/* Main */}
       <main>
         <div className="screen-zoom-wrapper p-4 flex justify-center overflow-x-auto">
-          {loading ? (
+
+          {/* ── ยังไม่ได้ระบุสาขา → lock screen ── */}
+          {branchReady === false ? (
+            <div className="flex flex-col items-center justify-center min-h-[70vh] gap-5 text-center px-6">
+              <div className="text-6xl select-none">🔒</div>
+              <div>
+                <div className="text-xl font-bold text-gray-700 mb-1">ใบจองสินค้า</div>
+                <div className="text-sm text-gray-400">ไม่สามารถเข้าใช้งานได้</div>
+              </div>
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-6 py-4 max-w-xs text-sm text-yellow-800">
+                กรุณาเปิดหน้าจองผ่าน <strong>LINE กลุ่มสาขา</strong><br/>
+                เพื่อระบุตัวตนก่อนใช้งาน
+              </div>
+            </div>
+          ) : branchReady === null ? (
+            <div className="flex items-center justify-center h-40 text-gray-400">กำลังตรวจสอบ...</div>
+          ) : loading ? (
             <div className="flex items-center justify-center h-40 text-gray-400">กำลังโหลดข้อมูล...</div>
           ) : (
             <div className="a4-frame bg-white shadow-xl"
