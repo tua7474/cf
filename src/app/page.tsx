@@ -252,11 +252,11 @@ export default function Home() {
             {busy.addAll ? 'กำลังเพิ่ม...' : '+ เพิ่มสต็อคทั้งหมด'}
           </button>
           <button onClick={handlePrint}
-            className="px-4 py-1.5 text-sm rounded bg-white hover:bg-gray-100 text-orange-300 font-semibold transition-colors border border-white/50 whitespace-nowrap">
+            className="px-4 py-1.5 text-sm rounded bg-white hover:bg-gray-100 text-orange-400 font-semibold transition-colors border border-white/50 whitespace-nowrap">
             🖨️ พิมพ์
           </button>
           <Link href="/booking2"
-            className="px-4 py-1.5 text-sm rounded bg-yellow-500 hover:bg-yellow-400 text-orange-300 font-medium transition-colors border border-yellow-400">
+            className="px-4 py-1.5 text-sm rounded bg-yellow-500 hover:bg-yellow-400 text-orange-400 font-medium transition-colors border border-yellow-400">
             📝 ใบจองสินค้า
           </Link>
           {msg && (
@@ -267,15 +267,15 @@ export default function Home() {
 
       {/* Tab bar */}
       <div className="bg-white border-b border-gray-200 px-4 shadow-sm flex">
-        <span className="inline-block px-4 py-3 text-sm font-medium border-b-2 border-gray-500 text-orange-300 bg-green-50">
+        <span className="inline-block px-4 py-3 text-sm font-medium border-b-2 border-gray-500 text-orange-400 bg-green-50">
           📦 สต็อคสินค้า
         </span>
         <Link href="/stock"
-          className="inline-block px-4 py-3 text-sm font-medium text-gray-500 hover:text-orange-300 hover:bg-green-50 transition-colors">
+          className="inline-block px-4 py-3 text-sm font-medium text-gray-500 hover:text-orange-400 hover:bg-green-50 transition-colors">
           🌿 สต็อคกระดาษฝอย
         </Link>
         <Link href="/branches"
-          className="inline-block px-4 py-3 text-sm font-medium text-gray-500 hover:text-orange-300 hover:bg-green-50 transition-colors">
+          className="inline-block px-4 py-3 text-sm font-medium text-gray-500 hover:text-orange-400 hover:bg-green-50 transition-colors">
           🏪 สาขาและตัวแทน
         </Link>
       </div>
@@ -295,7 +295,7 @@ export default function Home() {
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">สต็อคล่าสุด</th>
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">เพิ่มสต็อค</th>
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">จำนวนจอง</th>
-                  <th className="px-3 py-2 border-r border-orange-300 whitespace-nowrap text-right bg-orange-300">ราคาโกดัง ✎</th>
+                  <th className="px-3 py-2 border-r border-orange-400 whitespace-nowrap text-right bg-orange-400">ราคาโกดัง ✎</th>
                   <th className="px-3 py-2 border-r border-yellow-400 whitespace-nowrap text-right bg-yellow-500 text-gray-500">ราคา+9%</th>
                   <th className="px-3 py-2 border-r border-red-500 whitespace-nowrap text-right bg-red-600">ราคา+9%+7%</th>
                   <th className="px-3 py-2 whitespace-nowrap text-center bg-gray-500">ใบจองสินค้า</th>
@@ -347,7 +347,7 @@ export default function Home() {
                         <td className="px-2 py-1 text-center">
                           <button
                             onClick={() => handleToggleGroupBooking(entry.name, !allOn)}
-                            className={`px-3 py-0.5 text-[11px] rounded-full font-semibold transition-colors ${allOn ? 'bg-green-400 hover:bg-green-300 text-orange-300' : 'bg-red-500 hover:bg-red-400 text-white'}`}
+                            className={`px-3 py-0.5 text-[11px] rounded-full font-semibold transition-colors ${allOn ? 'bg-green-400 hover:bg-green-300 text-orange-400' : 'bg-red-500 hover:bg-red-400 text-white'}`}
                           >
                             {allOn ? '● โชว์ทั้งหมวด' : '● ซ่อนทั้งหมวด'}
                           </button>
@@ -383,7 +383,7 @@ export default function Home() {
 
                       {/* 3. สต็อคล่าสุด */}
                       <td className="px-3 py-1 border-r border-gray-200 text-center whitespace-nowrap">
-                        <div className={`text-sm font-bold ${stock < 0 ? 'text-red-600' : 'text-orange-300'}`}>
+                        <div className={`text-sm font-bold ${stock < 0 ? 'text-red-600' : 'text-orange-400'}`}>
                           {fmtQty(p.quantity)}
                         </div>
                       </td>
@@ -414,10 +414,10 @@ export default function Home() {
                           <input type="text" inputMode="numeric" placeholder="จำนวน"
                             value={bookInputs[p.id] ?? ''}
                             onChange={e => setBookInputs(prev => ({ ...prev, [p.id]: e.target.value }))}
-                            className="w-16 px-1.5 py-1 text-xs rounded border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-orange-300 text-right" />
+                            className="w-16 px-1.5 py-1 text-xs rounded border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-orange-400 text-right" />
                           <button onClick={() => handleStock(p.id, 'book')}
                             disabled={!!busy[`book-${p.id}`]}
-                            className="px-2 py-1 text-xs rounded bg-orange-100 hover:bg-orange-200 text-orange-800 border border-orange-300 transition-colors disabled:opacity-50 whitespace-nowrap">
+                            className="px-2 py-1 text-xs rounded bg-orange-100 hover:bg-orange-200 text-orange-800 border border-orange-400 transition-colors disabled:opacity-50 whitespace-nowrap">
                             − จอง
                           </button>
                           <Link href={`/history?id=${p.id}&type=book&name=${encodeURIComponent(p.product_name)}`}
@@ -445,7 +445,7 @@ export default function Home() {
                         {hasPending && (
                           <button onClick={() => handleSaveInfo(p.id)}
                             disabled={!!busy[`info-${p.id}`]}
-                            className="mt-0.5 px-2 py-0.5 text-[10px] rounded bg-yellow-400 hover:bg-yellow-300 text-orange-300 font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
+                            className="mt-0.5 px-2 py-0.5 text-[10px] rounded bg-yellow-400 hover:bg-yellow-300 text-orange-400 font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
                             💾 บันทึก
                           </button>
                         )}

@@ -60,7 +60,7 @@ const SUBGROUP_COLOR: Record<string, SubgroupColor> = {
 const SUBGROUP_BG: Record<SubgroupColor, string> = {
   gray:   'bg-gray-500   text-white    border-gray-500',
   light:  'bg-gray-300   text-gray-500 border-gray-400',
-  orange: 'bg-orange-300 text-white    border-orange-300',
+  orange: 'bg-orange-400 text-white    border-orange-400',
   teal:   'bg-teal-500   text-white    border-teal-600',
   maroon: 'bg-red-800    text-white    border-red-900',
 }
@@ -563,7 +563,7 @@ function Booking2Inner() {
               <button
                 onClick={handleSave}
                 disabled={saving || cannotBook60k || vehicleType === '' || sourceType === ''}
-                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-orange-300 font-semibold transition-colors disabled:opacity-50"
+                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-orange-400 font-semibold transition-colors disabled:opacity-50"
               >
                 {saving ? 'กำลังบันทึก...' : '💾 บันทึกการจอง'}
               </button>
@@ -583,7 +583,7 @@ function Booking2Inner() {
               <button
                 onClick={handleSave}
                 disabled={saving || cannotBook60k || vehicleType === '' || sourceType === ''}
-                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-orange-300 font-semibold transition-colors disabled:opacity-50"
+                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-orange-400 font-semibold transition-colors disabled:opacity-50"
               >
                 {saving ? 'กำลังบันทึก...' : '💾 อัพเดทการจอง'}
               </button>
@@ -686,7 +686,7 @@ function Booking2Inner() {
                                       max="999999.99"
                                       value={displayVal}
                                       onChange={e => setManualTotal(e.target.value)}
-                                      className="w-full text-xl font-bold text-orange-300 text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 rounded"
+                                      className="w-full text-xl font-bold text-orange-400 text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 rounded"
                                     />
                                   </div>
                                 </td>,

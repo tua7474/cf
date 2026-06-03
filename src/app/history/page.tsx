@@ -76,7 +76,7 @@ export default function HistoryPage({ searchParams }: { searchParams: Promise<{ 
                   <tr key={row.id} className="bg-white even:bg-gray-50 border-t border-gray-100">
                     <td className="px-4 py-2 text-center text-gray-400 text-xs">{i + 1}</td>
                     <td className="px-4 py-2 text-gray-500 whitespace-nowrap">{fmtDate(row.created_at)}</td>
-                    <td className={`px-4 py-2 text-right font-medium whitespace-nowrap ${type === 'add' ? 'text-orange-300' : 'text-orange-300'}`}>
+                    <td className={`px-4 py-2 text-right font-medium whitespace-nowrap ${type === 'add' ? 'text-orange-400' : 'text-orange-400'}`}>
                       {type === 'add' ? '+' : '−'}{fmtQty(row.qty)}
                     </td>
                   </tr>
