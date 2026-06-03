@@ -527,7 +527,7 @@ export default function OrdersPage() {
                           <div className="flex flex-col gap-1.5">
                             <div className="flex justify-between items-center gap-2 text-[11px]">
                               <span className={order.vehicle_type ? (order.vehicle_type === 'จองรถ60000' ? 'text-blue-700 font-medium' : 'text-green-400 font-medium') : 'text-gray-300'}>
-                                {order.vehicle_type === 'จองรถ60000' ? 'จองรถ' : order.vehicle_type === 'รอพ่วง' ? 'รอพ่วง' : '—'}
+                                {order.vehicle_type === 'จองรถ60000' ? 'จองรถ' : order.vehicle_type === 'รอพ่วง' ? 'รอพ่วง' : order.vehicle_type === 'รับเอง' ? 'รับเอง' : '—'}
                               </span>
                               <span className={order.source_type ? 'text-gray-500 font-medium' : 'text-gray-300'}>
                                 {order.source_type ?? '—'}
