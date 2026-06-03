@@ -10,37 +10,42 @@ interface Branch { id: number; name: string; phones: BranchPhone[]; pending_coun
 
 // ── Color groups ──────────────────────────────────────────────────────────────
 
+const GREEN_BRANCHES  = ['CFpack', 'CF Pack', 'cfpack', 'พนักงาน']
 const YELLOW_BRANCHES = ['ท่าฉลอม', 'หนองแขม', 'ไทรม้า', 'อ้อมน้อย']
 const RED_BRANCHES    = ['สนามบินน้ำ', 'ตลาดรังสิต']
 
-type ColorGroup = 'yellow' | 'red' | 'orange'
+type ColorGroup = 'green' | 'yellow' | 'red' | 'orange'
 
 function getBranchColor(name: string): ColorGroup {
+  if (GREEN_BRANCHES.some(n => name.includes(n)))  return 'green'
   if (YELLOW_BRANCHES.some(n => name.includes(n))) return 'yellow'
   if (RED_BRANCHES.some(n => name.includes(n)))    return 'red'
   return 'orange'
 }
 
-const GROUP_ORDER: ColorGroup[] = ['yellow', 'red', 'orange']
+const GROUP_ORDER: ColorGroup[] = ['green', 'yellow', 'red', 'orange']
 
 const ROW_BG: Record<ColorGroup, string> = {
+  green:  'bg-green-50   hover:bg-green-100/70',
   yellow: 'bg-yellow-50  hover:bg-yellow-100/70',
   red:    'bg-red-50     hover:bg-red-100/70',
   orange: 'bg-orange-50  hover:bg-orange-100/70',
 }
 const GROUP_HEADER_BG: Record<ColorGroup, string> = {
+  green:  'bg-green-200  text-green-900',
   yellow: 'bg-yellow-200 text-yellow-900',
   red:    'bg-red-200    text-red-900',
   orange: 'bg-orange-200 text-orange-900',
 }
 const GROUP_LABEL: Record<ColorGroup, string> = {
+  green:  'กลุ่มพนักงาน CFpack',
   yellow: 'กลุ่มสีเหลือง',
   red:    'กลุ่มสีแดง',
   orange: 'กลุ่มสีส้ม',
 }
 
 function sortAndGroup(branches: Branch[]): { color: ColorGroup; items: Branch[] }[] {
-  const grouped: Record<ColorGroup, Branch[]> = { yellow: [], red: [], orange: [] }
+  const grouped: Record<ColorGroup, Branch[]> = { green: [], yellow: [], red: [], orange: [] }
   for (const b of branches) {
     grouped[getBranchColor(b.name)].push(b)
   }
