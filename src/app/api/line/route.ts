@@ -127,6 +127,32 @@ async function countOrdered(userId: string): Promise<Record<number, number>> {
   return Object.fromEntries(rows.map(r => [r.section_order, r.cnt]))
 }
 
+// ── Group / Branch helpers ────────────────────────────────────────────────────
+
+async function getGroupName(groupId: string): Promise<string | null> {
+  try {
+    const res = await fetch(`https://api.line.me/v2/bot/group/${groupId}/summary`, {
+      headers: { Authorization: `Bearer ${TOKEN}` },
+    })
+    if (!res.ok) return null
+    const data = await res.json() as { groupName?: string }
+    return data.groupName ?? null
+  } catch { return null }
+}
+
+// ค้นหาสาขาที่ชื่อกลุ่มมีคำว่าชื่อสาขา เช่น กลุ่ม "CF สนามบินน้ำ" → สาขา "สนามบินน้ำ"
+async function findBranchByGroupName(groupName: string): Promise<{ id: number; name: string } | null> {
+  try {
+    const { rows } = await pool.query<{ id: number; name: string }>(
+      `SELECT id, name FROM branches
+       WHERE $1 LIKE '%' || name || '%'
+       ORDER BY length(name) DESC LIMIT 1`,
+      [groupName]
+    )
+    return rows[0] ?? null
+  } catch { return null }
+}
+
 // ── Flex Builders ─────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 7
@@ -536,7 +562,7 @@ async function handlePostback(data: string, userId: string, replyToken: string) 
 
 // ── Text handler ──────────────────────────────────────────────────────────────
 
-async function handleText(text: string, userId: string, replyToken: string) {
+async function handleText(text: string, userId: string, replyToken: string, source?: Record<string, string>) {
   const t = text.trim().toLowerCase()
 
   // Check if user is responding to a QI: input prompt
@@ -574,6 +600,21 @@ async function handleText(text: string, userId: string, replyToken: string) {
   }
 
   if (['ใบจอง', 'จอง', 'สั่งสินค้า', 'order', 'booking', 'เมนู', 'menu'].includes(t)) {
+    // ── ตรวจกลุ่ม → หาสาขา → สร้าง URL พร้อม branch params ──────────────────
+    let bookingUrl = `${BASE_URL}/booking2`
+    let branchLabel = 'ข้อมูลสินค้าและราคาล่าสุดจากระบบ'
+
+    if (source?.type === 'group' && source.groupId) {
+      const groupName = await getGroupName(source.groupId)
+      if (groupName) {
+        const branch = await findBranchByGroupName(groupName)
+        if (branch) {
+          bookingUrl = `${BASE_URL}/booking2?branch_id=${branch.id}&branch_name=${encodeURIComponent(branch.name)}`
+          branchLabel = `สาขา: ${branch.name}`
+        }
+      }
+    }
+
     return reply(replyToken, [{
       type: 'flex',
       altText: '📋 เปิดใบจองสินค้า',
@@ -583,7 +624,7 @@ async function handleText(text: string, userId: string, replyToken: string) {
           type: 'box', layout: 'vertical', backgroundColor: '#1a5c29', paddingAll: '16px',
           contents: [
             { type: 'text', text: '📋 ใบจองสินค้า', color: '#ffffff', weight: 'bold', size: 'xl' },
-            { type: 'text', text: 'ข้อมูลสินค้าและราคาล่าสุดจากระบบ', color: '#aaffaa', size: 'sm', margin: 'sm' }
+            { type: 'text', text: branchLabel, color: '#aaffaa', size: 'sm', margin: 'sm' }
           ]
         },
         body: {
@@ -597,7 +638,7 @@ async function handleText(text: string, userId: string, replyToken: string) {
           contents: [
             {
               type: 'button',
-              action: { type: 'uri', label: '🛒 เปิดใบจองสินค้า', uri: `${BASE_URL}/booking2` },
+              action: { type: 'uri', label: '🛒 เปิดใบจองสินค้า', uri: bookingUrl },
               style: 'primary', color: '#1a5c29', height: 'md'
             },
             {
@@ -662,7 +703,7 @@ export async function POST(req: NextRequest) {
       await handlePostback(data, userId, replyToken)
     } else if (ev.type === 'message') {
       const msg = ev.message as Record<string, unknown>
-      if (msg?.type === 'text') await handleText(msg.text as string, userId, replyToken)
+      if (msg?.type === 'text') await handleText(msg.text as string, userId, replyToken, ev.source as Record<string, string>)
     }
   }))
 

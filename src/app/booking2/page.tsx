@@ -133,7 +133,9 @@ function fmt2(n: number) {
 function Booking2Inner() {
   const searchParams  = useSearchParams()
   const router        = useRouter()
-  const editOrderNo   = searchParams.get('edit')   // null = new order, string = edit mode
+  const editOrderNo    = searchParams.get('edit')         // null = new order, string = edit mode
+  const branchIdParam  = searchParams.get('branch_id')    // from LINE group auto-detect
+  const branchNameParam = searchParams.get('branch_name') // from LINE group auto-detect
 
   const [products, setProducts]     = useState<CatalogProduct[]>([])
   const [loading, setLoading]       = useState(true)
@@ -160,16 +162,32 @@ function Booking2Inner() {
   }, [editOrderNo])
 
   // Load draft / branch session on mount
+  // URL params (from LINE group auto-detect) take priority over localStorage
   useEffect(() => {
     if (!editOrderNo) setPending(loadDraft())
-    try {
-      const bs = localStorage.getItem('branch_session')
-      if (bs) {
-        const s = JSON.parse(bs)
-        if (s?.branch_name) setBranchInfo({ name: s.branch_name, phone: s.phone ?? '' })
+    if (branchNameParam) {
+      // มาจาก LINE group → auto-fill branch และ save ลง localStorage
+      setBranchInfo({ name: branchNameParam, phone: '' })
+      if (branchIdParam) {
+        try {
+          localStorage.setItem('branch_session', JSON.stringify({
+            branch_id: Number(branchIdParam),
+            branch_name: branchNameParam,
+            phone: '',
+            is_admin: false,
+          }))
+        } catch { /* ignore */ }
       }
-    } catch { /* ignore */ }
-  }, [editOrderNo])
+    } else {
+      try {
+        const bs = localStorage.getItem('branch_session')
+        if (bs) {
+          const s = JSON.parse(bs)
+          if (s?.branch_name) setBranchInfo({ name: s.branch_name, phone: s.phone ?? '' })
+        }
+      } catch { /* ignore */ }
+    }
+  }, [editOrderNo, branchIdParam, branchNameParam])
 
   // When editing — load existing order quantities + FOY data + selections
   useEffect(() => {
