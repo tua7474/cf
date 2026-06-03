@@ -143,19 +143,10 @@ function Booking2Inner() {
   const [pending, setPending]       = useState<Record<number, number>>({})
   const [foyPending, setFoyPending]         = useState<Record<string, { qty: number; amount: number }>>({})
   const [foyItemPending, setFoyItemPending] = useState<Record<number, number>>({})
-  const [zoom, setZoom]                     = useState(1)
   const [sourceType, setSourceType]   = useState<'โกดัง' | 'หน้าร้าน' | ''>('')
   const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | ''>('')
   const [manualTotal, setManualTotal] = useState<string>('')
   const [branchInfo, setBranchInfo] = useState<{ name: string; phone: string } | null>(null)
-
-  // Scale A4 frame to fit small screens
-  useEffect(() => {
-    const calc = () => setZoom(Math.min(1, window.innerWidth / (A4_W_PX + 32)))
-    calc()
-    window.addEventListener('resize', calc)
-    return () => window.removeEventListener('resize', calc)
-  }, [])
 
   // Load foy result from booking-foy (new order mode only)
   useEffect(() => {
@@ -562,7 +553,7 @@ function Booking2Inner() {
 
       {/* Main */}
       <main>
-        <div className="screen-zoom-wrapper p-4 flex justify-center" style={{ zoom: zoom < 1 ? zoom : undefined }}>
+        <div className="screen-zoom-wrapper p-4 flex justify-center overflow-x-auto">
           {loading ? (
             <div className="flex items-center justify-center h-40 text-gray-400">กำลังโหลดข้อมูล...</div>
           ) : (
