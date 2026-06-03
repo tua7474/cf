@@ -51,14 +51,14 @@ export default function StockHistoryPage({
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <header className="bg-green-800 text-white px-6 py-3 shadow flex items-center gap-3">
-        <Link href="/stock" className="text-green-200 hover:text-white text-sm transition-colors">
+      <header className="bg-gray-800 text-white px-6 py-3 shadow flex items-center gap-3">
+        <Link href="/stock" className="text-orange-200 hover:text-white text-sm transition-colors">
           ← สต็อคกระดาษฝอย
         </Link>
         <div>
           <h1 className="text-xl font-bold">{title}</h1>
           {productName && (
-            <p className="text-green-200 text-xs mt-0.5">{decodeURIComponent(productName)}</p>
+            <p className="text-orange-200 text-xs mt-0.5">{decodeURIComponent(productName)}</p>
           )}
         </div>
       </header>
@@ -72,7 +72,7 @@ export default function StockHistoryPage({
           <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden max-w-lg">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="bg-green-700 text-white text-left">
+                <tr className="bg-gray-700 text-white text-left">
                   <th className="px-4 py-2 w-10 text-center">#</th>
                   <th className="px-4 py-2">วันเวลา</th>
                   <th className="px-4 py-2 text-right">จำนวน</th>
@@ -83,7 +83,7 @@ export default function StockHistoryPage({
                   <tr key={row.id} className="bg-white even:bg-gray-50 border-t border-gray-100">
                     <td className="px-4 py-2 text-center text-gray-400 text-xs">{i + 1}</td>
                     <td className="px-4 py-2 text-gray-600 whitespace-nowrap">{fmtDate(row.created_at)}</td>
-                    <td className={`px-4 py-2 text-right font-medium whitespace-nowrap ${isAdd ? 'text-green-700' : 'text-orange-600'}`}>
+                    <td className={`px-4 py-2 text-right font-medium whitespace-nowrap ${isAdd ? 'text-orange-500' : 'text-orange-600'}`}>
                       {isAdd ? '+' : '−'}{fmtQty(row.qty)}
                     </td>
                   </tr>

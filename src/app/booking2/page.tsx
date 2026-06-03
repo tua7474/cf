@@ -507,10 +507,10 @@ function Booking2Inner() {
       `}</style>
 
       {/* Header */}
-      <header className="no-print bg-green-800 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
+      <header className="no-print bg-gray-800 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {isAdmin && (
-            <Link href="/" className="text-green-200 hover:text-white text-sm transition-colors">
+            <Link href="/" className="text-orange-200 hover:text-white text-sm transition-colors">
               ← กลับหน้าหลัก
             </Link>
           )}
@@ -518,7 +518,7 @@ function Booking2Inner() {
             <h1 className="text-xl font-bold">
               {editOrderNo ? `แก้ไขใบจอง — ${editOrderNo}` : 'ใบจองสินค้า'}
             </h1>
-            <p className="text-green-200 text-xs mt-0.5">
+            <p className="text-orange-200 text-xs mt-0.5">
               {editOrderNo ? 'แก้ไขรายการแล้วกดบันทึกเพื่ออัพเดท' : 'ข้อมูลจากสต็อคสินค้า · Auto-save ใน browser'}
             </p>
           </div>
@@ -563,7 +563,7 @@ function Booking2Inner() {
               <button
                 onClick={handleSave}
                 disabled={saving || cannotBook60k || vehicleType === '' || sourceType === ''}
-                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors disabled:opacity-50"
+                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-orange-700 font-semibold transition-colors disabled:opacity-50"
               >
                 {saving ? 'กำลังบันทึก...' : '💾 บันทึกการจอง'}
               </button>
@@ -583,7 +583,7 @@ function Booking2Inner() {
               <button
                 onClick={handleSave}
                 disabled={saving || cannotBook60k || vehicleType === '' || sourceType === ''}
-                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-900 font-semibold transition-colors disabled:opacity-50"
+                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-orange-700 font-semibold transition-colors disabled:opacity-50"
               >
                 {saving ? 'กำลังบันทึก...' : '💾 อัพเดทการจอง'}
               </button>
@@ -686,7 +686,7 @@ function Booking2Inner() {
                                       max="999999.99"
                                       value={displayVal}
                                       onChange={e => setManualTotal(e.target.value)}
-                                      className="w-full text-xl font-bold text-green-800 text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-green-400 rounded"
+                                      className="w-full text-xl font-bold text-orange-600 text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 rounded"
                                     />
                                   </div>
                                 </td>,
@@ -858,7 +858,7 @@ function Booking2Inner() {
                                   defaultValue={qty || ''}
                                   key={`qty-${p.id}-${resetKey}`}
                                   onChange={e => handleQtyChange(p.id, e.target.value)}
-                                  className={`w-full px-1 py-px text-[13px] text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-inset focus:ring-green-500 ${hasPending ? 'font-semibold' : ''}`}
+                                  className={`w-full px-1 py-px text-[13px] text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-inset focus:ring-gray-400 ${hasPending ? 'font-semibold' : ''}`}
                                 />
                               )}
                             </td>,

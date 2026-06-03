@@ -198,14 +198,14 @@ export default function OrdersPage() {
     const orderDate  = fmtOrderDate(order.updated_at)
 
     const tdBase: React.CSSProperties = { padding: '1.5mm 2mm', border: '1px solid #ccc', fontSize: '8.5pt' }
-    const thBase: React.CSSProperties = { padding: '2mm', border: '1px solid #888', fontSize: '8.5pt', backgroundColor: '#1e5c3a', color: 'white' }
+    const thBase: React.CSSProperties = { padding: '2mm', border: '1px solid #888', fontSize: '8.5pt', backgroundColor: '#374151', color: 'white' }
 
     return (
       <div style={{ width: '210mm', height: '297mm', padding: '8mm', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', fontFamily: 'sans-serif' }}>
 
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '3mm' }}>
-          <div style={{ fontSize: '16pt', fontWeight: 'bold', color: '#1e5c3a' }}>ใบจองสินค้า</div>
+          <div style={{ fontSize: '16pt', fontWeight: 'bold', color: '#ea580c' }}>ใบจองสินค้า</div>
           <div style={{ fontSize: '9pt', color: '#555' }}>เลขที่: {order.order_no}</div>
         </div>
 
@@ -363,7 +363,7 @@ export default function OrdersPage() {
                   items.map((item, idx) => (
                     <tr key={`${modelName}-${idx}`} style={{ backgroundColor: idx % 2 === 0 ? 'white' : '#f5f5f5' }}>
                       {idx === 0 && (
-                        <td rowSpan={items.length} style={{ ...tdBase, fontWeight: 'bold', color: '#134e4a', textAlign: 'center', verticalAlign: 'middle', backgroundColor: '#ccfbf1', fontSize: '7.5pt' }}>
+                        <td rowSpan={items.length} style={{ ...tdBase, fontWeight: 'bold', color: '#ea580c', textAlign: 'center', verticalAlign: 'middle', backgroundColor: '#ccfbf1', fontSize: '7.5pt' }}>
                           {modelName}
                         </td>
                       )}
@@ -380,7 +380,7 @@ export default function OrdersPage() {
               <tfoot>
                 <tr style={{ backgroundColor: '#ccfbf1' }}>
                   <td colSpan={4} style={{ ...tdBase, textAlign: 'right', fontWeight: 'bold', fontSize: '10pt', borderColor: '#888' }}>ยอดเงินรวม</td>
-                  <td style={{ ...tdBase, textAlign: 'right', fontWeight: 'bold', fontSize: '10pt', color: '#134e4a', borderColor: '#888' }}>
+                  <td style={{ ...tdBase, textAlign: 'right', fontWeight: 'bold', fontSize: '10pt', color: '#ea580c', borderColor: '#888' }}>
                     {grandTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 })} บาท
                   </td>
                 </tr>
@@ -408,7 +408,7 @@ export default function OrdersPage() {
               <tfoot>
                 <tr style={{ backgroundColor: '#ccfbf1' }}>
                   <td style={{ ...tdBase, textAlign: 'right', fontWeight: 'bold', fontSize: '10pt', borderColor: '#888' }} colSpan={2}>ยอดเงินรวม</td>
-                  <td style={{ ...tdBase, textAlign: 'right', fontWeight: 'bold', fontSize: '10pt', color: '#134e4a', borderColor: '#888' }}>
+                  <td style={{ ...tdBase, textAlign: 'right', fontWeight: 'bold', fontSize: '10pt', color: '#ea580c', borderColor: '#888' }}>
                     {grandTotal.toLocaleString('th-TH', { minimumFractionDigits: 2 })} บาท
                   </td>
                 </tr>
@@ -459,14 +459,14 @@ export default function OrdersPage() {
       <div className="no-print min-h-screen bg-gray-100">
 
         {/* Header */}
-        <header className="bg-green-800 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
+        <header className="bg-gray-800 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <Link href="/booking2" className="text-green-200 hover:text-white text-sm transition-colors">
+            <Link href="/booking2" className="text-orange-200 hover:text-white text-sm transition-colors">
               ← กลับหน้าใบจองสินค้า
             </Link>
             <div>
               <h1 className="text-xl font-bold">ประวัติใบจอง</h1>
-              <p className="text-green-200 text-xs mt-0.5">ประวัติรายการทั้งหมด</p>
+              <p className="text-orange-200 text-xs mt-0.5">ประวัติรายการทั้งหมด</p>
             </div>
           </div>
           {msg && (
@@ -484,14 +484,14 @@ export default function OrdersPage() {
             <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden min-w-max">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="bg-green-700 text-white text-left text-xs">
-                    <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">เลขที่ใบจอง</th>
-                    <th className="px-4 py-2 whitespace-nowrap border-r border-green-600 text-right">ยอดเงินรวม (฿)</th>
-                    <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">วันเวลาอัพเดทล่าสุด</th>
-                    <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">สถานะใบจอง</th>
-                    <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">ขึ้นของ</th>
-                    <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">แจ้งชื่อตัวแทนสาขา</th>
-                    <th className="px-4 py-2 whitespace-nowrap border-r border-green-600">สถานะการชำระเงิน</th>
+                  <tr className="bg-gray-700 text-white text-left text-xs">
+                    <th className="px-4 py-2 whitespace-nowrap border-r border-gray-600">เลขที่ใบจอง</th>
+                    <th className="px-4 py-2 whitespace-nowrap border-r border-gray-600 text-right">ยอดเงินรวม (฿)</th>
+                    <th className="px-4 py-2 whitespace-nowrap border-r border-gray-600">วันเวลาอัพเดทล่าสุด</th>
+                    <th className="px-4 py-2 whitespace-nowrap border-r border-gray-600">สถานะใบจอง</th>
+                    <th className="px-4 py-2 whitespace-nowrap border-r border-gray-600">ขึ้นของ</th>
+                    <th className="px-4 py-2 whitespace-nowrap border-r border-gray-600">แจ้งชื่อตัวแทนสาขา</th>
+                    <th className="px-4 py-2 whitespace-nowrap border-r border-gray-600">สถานะการชำระเงิน</th>
                     <th className="px-4 py-2 whitespace-nowrap text-center">พิมพ์</th>
                   </tr>
                 </thead>
@@ -508,7 +508,7 @@ export default function OrdersPage() {
                       <tr key={order.id} className={cancelled ? 'bg-red-50 opacity-60' : i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
 
                         {/* 1. เลขที่ใบจอง */}
-                        <td className="px-4 py-3 border-r border-gray-200 font-mono font-bold text-green-800 text-base">
+                        <td className="px-4 py-3 border-r border-gray-200 font-mono font-bold text-orange-600 text-base">
                           {order.order_no}
                         </td>
 
@@ -557,7 +557,7 @@ export default function OrdersPage() {
                           {cancelled ? (
                             <span className="text-gray-300 text-xs">—</span>
                           ) : pickedUp ? (
-                            <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                            <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-orange-500">
                               ✅ ขึ้นของแล้ว
                             </span>
                           ) : isAdmin ? (
@@ -583,7 +583,7 @@ export default function OrdersPage() {
                             <span className="text-gray-300 text-xs">—</span>
                           ) : paid ? (
                             <div className="flex flex-col gap-0.5">
-                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-orange-500">
                                 ✅ ชำระแล้ว
                               </span>
                               {order.payment_date && (
@@ -600,20 +600,20 @@ export default function OrdersPage() {
                                 type="date"
                                 value={payDate}
                                 onChange={e => setPayDate(e.target.value)}
-                                className="w-full px-2 py-1 text-xs rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-green-400"
+                                className="w-full px-2 py-1 text-xs rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-400"
                               />
                               <input
                                 type="text"
                                 placeholder="ธนาคาร / ยอดเงิน"
                                 value={payBank}
                                 onChange={e => setPayBank(e.target.value)}
-                                className="w-full px-2 py-1 text-xs rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-green-400"
+                                className="w-full px-2 py-1 text-xs rounded border border-gray-300 focus:outline-none focus:ring-1 focus:ring-gray-400"
                               />
                               <div className="flex gap-1">
                                 <button
                                   onClick={() => handlePayment(order.order_no)}
                                   disabled={!payDate || !payBank.trim()}
-                                  className="flex-1 px-2 py-1 text-xs rounded bg-green-600 hover:bg-green-700 text-white font-semibold transition-colors disabled:opacity-40"
+                                  className="flex-1 px-2 py-1 text-xs rounded bg-gray-600 hover:bg-gray-700 text-white font-semibold transition-colors disabled:opacity-40"
                                 >
                                   ✓ ยืนยัน
                                 </button>

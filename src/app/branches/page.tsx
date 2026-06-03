@@ -32,7 +32,7 @@ const ROW_BG: Record<ColorGroup, string> = {
   orange: 'bg-orange-50  hover:bg-orange-100/70',
 }
 const GROUP_HEADER_BG: Record<ColorGroup, string> = {
-  green:  'bg-green-200  text-green-900',
+  green:  'bg-green-200  text-orange-700',
   yellow: 'bg-yellow-200 text-yellow-900',
   red:    'bg-red-200    text-red-900',
   orange: 'bg-orange-200 text-orange-900',
@@ -186,11 +186,11 @@ function BranchRow({
     <tr className={`${ROW_BG[colorGroup]} align-top border-b border-gray-200 transition-colors`}>
 
       {/* 1. ชื่อสาขา */}
-      <td className="px-3 py-2 border-r border-gray-200 font-semibold text-green-800 whitespace-nowrap">
+      <td className="px-3 py-2 border-r border-gray-200 font-semibold text-orange-600 whitespace-nowrap">
         <div>{branch.name}</div>
         {session?.is_admin && (
           <button onClick={() => onManage(branch)}
-            className="mt-1 text-[10px] text-gray-400 hover:text-green-600 underline">
+            className="mt-1 text-[10px] text-gray-400 hover:text-orange-400 underline">
             จัดการ
           </button>
         )}
@@ -228,10 +228,10 @@ function BranchRow({
             <span className="inline-block text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 font-medium mb-1">
               รอชำระเงิน
             </span>
-            {payMsg && <div className="text-xs text-green-600">{payMsg}</div>}
+            {payMsg && <div className="text-xs text-orange-400">{payMsg}</div>}
             {session?.is_admin && !showOtp && (
               <button onClick={() => { setShowOtp(true); setOtpSent(false); setOtpCode(''); setOtpError('') }}
-                className="block text-xs px-2 py-1 rounded bg-green-600 hover:bg-green-700 text-white mt-1 whitespace-nowrap">
+                className="block text-xs px-2 py-1 rounded bg-gray-600 hover:bg-gray-700 text-white mt-1 whitespace-nowrap">
                 ✓ ชำระเงินแล้ว
               </button>
             )}
@@ -246,10 +246,10 @@ function BranchRow({
                   <div className="space-y-1">
                     <input value={otpCode} onChange={e => setOtpCode(e.target.value)}
                       placeholder="รหัส OTP 6 หลัก"
-                      className="w-28 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-green-400" />
+                      className="w-28 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400" />
                     <div className="flex gap-1">
                       <button onClick={handleVerifyOtp}
-                        className="text-xs px-2 py-1 rounded bg-green-600 hover:bg-green-700 text-white">
+                        className="text-xs px-2 py-1 rounded bg-gray-600 hover:bg-gray-700 text-white">
                         ยืนยัน
                       </button>
                       <button onClick={() => setShowOtp(false)}
@@ -264,7 +264,7 @@ function BranchRow({
             )}
           </div>
         ) : (
-          <span className="text-xs text-green-600">ชำระครบแล้ว</span>
+          <span className="text-xs text-orange-400">ชำระครบแล้ว</span>
         )}
       </td>
 
@@ -285,7 +285,7 @@ function BranchRow({
               <button key={m} onClick={() => handleMonthClick(m)}
                 className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${
                   isSelected
-                    ? 'bg-green-700 text-white border-green-700'
+                    ? 'bg-gray-700 text-white border-gray-700'
                     : s.pending > 0
                     ? 'bg-orange-50 text-orange-700 border-orange-300 hover:bg-orange-100'
                     : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
@@ -306,7 +306,7 @@ function BranchRow({
             {monthOrders.length === 0 ? (
               <div className="text-gray-400">ไม่มีรายการ</div>
             ) : monthOrders.map(o => (
-              <div key={o.id} className={`flex justify-between items-start py-1 border-b border-gray-100 last:border-0 ${o.payment_status === 'paid' ? 'text-green-700' : 'text-gray-700'}`}>
+              <div key={o.id} className={`flex justify-between items-start py-1 border-b border-gray-100 last:border-0 ${o.payment_status === 'paid' ? 'text-orange-500' : 'text-gray-700'}`}>
                 <div>
                   <span className="font-medium">#{o.order_no}</span>
                   <span className="ml-1 text-[10px] text-gray-400">{o.payment_status === 'paid' ? '✓ชำระ' : 'รอชำระ'}</span>
@@ -316,7 +316,7 @@ function BranchRow({
                   <div className="text-[10px] text-gray-400">
                     จอง {fmtDateShort(o.created_at)}
                     {o.payment_status === 'paid' && (
-                      <span className="block text-green-500">ชำระ {fmtDateShort(o.updated_at)}</span>
+                      <span className="block text-orange-400">ชำระ {fmtDateShort(o.updated_at)}</span>
                     )}
                   </div>
                 </div>
@@ -372,7 +372,7 @@ function ManageModal({ branch, onClose, onSaved, onDeleted }: { branch: Branch; 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl p-5 w-full max-w-sm">
-        <h3 className="text-base font-bold text-green-800 mb-3">จัดการสาขา: {branch.name}</h3>
+        <h3 className="text-base font-bold text-orange-600 mb-3">จัดการสาขา: {branch.name}</h3>
 
         {/* Phone list */}
         <div className="mb-3">
@@ -383,7 +383,7 @@ function ManageModal({ branch, onClose, onSaved, onDeleted }: { branch: Branch; 
               <div className="text-sm">
                 {p.phone}
                 {p.is_admin && <span className="ml-1 text-[10px] text-orange-500 font-medium">(admin)</span>}
-                {p.line_user_id && <span className="ml-1 text-[10px] text-green-500">✓LINE</span>}
+                {p.line_user_id && <span className="ml-1 text-[10px] text-orange-400">✓LINE</span>}
               </div>
               <button onClick={() => removePhone(p.id)}
                 className="text-xs text-red-400 hover:text-red-600">ลบ</button>
@@ -396,14 +396,14 @@ function ManageModal({ branch, onClose, onSaved, onDeleted }: { branch: Branch; 
           <div className="text-xs text-gray-500">เพิ่มเบอร์โทร</div>
           <input value={newPhone} onChange={e => setNewPhone(e.target.value)}
             placeholder="0812345678" type="text" inputMode="numeric"
-            className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-green-400" />
+            className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400" />
           <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input type="checkbox" checked={isAdmin} onChange={e => setIsAdmin(e.target.checked)}
               className="rounded" />
             เป็น Admin (กดชำระเงินได้)
           </label>
           <button onClick={addPhone} disabled={saving}
-            className="w-full py-1.5 text-sm rounded bg-green-600 hover:bg-green-700 text-white font-medium disabled:opacity-50">
+            className="w-full py-1.5 text-sm rounded bg-gray-600 hover:bg-gray-700 text-white font-medium disabled:opacity-50">
             + เพิ่มเบอร์
           </button>
         </div>
@@ -517,12 +517,12 @@ export default function BranchesPage() {
     <div className="min-h-screen bg-gray-100">
 
       {/* Header */}
-      <header className="bg-green-800 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
+      <header className="bg-gray-800 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <Link href="/" className="text-green-200 hover:text-white text-sm transition-colors">← กลับ</Link>
+          <Link href="/" className="text-orange-200 hover:text-white text-sm transition-colors">← กลับ</Link>
           <div>
             <h1 className="text-xl font-bold">สาขาและตัวแทน</h1>
-            {session && <p className="text-green-200 text-xs mt-0.5">เข้าสู่ระบบ: {session.branch_name} · {session.phone}</p>}
+            {session && <p className="text-orange-200 text-xs mt-0.5">เข้าสู่ระบบ: {session.branch_name} · {session.phone}</p>}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -538,7 +538,7 @@ export default function BranchesPage() {
               ออกจากระบบ
             </button>
           ) : (
-            <span className="text-green-200 text-sm">กรุณาล็อกอิน</span>
+            <span className="text-orange-200 text-sm">กรุณาล็อกอิน</span>
           )}
         </div>
       </header>
@@ -547,15 +547,15 @@ export default function BranchesPage() {
       {!session && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-2xl p-6 w-full max-w-xs">
-            <h2 className="text-lg font-bold text-green-800 mb-1">เข้าสู่ระบบสาขา</h2>
+            <h2 className="text-lg font-bold text-orange-600 mb-1">เข้าสู่ระบบสาขา</h2>
             <p className="text-xs text-gray-500 mb-4">กรอกเบอร์โทรที่ลงทะเบียนไว้</p>
             <input value={loginPhone} onChange={e => setLoginPhone(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleLogin()}
               placeholder="0812345678" type="text" inputMode="numeric"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-400 mb-2" />
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 mb-2" />
             {loginError && <p className="text-xs text-red-500 mb-2">{loginError}</p>}
             <button onClick={handleLogin} disabled={loginLoading}
-              className="w-full py-2 rounded-lg bg-green-700 hover:bg-green-800 text-white font-semibold disabled:opacity-50">
+              className="w-full py-2 rounded-lg bg-gray-700 hover:bg-gray-800 text-white font-semibold disabled:opacity-50">
               {loginLoading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
             </button>
           </div>
@@ -566,12 +566,12 @@ export default function BranchesPage() {
       {showAddBranch && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl p-5 w-full max-w-xs">
-            <h3 className="text-base font-bold text-green-800 mb-3">เพิ่มสาขาใหม่</h3>
+            <h3 className="text-base font-bold text-orange-600 mb-3">เพิ่มสาขาใหม่</h3>
             <input value={newBranchName} onChange={e => setNewBranchName(e.target.value)}
-              placeholder="ชื่อสาขา" className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-green-400 mb-3" />
+              placeholder="ชื่อสาขา" className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 mb-3" />
             <div className="flex gap-2">
               <button onClick={handleAddBranch}
-                className="flex-1 py-1.5 text-sm rounded bg-green-600 hover:bg-green-700 text-white font-medium">
+                className="flex-1 py-1.5 text-sm rounded bg-gray-600 hover:bg-gray-700 text-white font-medium">
                 เพิ่ม
               </button>
               <button onClick={() => { setShowAddBranch(false); setNewBranchName('') }}
@@ -605,12 +605,12 @@ export default function BranchesPage() {
           <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
             <table className="min-w-full text-xs">
               <thead>
-                <tr className="bg-green-700 text-white text-left">
-                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap">ชื่อสาขา</th>
-                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap">เบอร์โทร</th>
-                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap">ใบจองรอชำระ</th>
-                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap">สถานะ</th>
-                  <th className="px-3 py-2 border-r border-green-600 whitespace-nowrap text-center">เดือนนี้</th>
+                <tr className="bg-gray-700 text-white text-left">
+                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap">ชื่อสาขา</th>
+                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap">เบอร์โทร</th>
+                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap">ใบจองรอชำระ</th>
+                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap">สถานะ</th>
+                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap text-center">เดือนนี้</th>
                   <th className="px-3 py-2 whitespace-nowrap">ประวัติรายเดือน</th>
                 </tr>
               </thead>

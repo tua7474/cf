@@ -277,7 +277,7 @@ export default function BookingFoyPage() {
         </colgroup>
         <thead>
           {/* รุ่น header — แสดงชื่อรุ่น + ราคาโกดัง */}
-          <tr className="bg-green-700 text-white">
+          <tr className="bg-gray-700 text-white">
             <th colSpan={3} className="border border-gray-500 px-1 py-0.5 font-bold overflow-hidden text-[10px]">
               <div className="flex items-center justify-between gap-1">
                 <span className="truncate">{g.name}</span>
@@ -290,7 +290,7 @@ export default function BookingFoyPage() {
             </th>
           </tr>
           {/* sub-column header */}
-          <tr className="bg-green-800 text-white text-[9px]">
+          <tr className="bg-gray-800 text-white text-[9px]">
             <th className="border border-gray-500 px-1 py-0.5 text-left font-medium">ชื่อสี</th>
             <th className="border border-gray-500 px-1 py-0.5 text-right font-medium">จำนวน</th>
             <th className="border border-gray-500 px-1 py-0.5 text-right font-medium">รวม</th>
@@ -320,7 +320,7 @@ export default function BookingFoyPage() {
                     defaultValue={qty || ''}
                     key={`qty-${item.id}`}
                     onChange={e => handleQtyChange(item.id, e.target.value)}
-                    className={`w-full px-1 py-px text-[9px] text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-inset focus:ring-green-500 ${hasPending ? 'font-semibold' : ''}`}
+                    className={`w-full px-1 py-px text-[9px] text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-inset focus:ring-gray-400 ${hasPending ? 'font-semibold' : ''}`}
                   />
                 </td>
                 {/* รวม */}
@@ -372,13 +372,13 @@ export default function BookingFoyPage() {
       `}</style>
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
-      <header className="no-print bg-green-800 text-white px-6 py-3 shadow flex items-center gap-4">
-        <Link href="/stock" className="text-green-200 hover:text-white text-sm transition-colors">
+      <header className="no-print bg-gray-800 text-white px-6 py-3 shadow flex items-center gap-4">
+        <Link href="/stock" className="text-orange-200 hover:text-white text-sm transition-colors">
           ← สต็อคกระดาษฝอย
         </Link>
         <div>
           <h1 className="text-xl font-bold">ใบจองกระดาษฝอย</h1>
-          <p className="text-green-200 text-xs mt-0.5">A4 แนวตั้ง · 3 คอลัมน์ · {modelGroups.length} รุ่น</p>
+          <p className="text-orange-200 text-xs mt-0.5">A4 แนวตั้ง · 3 คอลัมน์ · {modelGroups.length} รุ่น</p>
         </div>
 
         <div className="ml-auto flex items-center gap-3">
@@ -401,7 +401,7 @@ export default function BookingFoyPage() {
               disabled={saving || (pendingCount === 0 && !editFoyMode)}
               className={`px-4 py-1.5 text-sm rounded font-semibold transition-colors disabled:opacity-40 ${
                 pendingCount > 0
-                  ? 'bg-yellow-400 hover:bg-yellow-300 text-green-900'
+                  ? 'bg-yellow-400 hover:bg-yellow-300 text-orange-700'
                   : editFoyMode
                     ? 'bg-red-500 hover:bg-red-400 text-white'
                     : 'bg-white/20 text-white border border-white/30 cursor-not-allowed'
@@ -479,7 +479,7 @@ export default function BookingFoyPage() {
                       max="999999.99"
                       value={displayTotal}
                       onChange={e => setManualTotal(e.target.value)}
-                      className="w-full text-xl font-bold text-green-800 text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-green-400 rounded"
+                      className="w-full text-xl font-bold text-orange-600 text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 rounded"
                     />
                   </div>
 
