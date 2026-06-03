@@ -295,7 +295,10 @@ export default function BookingFoyPage() {
               <tr key={item.id} className="hover:bg-yellow-50/30 transition-colors">
                 {/* ชื่อสี */}
                 <td className={`border border-gray-300 px-1 py-px bg-gray-100 overflow-hidden ${hasPending ? 'ring-1 ring-inset ring-yellow-400' : ''}`}>
-                  <div className="truncate text-[9px] text-gray-800">{item.color_name || item.color_code || '–'}</div>
+                  <div className="flex items-start justify-between gap-0.5">
+                    <div className="truncate text-[9px] text-gray-800">{item.color_name || item.color_code || '–'}</div>
+                    <div className="shrink-0 text-[7px] text-gray-400 leading-tight">{parseInt(item.stock_qty) || 0}</div>
+                  </div>
                 </td>
                 {/* จำนวน */}
                 <td className={`border border-gray-300 p-0 ${hasPending ? 'bg-yellow-50' : 'bg-white'}`}>
