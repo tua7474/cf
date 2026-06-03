@@ -231,7 +231,7 @@ function BranchRow({
             {payMsg && <div className="text-xs text-green-400">{payMsg}</div>}
             {session?.is_admin && !showOtp && (
               <button onClick={() => { setShowOtp(true); setOtpSent(false); setOtpCode(''); setOtpError('') }}
-                className="block text-xs px-2 py-1 rounded bg-gray-500 hover:bg-gray-500 text-white mt-1 whitespace-nowrap">
+                className="block text-xs px-2 py-1 rounded bg-[#9b9484] hover:bg-[#9b9484] text-white mt-1 whitespace-nowrap">
                 ✓ ชำระเงินแล้ว
               </button>
             )}
@@ -249,7 +249,7 @@ function BranchRow({
                       className="w-28 px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400" />
                     <div className="flex gap-1">
                       <button onClick={handleVerifyOtp}
-                        className="text-xs px-2 py-1 rounded bg-gray-500 hover:bg-gray-500 text-white">
+                        className="text-xs px-2 py-1 rounded bg-[#9b9484] hover:bg-[#9b9484] text-white">
                         ยืนยัน
                       </button>
                       <button onClick={() => setShowOtp(false)}
@@ -285,7 +285,7 @@ function BranchRow({
               <button key={m} onClick={() => handleMonthClick(m)}
                 className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors ${
                   isSelected
-                    ? 'bg-gray-500 text-white border-gray-500'
+                    ? 'bg-[#9b9484] text-white border-gray-500'
                     : s.pending > 0
                     ? 'bg-orange-50 text-green-400 border-orange-400 hover:bg-orange-100'
                     : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'
@@ -403,7 +403,7 @@ function ManageModal({ branch, onClose, onSaved, onDeleted }: { branch: Branch; 
             เป็น Admin (กดชำระเงินได้)
           </label>
           <button onClick={addPhone} disabled={saving}
-            className="w-full py-1.5 text-sm rounded bg-gray-500 hover:bg-gray-500 text-white font-medium disabled:opacity-50">
+            className="w-full py-1.5 text-sm rounded bg-[#9b9484] hover:bg-[#9b9484] text-white font-medium disabled:opacity-50">
             + เพิ่มเบอร์
           </button>
         </div>
@@ -517,7 +517,7 @@ export default function BranchesPage() {
     <div className="min-h-screen bg-gray-100">
 
       {/* Header */}
-      <header className="bg-gray-500 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
+      <header className="bg-[#9b9484] text-white px-6 py-3 shadow flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link href="/" className="text-orange-200 hover:text-white text-sm transition-colors">← กลับ</Link>
           <div>
@@ -555,7 +555,7 @@ export default function BranchesPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-400 mb-2" />
             {loginError && <p className="text-xs text-red-500 mb-2">{loginError}</p>}
             <button onClick={handleLogin} disabled={loginLoading}
-              className="w-full py-2 rounded-lg bg-gray-500 hover:bg-gray-500 text-white font-semibold disabled:opacity-50">
+              className="w-full py-2 rounded-lg bg-[#9b9484] hover:bg-[#9b9484] text-white font-semibold disabled:opacity-50">
               {loginLoading ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
             </button>
           </div>
@@ -571,7 +571,7 @@ export default function BranchesPage() {
               placeholder="ชื่อสาขา" className="w-full px-3 py-1.5 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-gray-400 mb-3" />
             <div className="flex gap-2">
               <button onClick={handleAddBranch}
-                className="flex-1 py-1.5 text-sm rounded bg-gray-500 hover:bg-gray-500 text-white font-medium">
+                className="flex-1 py-1.5 text-sm rounded bg-[#9b9484] hover:bg-[#9b9484] text-white font-medium">
                 เพิ่ม
               </button>
               <button onClick={() => { setShowAddBranch(false); setNewBranchName('') }}
@@ -605,7 +605,7 @@ export default function BranchesPage() {
           <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden">
             <table className="min-w-full text-xs">
               <thead>
-                <tr className="bg-gray-500 text-white text-left">
+                <tr className="bg-[#9b9484] text-white text-left">
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap">ชื่อสาขา</th>
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap">เบอร์โทร</th>
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap">ใบจองรอชำระ</th>

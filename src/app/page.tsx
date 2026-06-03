@@ -241,7 +241,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-100 print:hidden">
 
       {/* Header */}
-      <header className="bg-gray-500 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
+      <header className="bg-[#9b9484] text-white px-6 py-3 shadow flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold">กระดาษฝอยไทย — ระบบจัดการข้อมูล</h1>
           <p className="text-orange-200 text-xs mt-0.5">ข้อมูลจาก Railway PostgreSQL</p>
@@ -289,7 +289,7 @@ export default function Home() {
             <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 96px)' }}>
             <table className="min-w-full text-xs">
               <thead className="sticky top-0 z-20">
-                <tr className="bg-gray-500 text-white text-left">
+                <tr className="bg-[#9b9484] text-white text-left">
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap">หมวดสินค้า ✎</th>
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap">ชื่อสินค้า ✎</th>
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">สต็อคล่าสุด</th>
@@ -298,8 +298,8 @@ export default function Home() {
                   <th className="px-3 py-2 border-r border-orange-400 whitespace-nowrap text-right bg-orange-400">ราคาโกดัง ✎</th>
                   <th className="px-3 py-2 border-r border-yellow-400 whitespace-nowrap text-right bg-yellow-500 text-gray-500">ราคา+9%</th>
                   <th className="px-3 py-2 border-r border-red-500 whitespace-nowrap text-right bg-red-600">ราคา+9%+7%</th>
-                  <th className="px-3 py-2 whitespace-nowrap text-center bg-gray-500">ใบจองสินค้า</th>
-                  <th className="px-3 py-2 whitespace-nowrap text-center bg-gray-500">จัดการ</th>
+                  <th className="px-3 py-2 whitespace-nowrap text-center bg-[#9b9484]">ใบจองสินค้า</th>
+                  <th className="px-3 py-2 whitespace-nowrap text-center bg-[#9b9484]">จัดการ</th>
                 </tr>
 
                 {/* ── Add new product row (sticky) ── */}
@@ -340,7 +340,7 @@ export default function Home() {
                     const groupProducts = products.filter(p => p.group_name === entry.name)
                     const allOn = groupProducts.length > 0 && groupProducts.every(p => p.show_in_booking)
                     return (
-                      <tr key={`g-${ei}`} className="bg-gray-500 text-white">
+                      <tr key={`g-${ei}`} className="bg-[#9b9484] text-white">
                         <td colSpan={8} className="px-3 py-1.5 font-bold text-sm tracking-wide">
                           {entry.name}
                         </td>
@@ -475,7 +475,7 @@ export default function Home() {
                 })}
               </tbody>
               <tfoot>
-                <tr className="bg-gray-500 text-white text-xs">
+                <tr className="bg-[#9b9484] text-white text-xs">
                   <td colSpan={7} className="px-3 py-2 text-right font-semibold">
                     มูลค่าสต็อครวมทั้งหมด
                   </td>
@@ -484,7 +484,7 @@ export default function Home() {
                   </td>
                 </tr>
                 {dateStr && (
-                  <tr className="bg-gray-500 text-orange-200 text-[11px]">
+                  <tr className="bg-[#9b9484] text-orange-200 text-[11px]">
                     <td colSpan={10} className="px-3 py-1 text-right">{dateStr}</td>
                   </tr>
                 )}

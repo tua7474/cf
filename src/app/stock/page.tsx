@@ -248,7 +248,7 @@ export default function StockPage() {
     <div className="min-h-screen bg-gray-100 print:hidden">
 
       {/* Header */}
-      <header className="bg-gray-500 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
+      <header className="bg-[#9b9484] text-white px-6 py-3 shadow flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link href="/" className="text-orange-200 hover:text-white text-sm transition-colors">
             ← กลับหน้าหลัก
@@ -286,7 +286,7 @@ export default function StockPage() {
             <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 96px)' }}>
             <table className="min-w-full text-xs">
               <thead className="sticky top-0 z-20">
-                <tr className="bg-gray-500 text-white text-left">
+                <tr className="bg-[#9b9484] text-white text-left">
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap min-w-[180px]">ชื่อรุ่น ✎</th>
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap">รหัสสี ✎</th>
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap">ชื่อสี ✎</th>
@@ -374,7 +374,7 @@ export default function StockPage() {
                   return (
                     <Fragment key={item.id}>
                     {isFirstOfModel && (
-                      <tr className="bg-gray-500 text-white">
+                      <tr className="bg-[#9b9484] text-white">
                         <td colSpan={12} className="px-3 py-1 text-[11px] font-bold tracking-wide">
                           {item.model_name}
                         </td>
@@ -511,7 +511,7 @@ export default function StockPage() {
                 })}
               </tbody>
               <tfoot>
-                <tr className="bg-gray-500 text-white text-xs">
+                <tr className="bg-[#9b9484] text-white text-xs">
                   <td colSpan={9} className="px-3 py-2 text-right font-semibold">
                     มูลค่าสต็อครวมทั้งหมด
                   </td>
@@ -520,7 +520,7 @@ export default function StockPage() {
                   </td>
                 </tr>
                 {dateStr && (
-                  <tr className="bg-gray-500 text-orange-200 text-[11px]">
+                  <tr className="bg-[#9b9484] text-orange-200 text-[11px]">
                     <td colSpan={12} className="px-3 py-1 text-right">{dateStr}</td>
                   </tr>
                 )}

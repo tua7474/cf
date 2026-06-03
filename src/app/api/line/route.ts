@@ -163,7 +163,7 @@ async function mainMenu(userId: string) {
 
   const rows = sections.map(sec => {
     const cnt = secCounts[sec.section_order] ?? 0
-    const color = sec.is_vat_included ? '#6b7280' : '#4ade80'
+    const color = sec.is_vat_included ? '#9b9484' : '#4ade80'
     return {
       type: 'box', layout: 'horizontal', paddingAll: '10px',
       borderWidth: '1px', borderColor: '#eeeeee', cornerRadius: '8px', margin: 'sm',
@@ -193,7 +193,7 @@ async function mainMenu(userId: string) {
     contents: {
       type: 'bubble', size: 'giga',
       header: {
-        type: 'box', layout: 'vertical', backgroundColor: '#6b7280',
+        type: 'box', layout: 'vertical', backgroundColor: '#9b9484',
         contents: [
           { type: 'text', text: '📋 กระดาษฝอยไทย — ใบจอง', color: '#ffffff', weight: 'bold', size: 'md' },
           { type: 'text', text: totalItems ? `เลือกไว้แล้ว ${totalItems} รายการ` : 'เลือกหมวดสินค้าที่ต้องการ', color: '#aaffaa', size: 'xs' }
@@ -206,7 +206,7 @@ async function mainMenu(userId: string) {
           {
             type: 'button',
             action: { type: 'postback', label: '🧾 สรุปรายการสั่งซื้อรอบนี้', data: 'C' },
-            style: 'primary', color: '#6b7280', height: 'sm'
+            style: 'primary', color: '#9b9484', height: 'sm'
           }
         ]
       }
@@ -253,7 +253,7 @@ async function sectionMenu(sectionOrder: number, userId: string) {
     }
   })
 
-  const headerColor = sec?.is_vat_included ? '#6b7280' : '#4ade80'
+  const headerColor = sec?.is_vat_included ? '#9b9484' : '#4ade80'
   return {
     type: 'flex', altText: `${sec?.section_name} — เลือกหมวดย่อย`,
     contents: {
@@ -321,7 +321,7 @@ async function productsView(sectionOrder: number, subgroupOrder: number, page: n
             {
               type: 'button', flex: 4,
               action: { type: 'postback', label: '⌨️ ระบุจำนวน', data: `QI:${p.id}:${sectionOrder}:${subgroupOrder}:${page}` },
-              style: 'primary', color: '#6b7280', height: 'sm'
+              style: 'primary', color: '#9b9484', height: 'sm'
             },
             {
               type: 'button', flex: 1,
@@ -341,7 +341,7 @@ async function productsView(sectionOrder: number, subgroupOrder: number, page: n
     navBtns.push({ type: 'button', action: { type: 'postback', label: 'หน้าถัดไป →', data: `SG:${sectionOrder}:${subgroupOrder}:${page+1}` }, style: 'secondary', height: 'sm', flex: 1 })
 
   const backData = subgroupOrder === 0 ? 'M' : `S:${sectionOrder}`
-  const headerBg = isVat ? '#6b7280' : '#4ade80'
+  const headerBg = isVat ? '#9b9484' : '#4ade80'
   const title    = sgName ? `${secName} › ${sgName}` : secName
 
   return {
@@ -363,7 +363,7 @@ async function productsView(sectionOrder: number, subgroupOrder: number, page: n
         type: 'box', layout: 'vertical', spacing: 'sm',
         contents: [
           ...(navBtns.length ? [{ type: 'box', layout: 'horizontal', spacing: 'sm', contents: navBtns }] : []),
-          { type: 'button', action: { type: 'postback', label: '✅ ยืนยันและกลับ', data: backData }, style: 'primary', color: '#6b7280', height: 'sm' }
+          { type: 'button', action: { type: 'postback', label: '✅ ยืนยันและกลับ', data: backData }, style: 'primary', color: '#9b9484', height: 'sm' }
         ]
       }
     }
@@ -431,8 +431,8 @@ async function summaryView(userId: string) {
       { type: 'text', text: `${fmt(noVat)} ฿`, size: 'sm', flex: 5, align: 'end', weight: 'bold', color: '#4ade80' }
     ]},
     { type: 'box', layout: 'horizontal', contents: [
-      { type: 'text', text: '🔘 มีใบกำกับภาษี', size: 'sm', flex: 5, weight: 'bold', color: '#6b7280' },
-      { type: 'text', text: `${fmt(withVat)} ฿`, size: 'sm', flex: 5, align: 'end', weight: 'bold', color: '#6b7280' }
+      { type: 'text', text: '🔘 มีใบกำกับภาษี', size: 'sm', flex: 5, weight: 'bold', color: '#9b9484' },
+      { type: 'text', text: `${fmt(withVat)} ฿`, size: 'sm', flex: 5, align: 'end', weight: 'bold', color: '#9b9484' }
     ]}
   )
 
@@ -441,7 +441,7 @@ async function summaryView(userId: string) {
     contents: {
       type: 'bubble', size: 'giga',
       header: {
-        type: 'box', layout: 'vertical', backgroundColor: '#6b7280',
+        type: 'box', layout: 'vertical', backgroundColor: '#9b9484',
         contents: [
           { type: 'text', text: '🧾 สรุปรายการสั่งซื้อ', color: '#ffffff', weight: 'bold', size: 'md' },
           { type: 'text', text: `${ids.length} รายการ`, color: '#aaffaa', size: 'xs' }
@@ -621,7 +621,7 @@ async function handleText(text: string, userId: string, replyToken: string, sour
       contents: {
         type: 'bubble',
         header: {
-          type: 'box', layout: 'vertical', backgroundColor: '#6b7280', paddingAll: '16px',
+          type: 'box', layout: 'vertical', backgroundColor: '#9b9484', paddingAll: '16px',
           contents: [
             { type: 'text', text: '📋 ใบจองสินค้า', color: '#ffffff', weight: 'bold', size: 'xl' },
             { type: 'text', text: branchLabel, color: '#aaffaa', size: 'sm', margin: 'sm' }
@@ -630,7 +630,7 @@ async function handleText(text: string, userId: string, replyToken: string, sour
         body: {
           type: 'box', layout: 'vertical', paddingAll: '16px', backgroundColor: '#F5EED8',
           contents: [
-            { type: 'text', text: 'กดปุ่มด้านล่างเพื่อเปิดหน้าจองสินค้า สามารถเลือกสินค้า บันทึกใบจอง และดูประวัติได้ทันทีครับ', wrap: true, size: 'sm', color: '#6b7280' }
+            { type: 'text', text: 'กดปุ่มด้านล่างเพื่อเปิดหน้าจองสินค้า สามารถเลือกสินค้า บันทึกใบจอง และดูประวัติได้ทันทีครับ', wrap: true, size: 'sm', color: '#9b9484' }
           ]
         },
         footer: {
@@ -639,7 +639,7 @@ async function handleText(text: string, userId: string, replyToken: string, sour
             {
               type: 'button',
               action: { type: 'uri', label: '🛒 เปิดใบจองสินค้า', uri: bookingUrl },
-              style: 'primary', color: '#6b7280', height: 'md'
+              style: 'primary', color: '#9b9484', height: 'md'
             },
             {
               type: 'button',

@@ -58,7 +58,7 @@ const SUBGROUP_COLOR: Record<string, SubgroupColor> = {
 }
 
 const SUBGROUP_BG: Record<SubgroupColor, string> = {
-  gray:   'bg-gray-500   text-white    border-gray-500',
+  gray:   'bg-[#9b9484]   text-white    border-gray-500',
   light:  'bg-gray-300   text-gray-500 border-gray-400',
   orange: 'bg-orange-400 text-white    border-orange-400',
   teal:   'bg-teal-500   text-white    border-teal-600',
@@ -507,7 +507,7 @@ function Booking2Inner() {
       `}</style>
 
       {/* Header */}
-      <header className="no-print bg-gray-500 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
+      <header className="no-print bg-[#9b9484] text-white px-6 py-3 shadow flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {isAdmin && (
             <Link href="/" className="text-orange-200 hover:text-white text-sm transition-colors">

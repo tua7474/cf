@@ -277,7 +277,7 @@ export default function BookingFoyPage() {
         </colgroup>
         <thead>
           {/* รุ่น header — แสดงชื่อรุ่น + ราคาโกดัง */}
-          <tr className="bg-gray-500 text-white">
+          <tr className="bg-[#9b9484] text-white">
             <th colSpan={3} className="border border-gray-500 px-1 py-0.5 font-bold overflow-hidden text-[10px]">
               <div className="flex items-center justify-between gap-1">
                 <span className="truncate">{g.name}</span>
@@ -290,7 +290,7 @@ export default function BookingFoyPage() {
             </th>
           </tr>
           {/* sub-column header */}
-          <tr className="bg-gray-500 text-white text-[9px]">
+          <tr className="bg-[#9b9484] text-white text-[9px]">
             <th className="border border-gray-500 px-1 py-0.5 text-left font-medium">ชื่อสี</th>
             <th className="border border-gray-500 px-1 py-0.5 text-right font-medium">จำนวน</th>
             <th className="border border-gray-500 px-1 py-0.5 text-right font-medium">รวม</th>
@@ -372,7 +372,7 @@ export default function BookingFoyPage() {
       `}</style>
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
-      <header className="no-print bg-gray-500 text-white px-6 py-3 shadow flex items-center gap-4">
+      <header className="no-print bg-[#9b9484] text-white px-6 py-3 shadow flex items-center gap-4">
         <Link href="/stock" className="text-orange-200 hover:text-white text-sm transition-colors">
           ← สต็อคกระดาษฝอย
         </Link>

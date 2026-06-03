@@ -46,7 +46,7 @@ export default function HistoryPage({ searchParams }: { searchParams: Promise<{ 
 
   return (
     <div className="min-h-screen bg-gray-100">
-      <header className="bg-gray-500 text-white px-6 py-3 shadow flex items-center gap-3">
+      <header className="bg-[#9b9484] text-white px-6 py-3 shadow flex items-center gap-3">
         <Link href="/" className="text-orange-200 hover:text-white text-sm transition-colors">
           ← กลับหน้าหลัก
         </Link>
@@ -65,7 +65,7 @@ export default function HistoryPage({ searchParams }: { searchParams: Promise<{ 
           <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden max-w-lg">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="bg-gray-500 text-white text-left">
+                <tr className="bg-[#9b9484] text-white text-left">
                   <th className="px-4 py-2 w-10 text-center">#</th>
                   <th className="px-4 py-2">วันเวลา</th>
                   <th className="px-4 py-2 text-right">จำนวน</th>

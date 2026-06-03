@@ -198,7 +198,7 @@ export default function OrdersPage() {
     const orderDate  = fmtOrderDate(order.updated_at)
 
     const tdBase: React.CSSProperties = { padding: '1.5mm 2mm', border: '1px solid #ccc', fontSize: '8.5pt' }
-    const thBase: React.CSSProperties = { padding: '2mm', border: '1px solid #888', fontSize: '8.5pt', backgroundColor: '#6b7280', color: 'white' }
+    const thBase: React.CSSProperties = { padding: '2mm', border: '1px solid #888', fontSize: '8.5pt', backgroundColor: '#9b9484', color: 'white' }
 
     return (
       <div style={{ width: '210mm', height: '297mm', padding: '8mm', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', fontFamily: 'sans-serif' }}>
@@ -459,7 +459,7 @@ export default function OrdersPage() {
       <div className="no-print min-h-screen bg-gray-100">
 
         {/* Header */}
-        <header className="bg-gray-500 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
+        <header className="bg-[#9b9484] text-white px-6 py-3 shadow flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Link href="/booking2" className="text-orange-200 hover:text-white text-sm transition-colors">
               ← กลับหน้าใบจองสินค้า
@@ -484,7 +484,7 @@ export default function OrdersPage() {
             <div className="rounded-lg border border-gray-200 shadow-sm overflow-hidden min-w-max">
               <table className="min-w-full text-sm">
                 <thead>
-                  <tr className="bg-gray-500 text-white text-left text-xs">
+                  <tr className="bg-[#9b9484] text-white text-left text-xs">
                     <th className="px-4 py-2 whitespace-nowrap border-r border-gray-500">เลขที่ใบจอง</th>
                     <th className="px-4 py-2 whitespace-nowrap border-r border-gray-500 text-right">ยอดเงินรวม (฿)</th>
                     <th className="px-4 py-2 whitespace-nowrap border-r border-gray-500">วันเวลาอัพเดทล่าสุด</th>
@@ -613,7 +613,7 @@ export default function OrdersPage() {
                                 <button
                                   onClick={() => handlePayment(order.order_no)}
                                   disabled={!payDate || !payBank.trim()}
-                                  className="flex-1 px-2 py-1 text-xs rounded bg-gray-500 hover:bg-gray-500 text-white font-semibold transition-colors disabled:opacity-40"
+                                  className="flex-1 px-2 py-1 text-xs rounded bg-[#9b9484] hover:bg-[#9b9484] text-white font-semibold transition-colors disabled:opacity-40"
                                 >
                                   ✓ ยืนยัน
                                 </button>
