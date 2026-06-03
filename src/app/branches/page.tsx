@@ -332,7 +332,7 @@ function BranchRow({
 
 // ── Manage Branch Modal ───────────────────────────────────────────────────────
 
-function ManageModal({ branch, onClose, onSaved }: { branch: Branch; onClose: () => void; onSaved: () => void }) {
+function ManageModal({ branch, onClose, onSaved, onDeleted }: { branch: Branch; onClose: () => void; onSaved: () => void; onDeleted: (id: number) => void }) {
   const [newPhone, setNewPhone] = useState('')
   const [isAdmin, setIsAdmin] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -344,8 +344,7 @@ function ManageModal({ branch, onClose, onSaved }: { branch: Branch; onClose: ()
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id: branch.id }),
     })
-    onSaved()
-    onClose()
+    onDeleted(branch.id)
   }
 
   const addPhone = async () => {
@@ -590,6 +589,7 @@ export default function BranchesPage() {
           branch={manageBranch}
           onClose={() => setManageBranch(null)}
           onSaved={() => { loadBranches(); setManageBranch(null) }}
+          onDeleted={(id) => { setBranches(prev => prev.filter(b => b.id !== id)); setManageBranch(null) }}
         />
       )}
 
