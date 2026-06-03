@@ -65,7 +65,7 @@ export default function BookingFoyPage() {
   const [originalItems, setOriginalItems]     = useState<Record<number, number>>({})
   const [zoom, setZoom]           = useState(1)
   const [sourceType, setSourceType]   = useState<'โกดัง' | 'หน้าร้าน' | ''>('')
-  const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง' | ''>('')
+  const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | ''>('')
   const [manualTotal, setManualTotal] = useState('')
   const [branchInfo, setBranchInfo]   = useState<{ name: string; phone: string } | null>(null)
   const [isAdmin, setIsAdmin]         = useState(true)
@@ -116,7 +116,18 @@ export default function BookingFoyPage() {
         setIsAdmin(s?.is_admin !== false)
       }
     } catch { /* ignore */ }
+    // Load persisted source/vehicle from localStorage (shared with booking2)
+    try {
+      const st = localStorage.getItem('cf_source_type')
+      const vt = localStorage.getItem('cf_vehicle_type')
+      if (st) setSourceType(st as 'โกดัง' | 'หน้าร้าน')
+      if (vt) setVehicleType(vt as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง')
+    } catch { /* ignore */ }
   }, [])
+
+  // Persist source/vehicle to localStorage whenever they change
+  useEffect(() => { if (sourceType)  try { localStorage.setItem('cf_source_type',  sourceType)  } catch { /* ignore */ } }, [sourceType])
+  useEffect(() => { if (vehicleType) try { localStorage.setItem('cf_vehicle_type', vehicleType) } catch { /* ignore */ } }, [vehicleType])
 
   useEffect(() => {
     fetch('/api/stock')
@@ -515,12 +526,13 @@ export default function BookingFoyPage() {
                     <div className="text-[7px] font-semibold text-gray-500 leading-none mb-0.5">รถ</div>
                     <select
                       value={vehicleType}
-                      onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง')}
+                      onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง')}
                       className={`w-full border-2 rounded font-bold text-[10px] px-0.5 bg-white focus:outline-none ${vehicleType === '' ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-800'}`}
                     >
                       <option value="" disabled>— เลือก —</option>
                       <option value="จองรถ60000">จองรถ 60,000</option>
                       <option value="รอพ่วง">รอพ่วง</option>
+                      <option value="รับเอง">รับเอง</option>
                     </select>
                     {vehicleType === '' && <div className="text-[7px] text-red-500 leading-none mt-0.5">กรุณาเลือก</div>}
                   </div>

@@ -255,6 +255,21 @@ function Booking2Inner() {
       .catch(() => setLoading(false))
   }, [])
 
+  // Load persisted source/vehicle from localStorage (new order only; edit mode uses order values)
+  useEffect(() => {
+    if (editOrderNo) return
+    try {
+      const st = localStorage.getItem('cf_source_type')
+      const vt = localStorage.getItem('cf_vehicle_type')
+      if (st) setSourceType(st as 'โกดัง' | 'หน้าร้าน')
+      if (vt) setVehicleType(vt as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง')
+    } catch { /* ignore */ }
+  }, [editOrderNo])
+
+  // Persist source/vehicle to localStorage whenever they change
+  useEffect(() => { if (sourceType)  try { localStorage.setItem('cf_source_type',  sourceType)  } catch { /* ignore */ } }, [sourceType])
+  useEffect(() => { if (vehicleType) try { localStorage.setItem('cf_vehicle_type', vehicleType) } catch { /* ignore */ } }, [vehicleType])
+
   // Auto-reset vehicle if total drops below 60,000
   useEffect(() => {
     if (vehicleType !== 'จองรถ60000') return
