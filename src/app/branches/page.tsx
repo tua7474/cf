@@ -10,7 +10,7 @@ interface Branch { id: number; name: string; phones: BranchPhone[]; pending_coun
 
 // ── Color groups ──────────────────────────────────────────────────────────────
 
-const GREEN_BRANCHES  = ['CFpack', 'CF Pack', 'cfpack', 'พนักงาน']
+const GREEN_BRANCHES  = ['โกดัง']
 const YELLOW_BRANCHES = ['ท่าฉลอม', 'หนองแขม', 'ไทรม้า', 'อ้อมน้อย']
 const RED_BRANCHES    = ['สนามบินน้ำ', 'ตลาดรังสิต']
 
@@ -38,7 +38,7 @@ const GROUP_HEADER_BG: Record<ColorGroup, string> = {
   orange: 'bg-orange-200 text-orange-900',
 }
 const GROUP_LABEL: Record<ColorGroup, string> = {
-  green:  'กลุ่มพนักงาน CFpack',
+  green:  'โกดังCF',
   yellow: 'กลุ่มสีเหลือง',
   red:    'กลุ่มสีแดง',
   orange: 'กลุ่มสีส้ม',
