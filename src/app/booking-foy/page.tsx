@@ -277,7 +277,7 @@ export default function BookingFoyPage() {
         </colgroup>
         <thead>
           {/* รุ่น header — แสดงชื่อรุ่น + ราคาโกดัง */}
-          <tr className="bg-gray-700 text-white">
+          <tr className="bg-gray-500 text-white">
             <th colSpan={3} className="border border-gray-500 px-1 py-0.5 font-bold overflow-hidden text-[10px]">
               <div className="flex items-center justify-between gap-1">
                 <span className="truncate">{g.name}</span>
@@ -290,7 +290,7 @@ export default function BookingFoyPage() {
             </th>
           </tr>
           {/* sub-column header */}
-          <tr className="bg-gray-800 text-white text-[9px]">
+          <tr className="bg-gray-500 text-white text-[9px]">
             <th className="border border-gray-500 px-1 py-0.5 text-left font-medium">ชื่อสี</th>
             <th className="border border-gray-500 px-1 py-0.5 text-right font-medium">จำนวน</th>
             <th className="border border-gray-500 px-1 py-0.5 text-right font-medium">รวม</th>
@@ -307,7 +307,7 @@ export default function BookingFoyPage() {
                 {/* ชื่อสี */}
                 <td className={`border border-gray-300 px-1 py-px bg-gray-100 overflow-hidden ${hasPending ? 'ring-1 ring-inset ring-yellow-400' : ''}`}>
                   <div className="flex items-start justify-between gap-0.5">
-                    <div className="truncate text-[9px] text-gray-800">{item.color_name || item.color_code || '–'}</div>
+                    <div className="truncate text-[9px] text-gray-500">{item.color_name || item.color_code || '–'}</div>
                     <div className="shrink-0 text-[7px] text-gray-400 leading-tight">{parseInt(item.stock_qty) || 0}</div>
                   </div>
                 </td>
@@ -324,7 +324,7 @@ export default function BookingFoyPage() {
                   />
                 </td>
                 {/* รวม */}
-                <td className="border border-gray-300 px-1 py-px text-right bg-gray-100 text-[9px] text-gray-800">
+                <td className="border border-gray-300 px-1 py-px text-right bg-gray-100 text-[9px] text-gray-500">
                   {total > 0 ? fmt2(total) : ''}
                 </td>
               </tr>
@@ -372,7 +372,7 @@ export default function BookingFoyPage() {
       `}</style>
 
       {/* ── Header ────────────────────────────────────────────────────────── */}
-      <header className="no-print bg-gray-800 text-white px-6 py-3 shadow flex items-center gap-4">
+      <header className="no-print bg-gray-500 text-white px-6 py-3 shadow flex items-center gap-4">
         <Link href="/stock" className="text-orange-200 hover:text-white text-sm transition-colors">
           ← สต็อคกระดาษฝอย
         </Link>
@@ -401,7 +401,7 @@ export default function BookingFoyPage() {
               disabled={saving || (pendingCount === 0 && !editFoyMode)}
               className={`px-4 py-1.5 text-sm rounded font-semibold transition-colors disabled:opacity-40 ${
                 pendingCount > 0
-                  ? 'bg-yellow-400 hover:bg-yellow-300 text-orange-700'
+                  ? 'bg-yellow-400 hover:bg-yellow-300 text-orange-300'
                   : editFoyMode
                     ? 'bg-red-500 hover:bg-red-400 text-white'
                     : 'bg-white/20 text-white border border-white/30 cursor-not-allowed'
@@ -439,7 +439,7 @@ export default function BookingFoyPage() {
                 style={{ zoom: CONTENT_SCALE, transformOrigin: 'top left' }}
               >
                 {/* Title */}
-                <div className="text-center text-sm font-bold text-gray-800 mb-2 tracking-wide">
+                <div className="text-center text-sm font-bold text-gray-500 mb-2 tracking-wide">
                   ใบจองกระดาษฝอย
                 </div>
 
@@ -479,7 +479,7 @@ export default function BookingFoyPage() {
                       max="999999.99"
                       value={displayTotal}
                       onChange={e => setManualTotal(e.target.value)}
-                      className="w-full text-xl font-bold text-orange-600 text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 rounded"
+                      className="w-full text-xl font-bold text-orange-300 text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 rounded"
                     />
                   </div>
 
@@ -489,7 +489,7 @@ export default function BookingFoyPage() {
                     style={{ width: 84 }}
                   >
                     <div className="text-[7px] text-gray-400 leading-none">วันที่</div>
-                    <div className="text-[12px] font-extrabold text-gray-800 leading-tight text-center">{today}</div>
+                    <div className="text-[12px] font-extrabold text-gray-500 leading-tight text-center">{today}</div>
                   </div>
 
                   {/* เบิกของ */}
@@ -501,7 +501,7 @@ export default function BookingFoyPage() {
                     <select
                       value={sourceType}
                       onChange={e => setSourceType(e.target.value as 'โกดัง' | 'หน้าร้าน')}
-                      className={`w-full border-2 rounded font-bold text-[10px] px-0.5 bg-white focus:outline-none ${sourceType === '' ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-800'}`}
+                      className={`w-full border-2 rounded font-bold text-[10px] px-0.5 bg-white focus:outline-none ${sourceType === '' ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-500'}`}
                     >
                       <option value="" disabled>— เลือก —</option>
                       <option value="โกดัง">โกดัง</option>
@@ -518,7 +518,7 @@ export default function BookingFoyPage() {
                     {branchInfo ? (
                       <>
                         <div className="text-[7px] text-gray-400 leading-none">สาขา/ตัวแทน</div>
-                        <div className="text-[13px] font-extrabold text-gray-800 leading-tight truncate">{branchInfo.name}</div>
+                        <div className="text-[13px] font-extrabold text-gray-500 leading-tight truncate">{branchInfo.name}</div>
                         <div className="text-[8px] text-gray-500 truncate">{branchInfo.phone}</div>
                       </>
                     ) : (
@@ -535,7 +535,7 @@ export default function BookingFoyPage() {
                     <select
                       value={vehicleType}
                       onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง')}
-                      className={`w-full border-2 rounded font-bold text-[10px] px-0.5 bg-white focus:outline-none ${vehicleType === '' ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-800'}`}
+                      className={`w-full border-2 rounded font-bold text-[10px] px-0.5 bg-white focus:outline-none ${vehicleType === '' ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-500'}`}
                     >
                       <option value="" disabled>— เลือก —</option>
                       <option value="จองรถ60000">จองรถ 60,000</option>

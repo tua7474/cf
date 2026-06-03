@@ -248,7 +248,7 @@ export default function StockPage() {
     <div className="min-h-screen bg-gray-100 print:hidden">
 
       {/* Header */}
-      <header className="bg-gray-800 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
+      <header className="bg-gray-500 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link href="/" className="text-orange-200 hover:text-white text-sm transition-colors">
             ← กลับหน้าหลัก
@@ -267,11 +267,11 @@ export default function StockPage() {
             {busy.addAll ? 'กำลังเพิ่ม...' : '+ เพิ่มสต็อคทั้งหมด'}
           </button>
           <button onClick={handlePrint}
-            className="px-4 py-1.5 text-sm rounded bg-white hover:bg-gray-100 text-orange-700 font-semibold transition-colors border border-white/50 whitespace-nowrap">
+            className="px-4 py-1.5 text-sm rounded bg-white hover:bg-gray-100 text-orange-300 font-semibold transition-colors border border-white/50 whitespace-nowrap">
             🖨️ พิมพ์
           </button>
           <Link href="/booking-foy"
-            className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-orange-700 font-semibold transition-colors">
+            className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-orange-300 font-semibold transition-colors">
             📋 ใบจองกระดาษฝอย
           </Link>
         </div>
@@ -286,18 +286,18 @@ export default function StockPage() {
             <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 96px)' }}>
             <table className="min-w-full text-xs">
               <thead className="sticky top-0 z-20">
-                <tr className="bg-gray-700 text-white text-left">
-                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap min-w-[180px]">ชื่อรุ่น ✎</th>
-                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap">รหัสสี ✎</th>
-                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap">ชื่อสี ✎</th>
-                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap text-center">สต็อคล่าสุด</th>
-                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap text-center">เพิ่มเข้าสต็อค</th>
-                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap text-center">จำนวนจอง</th>
-                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap text-right">ราคาโกดัง ✎</th>
-                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap text-right">ราคาลูกค้า ✎</th>
-                  <th className="px-3 py-2 border-r border-yellow-400 whitespace-nowrap text-right bg-yellow-500 text-gray-900">ราคา+9%</th>
+                <tr className="bg-gray-500 text-white text-left">
+                  <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap min-w-[180px]">ชื่อรุ่น ✎</th>
+                  <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap">รหัสสี ✎</th>
+                  <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap">ชื่อสี ✎</th>
+                  <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">สต็อคล่าสุด</th>
+                  <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">เพิ่มเข้าสต็อค</th>
+                  <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">จำนวนจอง</th>
+                  <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-right">ราคาโกดัง ✎</th>
+                  <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-right">ราคาลูกค้า ✎</th>
+                  <th className="px-3 py-2 border-r border-yellow-400 whitespace-nowrap text-right bg-yellow-500 text-gray-500">ราคา+9%</th>
                   <th className="px-3 py-2 border-r border-red-500 whitespace-nowrap text-right bg-red-600">ราคา+9%+7%</th>
-                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap text-center">ใบจองฝอย</th>
+                  <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">ใบจองฝอย</th>
                   <th className="px-3 py-2 whitespace-nowrap text-center">จัดการ</th>
                 </tr>
 
@@ -374,7 +374,7 @@ export default function StockPage() {
                   return (
                     <Fragment key={item.id}>
                     {isFirstOfModel && (
-                      <tr className="bg-gray-800 text-white">
+                      <tr className="bg-gray-500 text-white">
                         <td colSpan={12} className="px-3 py-1 text-[11px] font-bold tracking-wide">
                           {item.model_name}
                         </td>
@@ -408,7 +408,7 @@ export default function StockPage() {
 
                       {/* 4. สต็อคล่าสุด */}
                       <td className="px-3 py-1.5 border-r border-gray-200 text-center">
-                        <div className={`text-base font-bold ${stock < 0 ? 'text-red-600' : 'text-orange-500'}`}>
+                        <div className={`text-base font-bold ${stock < 0 ? 'text-red-600' : 'text-orange-300'}`}>
                           {fmtQty(item.stock_qty)}
                         </div>
                         <div className="text-[10px] text-gray-400">หน่วย</div>
@@ -417,7 +417,7 @@ export default function StockPage() {
                       {/* 5. เพิ่มเข้าสต็อค */}
                       <td className="px-2 py-1.5 border-r border-gray-200 min-w-[160px]">
                         <div className="text-[10px] text-gray-500 mb-1">
-                          ล่าสุด: <span className="font-semibold text-orange-500">{fmtQty(item.last_added_qty)}</span>
+                          ล่าสุด: <span className="font-semibold text-orange-300">{fmtQty(item.last_added_qty)}</span>
                           <span className="ml-1 text-gray-400">({fmtDate(item.last_added_at)})</span>
                         </div>
                         <div className="flex gap-1">
@@ -426,7 +426,7 @@ export default function StockPage() {
                             onChange={e => setAddInputs(p => ({ ...p, [item.id]: e.target.value }))}
                             className="w-16 px-1.5 py-1 text-xs rounded border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 text-right" />
                           <Link href={`/stock-history?id=${item.id}&type=add&name=${encodeURIComponent(item.model_name + ' ' + item.color_name)}`}
-                            className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-300 transition-colors whitespace-nowrap">
+                            className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-300 transition-colors whitespace-nowrap">
                             ประวัติ
                           </Link>
                         </div>
@@ -435,21 +435,21 @@ export default function StockPage() {
                       {/* 6. จำนวนจอง */}
                       <td className="px-2 py-1.5 border-r border-gray-200 min-w-[160px]">
                         <div className="text-[10px] text-gray-500 mb-1">
-                          ล่าสุด: <span className="font-semibold text-orange-700">{fmtQty(item.last_booked_qty)}</span>
+                          ล่าสุด: <span className="font-semibold text-orange-300">{fmtQty(item.last_booked_qty)}</span>
                           <span className="ml-1 text-gray-400">({fmtDate(item.last_booked_at)})</span>
                         </div>
                         <div className="flex gap-1">
                           <input type="text" inputMode="numeric" placeholder="จำนวน"
                             value={bookInputs[item.id] ?? ''}
                             onChange={e => setBookInputs(p => ({ ...p, [item.id]: e.target.value }))}
-                            className="w-16 px-1.5 py-1 text-xs rounded border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-orange-400 text-right" />
+                            className="w-16 px-1.5 py-1 text-xs rounded border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-orange-300 text-right" />
                           <button onClick={() => handleStock(item.id, 'book')}
                             disabled={!!busy[`book-${item.id}`]}
                             className="px-2 py-1 text-xs rounded bg-orange-100 hover:bg-orange-200 text-orange-800 border border-orange-300 transition-colors disabled:opacity-50 whitespace-nowrap">
                             − จอง
                           </button>
                           <Link href={`/stock-history?id=${item.id}&type=book&name=${encodeURIComponent(item.model_name + ' ' + item.color_name)}`}
-                            className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-300 transition-colors whitespace-nowrap">
+                            className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-300 transition-colors whitespace-nowrap">
                             ประวัติ
                           </Link>
                         </div>
@@ -472,7 +472,7 @@ export default function StockPage() {
                       </td>
 
                       {/* 9. ราคา+9% */}
-                      <td className="px-3 py-1.5 border-r border-yellow-200 bg-yellow-50 text-right text-gray-700 whitespace-nowrap font-medium">
+                      <td className="px-3 py-1.5 border-r border-yellow-200 bg-yellow-50 text-right text-gray-500 whitespace-nowrap font-medium">
                         {price9 !== null ? fmtMoney(price9) : '-'}
                       </td>
 
@@ -482,7 +482,7 @@ export default function StockPage() {
                         {hasPending && (
                           <button onClick={() => handleSaveInfo(item.id)}
                             disabled={!!busy[`info-${item.id}`] || editDup}
-                            className={`mt-0.5 px-2 py-0.5 text-[10px] rounded font-semibold transition-colors disabled:opacity-50 whitespace-nowrap ${editDup ? 'bg-red-100 text-red-700 border border-red-300 cursor-not-allowed' : 'bg-yellow-400 hover:bg-yellow-300 text-orange-700'}`}>
+                            className={`mt-0.5 px-2 py-0.5 text-[10px] rounded font-semibold transition-colors disabled:opacity-50 whitespace-nowrap ${editDup ? 'bg-red-100 text-red-700 border border-red-300 cursor-not-allowed' : 'bg-yellow-400 hover:bg-yellow-300 text-orange-300'}`}>
                             {editDup ? '⛔ ชื่อซ้ำ' : '💾 บันทึก'}
                           </button>
                         )}
@@ -511,7 +511,7 @@ export default function StockPage() {
                 })}
               </tbody>
               <tfoot>
-                <tr className="bg-gray-900 text-white text-xs">
+                <tr className="bg-gray-500 text-white text-xs">
                   <td colSpan={9} className="px-3 py-2 text-right font-semibold">
                     มูลค่าสต็อครวมทั้งหมด
                   </td>
@@ -520,7 +520,7 @@ export default function StockPage() {
                   </td>
                 </tr>
                 {dateStr && (
-                  <tr className="bg-gray-800 text-orange-200 text-[11px]">
+                  <tr className="bg-gray-500 text-orange-200 text-[11px]">
                     <td colSpan={12} className="px-3 py-1 text-right">{dateStr}</td>
                   </tr>
                 )}
@@ -554,7 +554,7 @@ export default function StockPage() {
             return (
               <tr key={item.id} className="border-b border-gray-200">
                 <td className="py-1 pr-4">{item.model_name}</td>
-                <td className="py-1 pr-4 text-gray-600">{item.color_name || item.color_code || '-'}</td>
+                <td className="py-1 pr-4 text-gray-500">{item.color_name || item.color_code || '-'}</td>
                 <td className="py-1 pr-4 text-right">{fmtQty(item.stock_qty)}</td>
                 <td className="py-1 pr-4 text-right">{fmtMoney(parseFloat(item.warehouse_price))}</td>
                 <td className="py-1 text-right">{val > 0 ? val.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-'}</td>

@@ -241,7 +241,7 @@ export default function Home() {
     <div className="min-h-screen bg-gray-100 print:hidden">
 
       {/* Header */}
-      <header className="bg-gray-800 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
+      <header className="bg-gray-500 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold">กระดาษฝอยไทย — ระบบจัดการข้อมูล</h1>
           <p className="text-orange-200 text-xs mt-0.5">ข้อมูลจาก Railway PostgreSQL</p>
@@ -252,11 +252,11 @@ export default function Home() {
             {busy.addAll ? 'กำลังเพิ่ม...' : '+ เพิ่มสต็อคทั้งหมด'}
           </button>
           <button onClick={handlePrint}
-            className="px-4 py-1.5 text-sm rounded bg-white hover:bg-gray-100 text-orange-700 font-semibold transition-colors border border-white/50 whitespace-nowrap">
+            className="px-4 py-1.5 text-sm rounded bg-white hover:bg-gray-100 text-orange-300 font-semibold transition-colors border border-white/50 whitespace-nowrap">
             🖨️ พิมพ์
           </button>
           <Link href="/booking2"
-            className="px-4 py-1.5 text-sm rounded bg-yellow-500 hover:bg-yellow-400 text-orange-700 font-medium transition-colors border border-yellow-400">
+            className="px-4 py-1.5 text-sm rounded bg-yellow-500 hover:bg-yellow-400 text-orange-300 font-medium transition-colors border border-yellow-400">
             📝 ใบจองสินค้า
           </Link>
           {msg && (
@@ -267,15 +267,15 @@ export default function Home() {
 
       {/* Tab bar */}
       <div className="bg-white border-b border-gray-200 px-4 shadow-sm flex">
-        <span className="inline-block px-4 py-3 text-sm font-medium border-b-2 border-gray-600 text-orange-500 bg-green-50">
+        <span className="inline-block px-4 py-3 text-sm font-medium border-b-2 border-gray-500 text-orange-300 bg-green-50">
           📦 สต็อคสินค้า
         </span>
         <Link href="/stock"
-          className="inline-block px-4 py-3 text-sm font-medium text-gray-500 hover:text-orange-500 hover:bg-green-50 transition-colors">
+          className="inline-block px-4 py-3 text-sm font-medium text-gray-500 hover:text-orange-300 hover:bg-green-50 transition-colors">
           🌿 สต็อคกระดาษฝอย
         </Link>
         <Link href="/branches"
-          className="inline-block px-4 py-3 text-sm font-medium text-gray-500 hover:text-orange-500 hover:bg-green-50 transition-colors">
+          className="inline-block px-4 py-3 text-sm font-medium text-gray-500 hover:text-orange-300 hover:bg-green-50 transition-colors">
           🏪 สาขาและตัวแทน
         </Link>
       </div>
@@ -289,17 +289,17 @@ export default function Home() {
             <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 96px)' }}>
             <table className="min-w-full text-xs">
               <thead className="sticky top-0 z-20">
-                <tr className="bg-gray-700 text-white text-left">
-                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap">หมวดสินค้า ✎</th>
-                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap">ชื่อสินค้า ✎</th>
-                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap text-center">สต็อคล่าสุด</th>
-                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap text-center">เพิ่มสต็อค</th>
-                  <th className="px-3 py-2 border-r border-gray-600 whitespace-nowrap text-center">จำนวนจอง</th>
-                  <th className="px-3 py-2 border-r border-orange-400 whitespace-nowrap text-right bg-orange-500">ราคาโกดัง ✎</th>
-                  <th className="px-3 py-2 border-r border-yellow-400 whitespace-nowrap text-right bg-yellow-500 text-gray-900">ราคา+9%</th>
+                <tr className="bg-gray-500 text-white text-left">
+                  <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap">หมวดสินค้า ✎</th>
+                  <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap">ชื่อสินค้า ✎</th>
+                  <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">สต็อคล่าสุด</th>
+                  <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">เพิ่มสต็อค</th>
+                  <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">จำนวนจอง</th>
+                  <th className="px-3 py-2 border-r border-orange-300 whitespace-nowrap text-right bg-orange-300">ราคาโกดัง ✎</th>
+                  <th className="px-3 py-2 border-r border-yellow-400 whitespace-nowrap text-right bg-yellow-500 text-gray-500">ราคา+9%</th>
                   <th className="px-3 py-2 border-r border-red-500 whitespace-nowrap text-right bg-red-600">ราคา+9%+7%</th>
-                  <th className="px-3 py-2 whitespace-nowrap text-center bg-gray-900">ใบจองสินค้า</th>
-                  <th className="px-3 py-2 whitespace-nowrap text-center bg-gray-900">จัดการ</th>
+                  <th className="px-3 py-2 whitespace-nowrap text-center bg-gray-500">ใบจองสินค้า</th>
+                  <th className="px-3 py-2 whitespace-nowrap text-center bg-gray-500">จัดการ</th>
                 </tr>
 
                 {/* ── Add new product row (sticky) ── */}
@@ -340,14 +340,14 @@ export default function Home() {
                     const groupProducts = products.filter(p => p.group_name === entry.name)
                     const allOn = groupProducts.length > 0 && groupProducts.every(p => p.show_in_booking)
                     return (
-                      <tr key={`g-${ei}`} className="bg-gray-800 text-white">
+                      <tr key={`g-${ei}`} className="bg-gray-500 text-white">
                         <td colSpan={8} className="px-3 py-1.5 font-bold text-sm tracking-wide">
                           {entry.name}
                         </td>
                         <td className="px-2 py-1 text-center">
                           <button
                             onClick={() => handleToggleGroupBooking(entry.name, !allOn)}
-                            className={`px-3 py-0.5 text-[11px] rounded-full font-semibold transition-colors ${allOn ? 'bg-green-400 hover:bg-green-300 text-orange-700' : 'bg-red-500 hover:bg-red-400 text-white'}`}
+                            className={`px-3 py-0.5 text-[11px] rounded-full font-semibold transition-colors ${allOn ? 'bg-green-400 hover:bg-green-300 text-orange-300' : 'bg-red-500 hover:bg-red-400 text-white'}`}
                           >
                             {allOn ? '● โชว์ทั้งหมวด' : '● ซ่อนทั้งหมวด'}
                           </button>
@@ -383,7 +383,7 @@ export default function Home() {
 
                       {/* 3. สต็อคล่าสุด */}
                       <td className="px-3 py-1 border-r border-gray-200 text-center whitespace-nowrap">
-                        <div className={`text-sm font-bold ${stock < 0 ? 'text-red-600' : 'text-orange-500'}`}>
+                        <div className={`text-sm font-bold ${stock < 0 ? 'text-red-600' : 'text-orange-300'}`}>
                           {fmtQty(p.quantity)}
                         </div>
                       </td>
@@ -399,7 +399,7 @@ export default function Home() {
                             onChange={e => setAddInputs(prev => ({ ...prev, [p.id]: e.target.value }))}
                             className="w-16 px-1.5 py-1 text-xs rounded border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-gray-400 text-right" />
                           <Link href={`/history?id=${p.id}&type=add&name=${encodeURIComponent(p.product_name)}`}
-                            className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-300 transition-colors whitespace-nowrap">
+                            className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-300 transition-colors whitespace-nowrap">
                             ประวัติ
                           </Link>
                         </div>
@@ -414,14 +414,14 @@ export default function Home() {
                           <input type="text" inputMode="numeric" placeholder="จำนวน"
                             value={bookInputs[p.id] ?? ''}
                             onChange={e => setBookInputs(prev => ({ ...prev, [p.id]: e.target.value }))}
-                            className="w-16 px-1.5 py-1 text-xs rounded border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-orange-400 text-right" />
+                            className="w-16 px-1.5 py-1 text-xs rounded border border-gray-200 bg-white focus:outline-none focus:ring-1 focus:ring-orange-300 text-right" />
                           <button onClick={() => handleStock(p.id, 'book')}
                             disabled={!!busy[`book-${p.id}`]}
                             className="px-2 py-1 text-xs rounded bg-orange-100 hover:bg-orange-200 text-orange-800 border border-orange-300 transition-colors disabled:opacity-50 whitespace-nowrap">
                             − จอง
                           </button>
                           <Link href={`/history?id=${p.id}&type=book&name=${encodeURIComponent(p.product_name)}`}
-                            className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-600 border border-gray-300 transition-colors whitespace-nowrap">
+                            className="px-2 py-1 text-xs rounded bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-300 transition-colors whitespace-nowrap">
                             ประวัติ
                           </Link>
                         </div>
@@ -435,7 +435,7 @@ export default function Home() {
                       </td>
 
                       {/* 7. ราคา+9% */}
-                      <td className="px-3 py-1 border-r border-yellow-200 bg-yellow-50 text-right text-gray-700 whitespace-nowrap font-medium">
+                      <td className="px-3 py-1 border-r border-yellow-200 bg-yellow-50 text-right text-gray-500 whitespace-nowrap font-medium">
                         {price9 !== null ? fmtMoney(price9) : '-'}
                       </td>
 
@@ -445,7 +445,7 @@ export default function Home() {
                         {hasPending && (
                           <button onClick={() => handleSaveInfo(p.id)}
                             disabled={!!busy[`info-${p.id}`]}
-                            className="mt-0.5 px-2 py-0.5 text-[10px] rounded bg-yellow-400 hover:bg-yellow-300 text-orange-700 font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
+                            className="mt-0.5 px-2 py-0.5 text-[10px] rounded bg-yellow-400 hover:bg-yellow-300 text-orange-300 font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
                             💾 บันทึก
                           </button>
                         )}
@@ -475,7 +475,7 @@ export default function Home() {
                 })}
               </tbody>
               <tfoot>
-                <tr className="bg-gray-900 text-white text-xs">
+                <tr className="bg-gray-500 text-white text-xs">
                   <td colSpan={7} className="px-3 py-2 text-right font-semibold">
                     มูลค่าสต็อครวมทั้งหมด
                   </td>
@@ -484,7 +484,7 @@ export default function Home() {
                   </td>
                 </tr>
                 {dateStr && (
-                  <tr className="bg-gray-800 text-orange-200 text-[11px]">
+                  <tr className="bg-gray-500 text-orange-200 text-[11px]">
                     <td colSpan={10} className="px-3 py-1 text-right">{dateStr}</td>
                   </tr>
                 )}
@@ -517,7 +517,7 @@ export default function Home() {
             const val = isNaN(qty) || isNaN(pr) ? 0 : qty * pr
             return (
               <tr key={p.id} className="border-b border-gray-200">
-                <td className="py-1 pr-4 text-gray-600">{p.group_name}</td>
+                <td className="py-1 pr-4 text-gray-500">{p.group_name}</td>
                 <td className="py-1 pr-4">{p.product_name}</td>
                 <td className="py-1 pr-4 text-right">{fmtQty(p.quantity)}</td>
                 <td className="py-1 pr-4 text-right">{fmtMoney(p.price)}</td>

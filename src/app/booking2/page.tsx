@@ -58,9 +58,9 @@ const SUBGROUP_COLOR: Record<string, SubgroupColor> = {
 }
 
 const SUBGROUP_BG: Record<SubgroupColor, string> = {
-  gray:   'bg-gray-500   text-white    border-gray-600',
-  light:  'bg-gray-300   text-gray-800 border-gray-400',
-  orange: 'bg-orange-400 text-white    border-orange-500',
+  gray:   'bg-gray-500   text-white    border-gray-500',
+  light:  'bg-gray-300   text-gray-500 border-gray-400',
+  orange: 'bg-orange-300 text-white    border-orange-300',
   teal:   'bg-teal-500   text-white    border-teal-600',
   maroon: 'bg-red-800    text-white    border-red-900',
 }
@@ -507,7 +507,7 @@ function Booking2Inner() {
       `}</style>
 
       {/* Header */}
-      <header className="no-print bg-gray-800 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
+      <header className="no-print bg-gray-500 text-white px-6 py-3 shadow flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           {isAdmin && (
             <Link href="/" className="text-orange-200 hover:text-white text-sm transition-colors">
@@ -563,7 +563,7 @@ function Booking2Inner() {
               <button
                 onClick={handleSave}
                 disabled={saving || cannotBook60k || vehicleType === '' || sourceType === ''}
-                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-orange-700 font-semibold transition-colors disabled:opacity-50"
+                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-orange-300 font-semibold transition-colors disabled:opacity-50"
               >
                 {saving ? 'กำลังบันทึก...' : '💾 บันทึกการจอง'}
               </button>
@@ -583,7 +583,7 @@ function Booking2Inner() {
               <button
                 onClick={handleSave}
                 disabled={saving || cannotBook60k || vehicleType === '' || sourceType === ''}
-                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-orange-700 font-semibold transition-colors disabled:opacity-50"
+                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-orange-300 font-semibold transition-colors disabled:opacity-50"
               >
                 {saving ? 'กำลังบันทึก...' : '💾 อัพเดทการจอง'}
               </button>
@@ -611,7 +611,7 @@ function Booking2Inner() {
             <div className="flex flex-col items-center justify-center min-h-[70vh] gap-5 text-center px-6">
               <div className="text-6xl select-none">🔒</div>
               <div>
-                <div className="text-xl font-bold text-gray-700 mb-1">ใบจองสินค้า</div>
+                <div className="text-xl font-bold text-gray-500 mb-1">ใบจองสินค้า</div>
                 <div className="text-sm text-gray-400">ไม่สามารถเข้าใช้งานได้</div>
               </div>
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg px-6 py-4 max-w-xs text-sm text-yellow-800">
@@ -686,7 +686,7 @@ function Booking2Inner() {
                                       max="999999.99"
                                       value={displayVal}
                                       onChange={e => setManualTotal(e.target.value)}
-                                      className="w-full text-xl font-bold text-orange-600 text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 rounded"
+                                      className="w-full text-xl font-bold text-orange-300 text-right bg-transparent focus:outline-none focus:ring-1 focus:ring-gray-400 rounded"
                                     />
                                   </div>
                                 </td>,
@@ -700,7 +700,7 @@ function Booking2Inner() {
                                 className={`${base} p-1 bg-gray-50 align-middle overflow-hidden`}>
                                 <div className="flex flex-col items-center justify-center h-full gap-0.5">
                                   <div className="text-[7px] text-gray-400 leading-none">วันที่</div>
-                                  <div className="text-[20px] font-extrabold text-gray-800 leading-none text-center truncate w-full">
+                                  <div className="text-[20px] font-extrabold text-gray-500 leading-none text-center truncate w-full">
                                     {today}
                                   </div>
                                 </div>
@@ -711,7 +711,7 @@ function Booking2Inner() {
                                   <div className="text-[7px] text-gray-500 font-semibold leading-none">เบิกของ</div>
                                   <select value={sourceType}
                                     onChange={e => setSourceType(e.target.value as 'โกดัง' | 'หน้าร้าน')}
-                                    className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 bg-white focus:outline-none ${sourceType === '' ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-800'}`}>
+                                    className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 bg-white focus:outline-none ${sourceType === '' ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-500'}`}>
                                     <option value="" disabled>— เลือก —</option>
                                     <option value="โกดัง">โกดัง</option>
                                     <option value="หน้าร้าน">หน้าร้าน</option>
@@ -729,7 +729,7 @@ function Booking2Inner() {
                                 {branchInfo ? (
                                   <div className="flex flex-col justify-center h-full gap-0.5">
                                     <div className="text-[7px] text-gray-400 leading-none">สาขา/ตัวแทน</div>
-                                    <div className="text-[16px] font-extrabold text-gray-800 leading-tight truncate">
+                                    <div className="text-[16px] font-extrabold text-gray-500 leading-tight truncate">
                                       {branchInfo.name}
                                     </div>
                                     <div className="text-[8px] text-gray-500 leading-none truncate">{branchInfo.phone}</div>
@@ -744,7 +744,7 @@ function Booking2Inner() {
                                   <div className="text-[7px] text-gray-500 font-semibold leading-none">รถ</div>
                                   <select value={vehicleType}
                                     onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง')}
-                                    className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 bg-white focus:outline-none ${(vehicleType === '' || cannotBook60k) ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-800'}`}>
+                                    className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 bg-white focus:outline-none ${(vehicleType === '' || cannotBook60k) ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-500'}`}>
                                     <option value="" disabled>— เลือก —</option>
                                     <option value="จองรถ60000">จองรถ 60,000</option>
                                     <option value="รอพ่วง">รอพ่วง</option>
@@ -804,7 +804,7 @@ function Booking2Inner() {
 
                           if (FOY_GROUP_NAMES.has(p.group_name)) {
                             const foyData = foyPending[p.product_name]
-                            const bg = sec.is_vat_included ? 'bg-gray-200 text-gray-800' : 'bg-orange-50 text-gray-800'
+                            const bg = sec.is_vat_included ? 'bg-gray-200 text-gray-500' : 'bg-orange-50 text-gray-500'
                             const qtyBg = foyData ? 'bg-yellow-50 font-semibold' : (sec.is_vat_included ? 'bg-gray-200' : 'bg-orange-50')
                             const foyClick = () => router.push(editOrderNo ? `/booking-foy?from=booking&edit_foy=1&order_no=${editOrderNo}` : '/booking-foy?from=booking')
                             return [
@@ -826,7 +826,7 @@ function Booking2Inner() {
                             ]
                           }
 
-                          const nameBg = sec.is_vat_included ? 'bg-gray-200 text-gray-800' : 'bg-orange-50 text-gray-800'
+                          const nameBg = sec.is_vat_included ? 'bg-gray-200 text-gray-500' : 'bg-orange-50 text-gray-500'
                           const pendingRing = hasPending ? 'ring-1 ring-inset ring-yellow-400' : ''
                           const qtyBg = hasPending ? 'bg-yellow-50' : (sec.is_vat_included ? 'bg-gray-200' : 'bg-orange-50')
 
