@@ -574,14 +574,48 @@ async function handleText(text: string, userId: string, replyToken: string) {
   }
 
   if (['ใบจอง', 'จอง', 'สั่งสินค้า', 'order', 'booking', 'เมนู', 'menu'].includes(t)) {
-    return reply(replyToken, [await mainMenu(userId)])
+    return reply(replyToken, [{
+      type: 'flex',
+      altText: '📋 เปิดใบจองสินค้า',
+      contents: {
+        type: 'bubble',
+        header: {
+          type: 'box', layout: 'vertical', backgroundColor: '#1a5c29', paddingAll: '16px',
+          contents: [
+            { type: 'text', text: '📋 ใบจองสินค้า', color: '#ffffff', weight: 'bold', size: 'xl' },
+            { type: 'text', text: 'ข้อมูลสินค้าและราคาล่าสุดจากระบบ', color: '#aaffaa', size: 'sm', margin: 'sm' }
+          ]
+        },
+        body: {
+          type: 'box', layout: 'vertical', paddingAll: '16px',
+          contents: [
+            { type: 'text', text: 'กดปุ่มด้านล่างเพื่อเปิดหน้าจองสินค้า สามารถเลือกสินค้า บันทึกใบจอง และดูประวัติได้ทันทีครับ', wrap: true, size: 'sm', color: '#555555' }
+          ]
+        },
+        footer: {
+          type: 'box', layout: 'vertical', paddingAll: '12px', spacing: 'sm',
+          contents: [
+            {
+              type: 'button',
+              action: { type: 'uri', label: '🛒 เปิดใบจองสินค้า', uri: `${BASE_URL}/booking2` },
+              style: 'primary', color: '#1a5c29', height: 'md'
+            },
+            {
+              type: 'button',
+              action: { type: 'uri', label: '📋 ประวัติใบจอง', uri: `${BASE_URL}/orders` },
+              style: 'secondary', height: 'sm'
+            }
+          ]
+        }
+      }
+    }])
   }
   if (['สรุป', 'ยืนยัน', 'confirm', 'c', 'summary'].includes(t)) {
     return reply(replyToken, [await summaryView(userId)])
   }
   if (['ล้าง', 'clear', 'reset', 'ลบทั้งหมด'].includes(t)) {
     await saveOrder(userId, {})
-    return reply(replyToken, [{ type: 'text', text: '🗑 ล้างรายการแล้วครับ' }, await mainMenu(userId)])
+    return reply(replyToken, [{ type: 'text', text: '🗑 ล้างรายการแล้วครับ' }])
   }
 
   // Old commands still work
@@ -605,7 +639,7 @@ async function handleText(text: string, userId: string, replyToken: string) {
   // Default
   return reply(replyToken, [{
     type: 'text',
-    text: 'พิมพ์ "ใบจอง" เพื่อเริ่มสั่งสินค้า\nหรือ "สรุป" เพื่อดูรายการที่เลือกไว้ครับ 😊'
+    text: 'พิมพ์ "จอง" เพื่อเปิดหน้าจองสินค้าครับ 😊'
   }])
 }
 
