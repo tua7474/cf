@@ -138,22 +138,48 @@ export default function StockPage() {
     }
   }
 
-  // ── Bulk add all rows that have addInputs filled ─────────────────────────────
+  // ── Bulk update: add stock + save all pending price/info edits ───────────────
 
   const handleAddAll = async () => {
-    const entries = Object.entries(addInputs).filter(([, v]) => parseFloat(v) > 0)
-    if (!entries.length) return
+    const stockEntries = Object.entries(addInputs).filter(([, v]) => parseFloat(v) > 0)
+    // กรอง infoEntries ที่ไม่ซ้ำกันออก (duplicate จะไม่บันทึก)
+    const infoEntries  = Object.entries(rowEdits).filter(([idStr, edits]) => {
+      if (!Object.keys(edits).length) return false
+      const item = items.find(it => it.id === Number(idStr))
+      if (!item) return false
+      const newModel = String(edits.model_name ?? item.model_name)
+      const newColor = String(edits.color_name  ?? item.color_name)
+      return !isDuplicate(newModel, newColor, item.id)
+    })
+    if (!stockEntries.length && !infoEntries.length) return
     setBusy(b => ({ ...b, addAll: true }))
-    await Promise.all(entries.map(([idStr, v]) =>
-      fetch('/api/stock', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: Number(idStr), action: 'add', qty: parseFloat(v) }),
-      })
-    ))
+    await Promise.all([
+      ...stockEntries.map(([idStr, v]) =>
+        fetch('/api/stock', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: Number(idStr), action: 'add', qty: parseFloat(v) }),
+        })
+      ),
+      ...infoEntries.map(([idStr, edits]) => {
+        const payload: Record<string, unknown> = { id: Number(idStr) }
+        for (const [k, v] of Object.entries(edits)) {
+          payload[k] = (k === 'warehouse_price' || k === 'retail_price') ? parseFloat(String(v)) || 0 : v
+        }
+        return fetch('/api/stock', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+      }),
+    ])
     setAddInputs({})
+    setRowEdits({})
     load()
-    showMsg(`เพิ่มสต็อคสำเร็จ ${entries.length} รายการ`)
+    const parts: string[] = []
+    if (stockEntries.length) parts.push(`เพิ่มสต็อค ${stockEntries.length} รายการ`)
+    if (infoEntries.length)  parts.push(`อัพเดทราคา ${infoEntries.length} รายการ`)
+    showMsg(parts.join(' · '))
     setBusy(b => ({ ...b, addAll: false }))
   }
 
@@ -266,7 +292,7 @@ export default function StockPage() {
         <div className="ml-auto flex items-center gap-2">
           <button onClick={handleAddAll} disabled={!!busy.addAll}
             className="px-4 py-1.5 text-sm rounded bg-green-500 hover:bg-green-400 text-white font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
-            {busy.addAll ? 'กำลังเพิ่ม...' : '+ เพิ่มสต็อคทั้งหมด'}
+            {busy.addAll ? 'กำลังอัพเดท...' : '🔄 อัพเดทสต็อค/ราคา'}
           </button>
           <button onClick={handlePrint}
             className="px-4 py-1.5 text-sm rounded bg-white hover:bg-gray-100 text-green-400 font-semibold transition-colors border border-white/50 whitespace-nowrap">

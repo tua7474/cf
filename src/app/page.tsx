@@ -93,22 +93,40 @@ export default function Home() {
     }
   }
 
-  // ── Bulk add all rows that have addInputs filled ─────────────────────────────
+  // ── Bulk update: add stock + save all pending price/info edits ───────────────
 
   const handleAddAll = async () => {
-    const entries = Object.entries(addInputs).filter(([, v]) => parseFloat(v) > 0)
-    if (!entries.length) return
+    const stockEntries = Object.entries(addInputs).filter(([, v]) => parseFloat(v) > 0)
+    const infoEntries  = Object.entries(rowEdits).filter(([, edits]) => Object.keys(edits).length > 0)
+    if (!stockEntries.length && !infoEntries.length) return
     setBusy(b => ({ ...b, addAll: true }))
-    await Promise.all(entries.map(([idStr, v]) =>
-      fetch('/api/catalog', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: Number(idStr), action: 'add', qty: parseFloat(v) }),
-      })
-    ))
+    await Promise.all([
+      ...stockEntries.map(([idStr, v]) =>
+        fetch('/api/catalog', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: Number(idStr), action: 'add', qty: parseFloat(v) }),
+        })
+      ),
+      ...infoEntries.map(([idStr, edits]) => {
+        const payload: Record<string, unknown> = { id: Number(idStr) }
+        for (const [k, v] of Object.entries(edits)) {
+          payload[k] = k === 'price' ? (parseFloat(String(v)) || null) : v
+        }
+        return fetch('/api/catalog', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        })
+      }),
+    ])
     setAddInputs({})
+    setRowEdits({})
     load()
-    showMsg(`เพิ่มสต็อคสำเร็จ ${entries.length} รายการ`)
+    const parts: string[] = []
+    if (stockEntries.length) parts.push(`เพิ่มสต็อค ${stockEntries.length} รายการ`)
+    if (infoEntries.length)  parts.push(`อัพเดทราคา ${infoEntries.length} รายการ`)
+    showMsg(parts.join(' · '))
     setBusy(b => ({ ...b, addAll: false }))
   }
 
@@ -251,7 +269,7 @@ export default function Home() {
         <div className="flex items-center gap-3">
           <button onClick={handleAddAll} disabled={!!busy.addAll}
             className="px-4 py-1.5 text-sm rounded bg-green-500 hover:bg-green-400 text-white font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
-            {busy.addAll ? 'กำลังเพิ่ม...' : '+ เพิ่มสต็อคทั้งหมด'}
+            {busy.addAll ? 'กำลังอัพเดท...' : '🔄 อัพเดทสต็อค/ราคา'}
           </button>
           <button onClick={handlePrint}
             className="px-4 py-1.5 text-sm rounded bg-white hover:bg-gray-100 text-green-400 font-semibold transition-colors border border-white/50 whitespace-nowrap">
