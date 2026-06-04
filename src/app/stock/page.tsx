@@ -293,7 +293,7 @@ export default function StockPage() {
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">สต็อคล่าสุด</th>
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">เพิ่มเข้าสต็อค</th>
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">จำนวนจอง</th>
-                  <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-right">ราคาโกดัง ✎</th>
+                  <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-right w-14">ราคาโกดัง ✎</th>
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-right">ราคาลูกค้า ✎</th>
                   <th className="px-3 py-2 border-r border-yellow-400 whitespace-nowrap text-right bg-yellow-500 text-gray-500">ราคา+9%</th>
                   <th className="px-3 py-2 border-r border-red-500 whitespace-nowrap text-right bg-red-600">ราคา+9%+7%</th>
@@ -415,7 +415,7 @@ export default function StockPage() {
                       </td>
 
                       {/* 5. เพิ่มเข้าสต็อค */}
-                      <td className="px-2 py-1.5 border-r border-gray-200 min-w-[160px]">
+                      <td className="px-2 py-1.5 border-r border-gray-200 min-w-[192px]">
                         <div className="text-[10px] text-gray-500 mb-1">
                           ล่าสุด: <span className="font-semibold text-green-400">{fmtQty(item.last_added_qty)}</span>
                           <span className="ml-1 text-gray-400">({fmtDate(item.last_added_at)})</span>
@@ -456,7 +456,7 @@ export default function StockPage() {
                       </td>
 
                       {/* 7. ราคาโกดัง */}
-                      <td className="px-2 py-1.5 border-r border-gray-200">
+                      <td className="px-2 py-1.5 border-r border-gray-200 w-14">
                         <input type="text" inputMode="numeric"
                           value={editVal(item, 'warehouse_price')}
                           onChange={e => setEdit(item.id, 'warehouse_price', e.target.value)}
