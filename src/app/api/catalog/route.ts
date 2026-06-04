@@ -120,6 +120,8 @@ async function ensureTable() {
     )
   `)
   await pool.query(`ALTER TABLE products_catalog ADD COLUMN IF NOT EXISTS show_in_booking BOOLEAN NOT NULL DEFAULT true`)
+  await pool.query(`ALTER TABLE products_catalog ADD COLUMN IF NOT EXISTS prev_warehouse_price NUMERIC(12,2)`)
+  await pool.query(`ALTER TABLE products_catalog ADD COLUMN IF NOT EXISTS price_updated_at     TIMESTAMP`)
   const { rows } = await pool.query('SELECT COUNT(*)::int AS n FROM products_catalog')
   if (rows[0].n === 0) await seedData()
   // Seed กระดาษฝอย products if not yet present
@@ -434,7 +436,7 @@ export async function GET() {
     const { rows } = await pool.query(`
       SELECT id, group_name, product_name, price, quantity,
              last_added_qty, last_added_at, last_booked_qty, last_booked_at,
-             show_in_booking
+             show_in_booking, prev_warehouse_price, price_updated_at
       FROM products_catalog
       ORDER BY group_name, id
     `)
@@ -497,7 +499,7 @@ export async function PATCH(req: NextRequest) {
     // Info update: single object { id, group_name?, product_name?, price?, show_in_booking? }
     if (!Array.isArray(body)) {
       const { id, group_name, product_name, price, show_in_booking } = body
-      // Fetch current state before updating (for booking sync)
+      // Fetch current state before updating (for booking sync + price snapshot)
       const { rows: curr } = await pool.query(
         'SELECT group_name, product_name, price FROM products_catalog WHERE id=$1', [id]
       )
@@ -506,7 +508,14 @@ export async function PATCH(req: NextRequest) {
       let n = 1
       if (group_name       !== undefined) { fields.push(`group_name=$${n++}`);       vals.push(group_name) }
       if (product_name     !== undefined) { fields.push(`product_name=$${n++}`);     vals.push(product_name) }
-      if (price            !== undefined) { fields.push(`price=$${n++}`);            vals.push(price) }
+      if (price            !== undefined) {
+        // Snapshot old price before overwriting
+        if (curr[0]) {
+          fields.push(`prev_warehouse_price=$${n++}`); vals.push(curr[0].price)
+          fields.push(`price_updated_at=NOW()`)
+        }
+        fields.push(`price=$${n++}`); vals.push(price)
+      }
       if (show_in_booking  !== undefined) { fields.push(`show_in_booking=$${n++}`);  vals.push(show_in_booking) }
       if (!fields.length) return NextResponse.json({ ok: true })
       fields.push(`updated_at=NOW()`)

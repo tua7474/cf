@@ -16,6 +16,8 @@ interface Product {
   last_booked_qty: string | null
   last_booked_at: string | null
   show_in_booking: boolean
+  prev_warehouse_price: string | null
+  price_updated_at: string | null
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -296,8 +298,8 @@ export default function Home() {
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">เพิ่มสต็อค</th>
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">จำนวนจอง</th>
                   <th className="px-3 py-2 border-r border-orange-400 whitespace-nowrap text-right bg-orange-400">ราคาโกดัง ✎</th>
-                  <th className="px-3 py-2 border-r border-yellow-400 whitespace-nowrap text-right bg-yellow-500 text-gray-500">ราคา+9%</th>
-                  <th className="px-3 py-2 border-r border-red-500 whitespace-nowrap text-right bg-red-600">ราคา+9%+7%</th>
+                  <th className="px-3 py-2 border-r border-yellow-400 whitespace-nowrap text-right bg-yellow-500 text-gray-500 w-12">+9%</th>
+                  <th className="px-3 py-2 border-r border-red-500 whitespace-nowrap text-right bg-red-600 w-14">+9%+7%</th>
                   <th className="px-3 py-2 whitespace-nowrap text-center bg-[#9b9484]">ใบจองสินค้า</th>
                   <th className="px-3 py-2 whitespace-nowrap text-center bg-[#9b9484]">จัดการ</th>
                 </tr>
@@ -328,7 +330,7 @@ export default function Home() {
                   <td className="px-2 py-1.5 text-center">
                     <button onClick={handleAddProduct} disabled={!!busy.new || !newRow.group_name.trim() || !newRow.product_name.trim()}
                       className="px-3 py-1 text-xs rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
-                      + เพิ่มสินค้า
+                      เพิ่ม
                     </button>
                   </td>
                 </tr>
@@ -429,6 +431,12 @@ export default function Home() {
 
                       {/* 6. ราคาโกดัง */}
                       <td className="px-2 py-1 border-r border-orange-200 bg-orange-50">
+                        {p.price_updated_at && p.prev_warehouse_price !== null && (
+                          <div className="text-[9px] text-gray-400 leading-tight mb-0.5 whitespace-nowrap">
+                            {fmtDate(p.price_updated_at)}
+                            <span className="ml-0.5 text-gray-400">({fmtMoney(parseFloat(p.prev_warehouse_price))})</span>
+                          </div>
+                        )}
                         <input type="text" inputMode="numeric" value={editVal(p, 'price')}
                           onChange={e => setEdit(p.id, 'price', e.target.value)}
                           className={`${inputCls(!!rowEdits[p.id]?.price)} text-right`} />
