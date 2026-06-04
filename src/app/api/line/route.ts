@@ -153,6 +153,66 @@ async function findBranchByGroupName(groupName: string): Promise<{ id: number; n
   } catch { return null }
 }
 
+// ── Branch / Orders helpers ───────────────────────────────────────────────────
+
+const TH_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.']
+
+function fmtDateShortLine(iso: string): string {
+  return new Date(iso).toLocaleString('th-TH', {
+    day: '2-digit', month: '2-digit', year: '2-digit', timeZone: 'Asia/Bangkok',
+  })
+}
+
+async function getBranchFromLineUser(userId: string): Promise<{ branch_id: number; branch_name: string; is_admin: boolean } | null> {
+  try {
+    const { rows } = await pool.query(`
+      SELECT bp.is_admin, b.id AS branch_id, b.name AS branch_name
+      FROM branch_phones bp
+      JOIN branches b ON b.id = bp.branch_id
+      WHERE bp.line_user_id = $1 LIMIT 1
+    `, [userId])
+    return rows[0] ?? null
+  } catch { return null }
+}
+
+async function getMonthlySummary(branchId: number, year: number): Promise<Record<number, { pending: number; paid: number }>> {
+  const { rows } = await pool.query(`
+    SELECT
+      EXTRACT(MONTH FROM created_at AT TIME ZONE 'Asia/Bangkok')::int AS month,
+      COUNT(*) FILTER (WHERE payment_status = 'paid')::int   AS paid,
+      COUNT(*) FILTER (WHERE payment_status != 'paid')::int  AS pending
+    FROM booking_orders
+    WHERE branch_id = $1 AND EXTRACT(YEAR FROM created_at AT TIME ZONE 'Asia/Bangkok') = $2
+    GROUP BY month ORDER BY month
+  `, [branchId, year])
+  const out: Record<number, { pending: number; paid: number }> = {}
+  for (const r of rows) out[r.month] = { pending: r.pending, paid: r.paid }
+  return out
+}
+
+async function getMonthOrders(branchId: number, year: number, month: number) {
+  const { rows } = await pool.query(`
+    SELECT id, order_no, total_amount::float AS total_amount,
+           status, payment_status, created_at, updated_at
+    FROM booking_orders
+    WHERE branch_id = $1
+      AND EXTRACT(YEAR  FROM created_at AT TIME ZONE 'Asia/Bangkok') = $2
+      AND EXTRACT(MONTH FROM created_at AT TIME ZONE 'Asia/Bangkok') = $3
+    ORDER BY created_at DESC
+  `, [branchId, year, month])
+  return rows
+}
+
+async function getPendingOrders(branchId: number) {
+  const { rows } = await pool.query(`
+    SELECT id, order_no, total_amount::float AS total_amount, created_at
+    FROM booking_orders
+    WHERE branch_id = $1 AND payment_status != 'paid'
+    ORDER BY created_at ASC
+  `, [branchId])
+  return rows
+}
+
 // ── Flex Builders ─────────────────────────────────────────────────────────────
 
 const PAGE_SIZE = 7
@@ -460,6 +520,168 @@ async function summaryView(userId: string) {
   }
 }
 
+// ── History / Payment Flex builders ──────────────────────────────────────────
+
+function monthSummaryRows(summary: Record<number, { pending: number; paid: number }>, branchId: number, year: number): object[] {
+  const rows: object[] = []
+  for (let m = 1; m <= 12; m++) {
+    const s = summary[m]
+    if (!s || (s.pending === 0 && s.paid === 0)) continue
+    const subTexts: object[] = []
+    if (s.pending > 0) subTexts.push({ type: 'text', text: `${s.pending} รอชำระ`,   size: 'xs', color: '#f59e0b' })
+    if (s.paid    > 0) subTexts.push({ type: 'text', text: `${s.paid} ชำระแล้ว`, size: 'xs', color: '#4ade80' })
+    rows.push({
+      type: 'box', layout: 'horizontal', margin: 'sm', alignItems: 'center',
+      contents: [
+        { type: 'text', text: TH_MONTHS[m - 1], size: 'sm', flex: 2, color: '#333333', weight: 'bold' },
+        { type: 'box', flex: 5, layout: 'vertical', contents: subTexts },
+        { type: 'button', flex: 2,
+          action: { type: 'postback', label: 'ดู', data: `MON:${branchId}:${m}:${year}` },
+          style: 'secondary', height: 'sm' }
+      ]
+    })
+  }
+  return rows
+}
+
+async function historyView(branchId: number, branchName: string): Promise<object> {
+  const year    = new Date().getFullYear()
+  const summary = await getMonthlySummary(branchId, year)
+  const rows    = monthSummaryRows(summary, branchId, year)
+  return {
+    type: 'flex', altText: `📊 ประวัติรายเดือน — ${branchName}`,
+    contents: {
+      type: 'bubble', size: 'giga',
+      header: {
+        type: 'box', layout: 'vertical', backgroundColor: '#9b9484',
+        contents: [
+          { type: 'text', text: '📊 ประวัติรายเดือน', color: '#ffffff', weight: 'bold', size: 'md' },
+          { type: 'text', text: `${branchName} · ${year + 543}`, color: '#aaffaa', size: 'xs' }
+        ]
+      },
+      body: {
+        type: 'box', layout: 'vertical', spacing: 'xs', paddingAll: '12px',
+        contents: rows.length
+          ? rows
+          : [{ type: 'text', text: 'ยังไม่มีประวัติการสั่งซื้อ', color: '#aaaaaa', size: 'sm' }]
+      }
+    }
+  }
+}
+
+async function paymentView(branchId: number, branchName: string): Promise<object> {
+  const pending = await getPendingOrders(branchId)
+  if (!pending.length) {
+    return {
+      type: 'flex', altText: '✅ ไม่มียอดค้างชำระ',
+      contents: {
+        type: 'bubble',
+        body: {
+          type: 'box', layout: 'vertical', paddingAll: '20px',
+          contents: [
+            { type: 'text', text: '✅ ชำระครบแล้ว', weight: 'bold', size: 'lg', color: '#4ade80' },
+            { type: 'text', text: `${branchName} ไม่มียอดค้างชำระ`, size: 'sm', color: '#666666', margin: 'sm' }
+          ]
+        }
+      }
+    }
+  }
+  const total = pending.reduce((s: number, o: Record<string, number>) => s + (o.total_amount ?? 0), 0)
+  const orderItems = pending.map((o: Record<string, string | number>) => ({
+    type: 'box', layout: 'horizontal', margin: 'sm',
+    contents: [
+      { type: 'box', flex: 5, layout: 'vertical', contents: [
+        { type: 'text', text: `#${o.order_no}`, size: 'xs', color: '#333333', weight: 'bold' },
+        { type: 'text', text: fmtDateShortLine(String(o.created_at)), size: 'xs', color: '#aaaaaa' }
+      ]},
+      { type: 'text', text: `฿${fmt(Number(o.total_amount))}`, size: 'xs', flex: 3, align: 'end', color: '#f59e0b', weight: 'bold' }
+    ]
+  }))
+  return {
+    type: 'flex', altText: `💳 ยืนยันชำระเงิน — ${branchName}`,
+    contents: {
+      type: 'bubble', size: 'giga',
+      header: {
+        type: 'box', layout: 'vertical', backgroundColor: '#9b9484',
+        contents: [
+          { type: 'text', text: '💳 ยืนยันชำระเงิน', color: '#ffffff', weight: 'bold', size: 'md' },
+          { type: 'text', text: branchName, color: '#aaffaa', size: 'xs' }
+        ]
+      },
+      body: {
+        type: 'box', layout: 'vertical', spacing: 'xs', paddingAll: '12px',
+        contents: [
+          { type: 'text', text: `${pending.length} ใบจองรอชำระ`, size: 'sm', color: '#666666' },
+          { type: 'separator', margin: 'sm' },
+          ...orderItems,
+          { type: 'separator', margin: 'md' },
+          { type: 'box', layout: 'horizontal', margin: 'sm', contents: [
+            { type: 'text', text: 'รวมทั้งหมด', size: 'sm', flex: 5, weight: 'bold', color: '#333333' },
+            { type: 'text', text: `฿${fmt(total)}`, size: 'sm', flex: 3, align: 'end', weight: 'bold', color: '#f59e0b' }
+          ]}
+        ]
+      },
+      footer: {
+        type: 'box', layout: 'vertical', spacing: 'sm', paddingAll: '12px',
+        contents: [
+          { type: 'button', action: { type: 'postback', label: '✅ ยืนยันชำระเงิน', data: `PAYCONFIRM:${branchId}` }, style: 'primary', color: '#4ade80', height: 'sm' },
+          { type: 'button', action: { type: 'postback', label: '← ยกเลิก', data: `HIST:${branchId}` }, style: 'secondary', height: 'sm' }
+        ]
+      }
+    }
+  }
+}
+
+async function monthDetailView(branchId: number, branchName: string, month: number, year: number): Promise<object> {
+  const orders = await getMonthOrders(branchId, year, month)
+  const orderRows = orders.map((o: Record<string, string | number>) => ({
+    type: 'box', layout: 'horizontal', margin: 'sm', paddingAll: '6px',
+    backgroundColor: o.payment_status === 'paid' ? '#f0fff4' : '#fffbeb', cornerRadius: '4px',
+    contents: [
+      { type: 'box', flex: 5, layout: 'vertical', contents: [
+        { type: 'text', text: `#${o.order_no}`, size: 'xs', color: '#333333', weight: 'bold' },
+        { type: 'text', text: fmtDateShortLine(String(o.created_at)), size: 'xs', color: '#aaaaaa' },
+        ...(o.payment_status === 'paid'
+          ? [{ type: 'text', text: `ชำระ ${fmtDateShortLine(String(o.updated_at))}`, size: 'xs', color: '#4ade80' }]
+          : [])
+      ]},
+      { type: 'box', flex: 3, layout: 'vertical', alignItems: 'flex-end', contents: [
+        { type: 'text', text: `฿${fmt(Number(o.total_amount))}`, size: 'xs', align: 'end', weight: 'bold',
+          color: o.payment_status === 'paid' ? '#4ade80' : '#f59e0b' },
+        { type: 'text', text: o.payment_status === 'paid' ? '✓ ชำระแล้ว' : 'รอชำระ', size: 'xs', align: 'end',
+          color: o.payment_status === 'paid' ? '#4ade80' : '#f59e0b' }
+      ]}
+    ]
+  }))
+  return {
+    type: 'flex', altText: `📋 ${TH_MONTHS[month - 1]} ${year + 543} — ${branchName}`,
+    contents: {
+      type: 'bubble', size: 'giga',
+      header: {
+        type: 'box', layout: 'vertical', backgroundColor: '#9b9484',
+        contents: [
+          { type: 'text', text: `📋 ${TH_MONTHS[month - 1]} ${year + 543}`, color: '#ffffff', weight: 'bold', size: 'md' },
+          { type: 'text', text: branchName, color: '#aaffaa', size: 'xs' }
+        ]
+      },
+      body: {
+        type: 'box', layout: 'vertical', spacing: 'xs', paddingAll: '12px',
+        contents: orders.length
+          ? [
+              { type: 'text', text: `${orders.length} ใบจอง`, size: 'xs', color: '#888888' },
+              { type: 'separator', margin: 'sm' },
+              ...orderRows
+            ]
+          : [{ type: 'text', text: 'ไม่มีรายการในเดือนนี้', color: '#aaaaaa', size: 'sm' }]
+      },
+      footer: {
+        type: 'box', layout: 'vertical', paddingAll: '12px',
+        contents: [{ type: 'button', action: { type: 'postback', label: '← กลับ', data: `HIST:${branchId}` }, style: 'secondary', height: 'sm' }]
+      }
+    }
+  }
+}
+
 // ── Postback handler ──────────────────────────────────────────────────────────
 
 async function handlePostback(data: string, userId: string, replyToken: string) {
@@ -558,6 +780,54 @@ async function handlePostback(data: string, userId: string, replyToken: string) 
       text: `⌨️ กรอกจำนวน:\n"${product_name}"\nราคา ฿${fmt(unit_price)} / ชิ้น\n\nพิมพ์จำนวนที่ต้องการ (ตัวเลขเท่านั้น):`
     }])
   }
+
+  // HIST: monthly history for a branch
+  if (data.startsWith('HIST:')) {
+    const branchId = parseInt(data.split(':')[1])
+    const { rows: br } = await pool.query('SELECT name FROM branches WHERE id=$1', [branchId])
+    return reply(replyToken, [await historyView(branchId, br[0]?.name ?? `สาขา #${branchId}`)])
+  }
+
+  // PAYVIEW: show pending orders for payment confirmation
+  if (data.startsWith('PAYVIEW:')) {
+    const branchId = parseInt(data.split(':')[1])
+    const { rows: br } = await pool.query('SELECT name FROM branches WHERE id=$1', [branchId])
+    return reply(replyToken, [await paymentView(branchId, br[0]?.name ?? `สาขา #${branchId}`)])
+  }
+
+  // PAYCONFIRM: mark all pending orders paid (admin only via LINE user_id)
+  if (data.startsWith('PAYCONFIRM:')) {
+    const branchId = parseInt(data.split(':')[1])
+    const { rows: adminCheck } = await pool.query(`
+      SELECT 1 FROM branch_phones
+      WHERE line_user_id=$1 AND branch_id=$2 AND is_admin=true LIMIT 1
+    `, [userId, branchId])
+    if (!adminCheck.length) {
+      return reply(replyToken, [{
+        type: 'text',
+        text: '❌ ไม่มีสิทธิ์ชำระเงิน\nกรุณาลงทะเบียนเบอร์ Admin ก่อน\nพิมพ์: ลงทะเบียน [เบอร์โทร]'
+      }])
+    }
+    const { rowCount } = await pool.query(`
+      UPDATE booking_orders SET payment_status='paid', updated_at=NOW()
+      WHERE branch_id=$1 AND payment_status != 'paid'
+    `, [branchId])
+    const { rows: br } = await pool.query('SELECT name FROM branches WHERE id=$1', [branchId])
+    return reply(replyToken, [{
+      type: 'text',
+      text: `✅ บันทึกชำระเงินสำเร็จ!\n${br[0]?.name ?? ''}\nอัปเดต ${rowCount} ใบจองแล้วครับ`
+    }])
+  }
+
+  // MON: month detail view
+  if (data.startsWith('MON:')) {
+    const [, bId, mStr, yStr] = data.split(':')
+    const branchId = parseInt(bId)
+    const month    = parseInt(mStr)
+    const year     = parseInt(yStr)
+    const { rows: br } = await pool.query('SELECT name FROM branches WHERE id=$1', [branchId])
+    return reply(replyToken, [await monthDetailView(branchId, br[0]?.name ?? `สาขา #${branchId}`, month, year)])
+  }
 }
 
 // ── Text handler ──────────────────────────────────────────────────────────────
@@ -600,19 +870,66 @@ async function handleText(text: string, userId: string, replyToken: string, sour
   }
 
   if (['ใบจอง', 'จอง', 'สั่งสินค้า', 'order', 'booking', 'เมนู', 'menu'].includes(t)) {
-    // ── ตรวจกลุ่ม → หาสาขา → สร้าง URL พร้อม branch params ──────────────────
-    let bookingUrl = `${BASE_URL}/booking2`
-    let branchLabel = 'ข้อมูลสินค้าและราคาล่าสุดจากระบบ'
+    // ── หาสาขา: จากกลุ่ม หรือจาก userId ──────────────────────────────────────
+    let bookingUrl    = `${BASE_URL}/booking2`
+    let branchLabel   = 'ข้อมูลสินค้าและราคาล่าสุดจากระบบ'
+    let branchId: number | null    = null
+    let branchNameStr: string | null = null
 
     if (source?.type === 'group' && source.groupId) {
       const groupName = await getGroupName(source.groupId)
       if (groupName) {
         const branch = await findBranchByGroupName(groupName)
         if (branch) {
-          bookingUrl = `${BASE_URL}/booking2?branch_id=${branch.id}&branch_name=${encodeURIComponent(branch.name)}`
-          branchLabel = `สาขา: ${branch.name}`
+          bookingUrl    = `${BASE_URL}/booking2?branch_id=${branch.id}&branch_name=${encodeURIComponent(branch.name)}`
+          branchLabel   = `สาขา: ${branch.name}`
+          branchId      = branch.id
+          branchNameStr = branch.name
         }
       }
+    }
+    if (!branchId) {
+      const ub = await getBranchFromLineUser(userId)
+      if (ub) {
+        branchId      = ub.branch_id
+        branchNameStr = ub.branch_name
+        branchLabel   = `สาขา: ${ub.branch_name}`
+        bookingUrl    = `${BASE_URL}/booking2?branch_id=${ub.branch_id}&branch_name=${encodeURIComponent(ub.branch_name)}`
+      }
+    }
+
+    // ── ประวัติรายเดือน + ยอดค้างชำระ ────────────────────────────────────────
+    const year = new Date().getFullYear()
+    const summaryExtra: object[] = []
+    let pendingCount = 0
+
+    if (branchId !== null) {
+      const [summary, pending] = await Promise.all([
+        getMonthlySummary(branchId, year),
+        getPendingOrders(branchId),
+      ])
+      pendingCount = pending.length
+      const mRows = monthSummaryRows(summary, branchId, year)
+      if (mRows.length > 0) {
+        summaryExtra.push(
+          { type: 'separator', margin: 'lg' },
+          { type: 'text', text: `ประวัติรายเดือน ${year + 543}`, size: 'xs', color: '#9b9484', weight: 'bold', margin: 'md' },
+          ...mRows
+        )
+      }
+    }
+
+    // ── Footer buttons ────────────────────────────────────────────────────────
+    const footerBtns: object[] = [
+      { type: 'button', action: { type: 'uri', label: '🛒 เปิดใบจองสินค้า', uri: bookingUrl }, style: 'primary', color: '#9b9484', height: 'md' },
+      { type: 'button', action: { type: 'uri', label: '📋 ประวัติใบจอง', uri: `${BASE_URL}/orders` }, style: 'secondary', height: 'sm' },
+    ]
+    if (branchId !== null) {
+      footerBtns.push({
+        type: 'button',
+        action: { type: 'postback', label: pendingCount > 0 ? `💳 ชำระเงิน (${pendingCount} ใบ)` : '✅ ชำระครบแล้ว', data: `PAYVIEW:${branchId}` },
+        style: 'primary', color: pendingCount > 0 ? '#f59e0b' : '#4ade80', height: 'sm'
+      })
     }
 
     return reply(replyToken, [{
@@ -630,23 +947,13 @@ async function handleText(text: string, userId: string, replyToken: string, sour
         body: {
           type: 'box', layout: 'vertical', paddingAll: '16px', backgroundColor: '#F5EED8',
           contents: [
-            { type: 'text', text: 'กดปุ่มด้านล่างเพื่อเปิดหน้าจองสินค้า สามารถเลือกสินค้า บันทึกใบจอง และดูประวัติได้ทันทีครับ', wrap: true, size: 'sm', color: '#9b9484' }
+            { type: 'text', text: 'กดปุ่มด้านล่างเพื่อเปิดหน้าจองสินค้า สามารถเลือกสินค้า บันทึกใบจอง และดูประวัติได้ทันทีครับ', wrap: true, size: 'sm', color: '#9b9484' },
+            ...summaryExtra
           ]
         },
         footer: {
           type: 'box', layout: 'vertical', paddingAll: '12px', spacing: 'sm', backgroundColor: '#F5EED8',
-          contents: [
-            {
-              type: 'button',
-              action: { type: 'uri', label: '🛒 เปิดใบจองสินค้า', uri: bookingUrl },
-              style: 'primary', color: '#9b9484', height: 'md'
-            },
-            {
-              type: 'button',
-              action: { type: 'uri', label: '📋 ประวัติใบจอง', uri: `${BASE_URL}/orders` },
-              style: 'secondary', height: 'sm'
-            }
-          ]
+          contents: footerBtns
         }
       }
     }])
