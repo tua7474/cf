@@ -677,11 +677,6 @@ async function handleText(text: string, userId: string, replyToken: string, sour
     return reply(replyToken, [{ type: 'text', text: `🎯 เป้าหมาย:\n${lines || 'ไม่มีข้อมูล'}` }])
   }
 
-  // Default
-  return reply(replyToken, [{
-    type: 'text',
-    text: 'พิมพ์ "จอง" เพื่อเปิดหน้าจองสินค้าครับ 😊'
-  }])
 }
 
 // ── Webhook entry ─────────────────────────────────────────────────────────────
