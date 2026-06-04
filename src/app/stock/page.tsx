@@ -18,6 +18,8 @@ interface StockItem {
   warehouse_price: string
   retail_price: string
   show_in_booking: boolean
+  prev_warehouse_price: string | null
+  price_updated_at: string | null
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -295,8 +297,8 @@ export default function StockPage() {
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">จำนวนจอง</th>
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-right w-14">ราคาโกดัง ✎</th>
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-right">ราคาลูกค้า ✎</th>
-                  <th className="px-3 py-2 border-r border-yellow-400 whitespace-nowrap text-right bg-yellow-500 text-gray-500">ราคา+9%</th>
-                  <th className="px-3 py-2 border-r border-red-500 whitespace-nowrap text-right bg-red-600">ราคา+9%+7%</th>
+                  <th className="px-3 py-2 border-r border-yellow-400 whitespace-nowrap text-right bg-yellow-500 text-gray-500 w-12">+9%</th>
+                  <th className="px-3 py-2 border-r border-red-500 whitespace-nowrap text-right bg-red-600 w-14">+9%+7%</th>
                   <th className="px-3 py-2 border-r border-gray-500 whitespace-nowrap text-center">ใบจองฝอย</th>
                   <th className="px-3 py-2 whitespace-nowrap text-center">จัดการ</th>
                 </tr>
@@ -345,7 +347,7 @@ export default function StockPage() {
                       <td className="px-2 py-1.5 text-center">
                         <button onClick={handleAddRow} disabled={!!busy.new || addDup}
                           className="px-3 py-1 text-xs rounded bg-blue-600 hover:bg-blue-700 text-white font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
-                          + เพิ่มรุ่น
+                          + เพิ่ม
                         </button>
                       </td>
                     </tr>
@@ -457,6 +459,12 @@ export default function StockPage() {
 
                       {/* 7. ราคาโกดัง */}
                       <td className="px-2 py-1.5 border-r border-gray-200 w-14">
+                        {item.price_updated_at && item.prev_warehouse_price !== null && (
+                          <div className="text-[9px] text-gray-400 leading-tight mb-0.5 whitespace-nowrap">
+                            {fmtDate(item.price_updated_at)}
+                            <span className="ml-0.5 text-gray-400">({fmtMoney(parseFloat(item.prev_warehouse_price))})</span>
+                          </div>
+                        )}
                         <input type="text" inputMode="numeric"
                           value={editVal(item, 'warehouse_price')}
                           onChange={e => setEdit(item.id, 'warehouse_price', e.target.value)}

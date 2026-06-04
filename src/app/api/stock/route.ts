@@ -99,6 +99,8 @@ export async function GET() {
     ALTER TABLE paper_stock
     ADD COLUMN IF NOT EXISTS show_in_booking BOOLEAN NOT NULL DEFAULT true
   `)
+  await pool.query(`ALTER TABLE paper_stock ADD COLUMN IF NOT EXISTS prev_warehouse_price DECIMAL(10,2)`)
+  await pool.query(`ALTER TABLE paper_stock ADD COLUMN IF NOT EXISTS price_updated_at TIMESTAMP`)
   await migrateGroup('2 มิล พิเศษ A', 'รุ่นสีพิเศษ A')
   await migrateGroup('2 มิล พิเศษ B', 'รุ่นสีพิเศษ B')
   await migrateGroup('2 มิล สีอ่อน', 'รุ่นสีอ่อน')
@@ -173,7 +175,15 @@ export async function PATCH(request: Request) {
   if (model_name        !== undefined) { sets.push(`model_name = $${i++}`);        vals.push(model_name) }
   if (color_code        !== undefined) { sets.push(`color_code = $${i++}`);        vals.push(color_code) }
   if (color_name        !== undefined) { sets.push(`color_name = $${i++}`);        vals.push(color_name) }
-  if (warehouse_price   !== undefined) { sets.push(`warehouse_price = $${i++}`);   vals.push(warehouse_price) }
+  if (warehouse_price   !== undefined) {
+    // Snapshot old price before overwriting
+    const { rows: cur } = await pool.query(`SELECT warehouse_price FROM paper_stock WHERE id = $1`, [id])
+    if (cur[0]) {
+      sets.push(`prev_warehouse_price = $${i++}`); vals.push(cur[0].warehouse_price)
+      sets.push(`price_updated_at = NOW()`)
+    }
+    sets.push(`warehouse_price = $${i++}`);   vals.push(warehouse_price)
+  }
   if (retail_price      !== undefined) { sets.push(`retail_price = $${i++}`);      vals.push(retail_price) }
   if (show_in_booking   !== undefined) { sets.push(`show_in_booking = $${i++}`);   vals.push(show_in_booking) }
 
