@@ -563,7 +563,7 @@ function Booking2Inner() {
               <button
                 onClick={handleSave}
                 disabled={saving || cannotBook60k || vehicleType === '' || sourceType === ''}
-                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-400 font-semibold transition-colors disabled:opacity-50"
+                className="px-4 py-1.5 text-sm rounded bg-[#F2E9D3] hover:bg-[#E8DFC9] text-green-400 font-semibold transition-colors disabled:opacity-50"
               >
                 {saving ? 'กำลังบันทึก...' : '💾 บันทึกการจอง'}
               </button>
@@ -583,7 +583,7 @@ function Booking2Inner() {
               <button
                 onClick={handleSave}
                 disabled={saving || cannotBook60k || vehicleType === '' || sourceType === ''}
-                className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-400 font-semibold transition-colors disabled:opacity-50"
+                className="px-4 py-1.5 text-sm rounded bg-[#F2E9D3] hover:bg-[#E8DFC9] text-green-400 font-semibold transition-colors disabled:opacity-50"
               >
                 {saving ? 'กำลังบันทึก...' : '💾 อัพเดทการจอง'}
               </button>

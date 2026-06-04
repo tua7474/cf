@@ -271,7 +271,7 @@ export default function StockPage() {
             🖨️ พิมพ์
           </button>
           <Link href="/booking-foy"
-            className="px-4 py-1.5 text-sm rounded bg-yellow-400 hover:bg-yellow-300 text-green-400 font-semibold transition-colors">
+            className="px-4 py-1.5 text-sm rounded bg-[#F2E9D3] hover:bg-[#E8DFC9] text-green-400 font-semibold transition-colors">
             📋 ใบจองกระดาษฝอย
           </Link>
         </div>
@@ -482,7 +482,7 @@ export default function StockPage() {
                         {hasPending && (
                           <button onClick={() => handleSaveInfo(item.id)}
                             disabled={!!busy[`info-${item.id}`] || editDup}
-                            className={`mt-0.5 px-2 py-0.5 text-[10px] rounded font-semibold transition-colors disabled:opacity-50 whitespace-nowrap ${editDup ? 'bg-red-100 text-red-700 border border-red-300 cursor-not-allowed' : 'bg-yellow-400 hover:bg-yellow-300 text-green-400'}`}>
+                            className={`mt-0.5 px-2 py-0.5 text-[10px] rounded font-semibold transition-colors disabled:opacity-50 whitespace-nowrap ${editDup ? 'bg-red-100 text-red-700 border border-red-300 cursor-not-allowed' : 'bg-[#F2E9D3] hover:bg-[#E8DFC9] text-green-400'}`}>
                             {editDup ? '⛔ ชื่อซ้ำ' : '💾 บันทึก'}
                           </button>
                         )}

@@ -256,7 +256,7 @@ export default function Home() {
             🖨️ พิมพ์
           </button>
           <Link href="/booking2"
-            className="px-4 py-1.5 text-sm rounded bg-yellow-500 hover:bg-yellow-400 text-green-400 font-medium transition-colors border border-yellow-400">
+            className="px-4 py-1.5 text-sm rounded bg-[#F2E9D3] hover:bg-[#E8DFC9] text-green-400 font-medium transition-colors border border-yellow-400">
             📝 ใบจองสินค้า
           </Link>
           {msg && (
@@ -445,7 +445,7 @@ export default function Home() {
                         {hasPending && (
                           <button onClick={() => handleSaveInfo(p.id)}
                             disabled={!!busy[`info-${p.id}`]}
-                            className="mt-0.5 px-2 py-0.5 text-[10px] rounded bg-yellow-400 hover:bg-yellow-300 text-green-400 font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
+                            className="mt-0.5 px-2 py-0.5 text-[10px] rounded bg-[#F2E9D3] hover:bg-[#E8DFC9] text-green-400 font-semibold transition-colors disabled:opacity-50 whitespace-nowrap">
                             💾 บันทึก
                           </button>
                         )}
