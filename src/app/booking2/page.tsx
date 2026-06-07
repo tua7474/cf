@@ -759,7 +759,7 @@ function Booking2Inner() {
                                       </>
                                     ) : (
                                       <>
-                                        <option value="จองรถ60000">จองรถ 60,000</option>
+                                        <option value="จองรถ60000">เต็มคัน20k</option>
                                         <option value="รอพ่วง">รอพ่วง</option>
                                         <option value="รับเอง">รับเอง</option>
                                       </>
