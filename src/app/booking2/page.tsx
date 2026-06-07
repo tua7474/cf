@@ -644,6 +644,19 @@ function Booking2Inner() {
                     ])}
                   </colgroup>
 
+                  {/* Header — section names */}
+                  <thead>
+                    <tr>
+                      <th className="border border-gray-300 bg-[#9b9484]" />
+                      {sections.flatMap(sec => (
+                        <th key={sec.order} colSpan={4}
+                          className="border border-gray-300 bg-[#9b9484] text-white text-center text-[11px] font-bold py-0.5 px-1">
+                          {sec.name}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+
                   {/* Body */}
                   <tbody>
                     {Array.from({ length: maxRows }, (_, rowIdx) => (
