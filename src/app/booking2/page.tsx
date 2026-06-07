@@ -507,7 +507,7 @@ function Booking2Inner() {
   const isAutoForced       = autoForceFactory || autoForceWarehouse
 
   // ── Bubble unit validation ─────────────────────────────────────────────────
-  let totalBubbleUnits = 0, hasBubbleItems = false, hasNonBubbleInOrder = false
+  let totalBubbleUnits = 0, hasBubbleItems = false
   for (const sec of sections) {
     for (const row of sec.rows) {
       if (row.type !== 'product') continue
@@ -515,32 +515,21 @@ function Booking2Inner() {
       if (BUBBLE_GROUPS_SET.has(row.product.group_name)) {
         totalBubbleUnits += qty * getBubbleUnits(row.product.product_name)
         if (qty > 0) hasBubbleItems = true
-      } else if (qty > 0) {
-        hasNonBubbleInOrder = true
       }
     }
   }
-  if (foyTotal > 0) hasNonBubbleInOrder = true
 
   let bubbleWarning: string | null = null
   let bubbleBlocking = false
   if (hasBubbleItems) {
-    if (hasNonBubbleInOrder) {
-      if (totalBubbleUnits > 20) {
-        const over = totalBubbleUnits - 20
-        bubbleBlocking = true
-        bubbleWarning = `⛔ บับเบิลเกิน 20 หน่วย — ใส่รถไม่ได้ (ลด ${over} ลูก 32.5)`
-      }
-    } else {
-      if (totalBubbleUnits < 120) {
-        const need = 120 - totalBubbleUnits
-        bubbleBlocking = true
-        bubbleWarning = `⛔ บับเบิลล้วน ต้องสั่งอีก ${need} ลูก 32.5 (ครบ 120 หน่วย)`
-      } else if (totalBubbleUnits > 128) {
-        const over = totalBubbleUnits - 128
-        bubbleBlocking = true
-        bubbleWarning = `⛔ บับเบิลล้วน เกิน 128 หน่วย — ลด ${over} ลูก 32.5`
-      }
+    if (totalBubbleUnits < 120) {
+      const need = 120 - totalBubbleUnits
+      bubbleBlocking = true
+      bubbleWarning = `⛔ บับเบิลต้องสั่งอีก ${need} ลูก 32.5 (ครบ 120 หน่วย)`
+    } else if (totalBubbleUnits > 128) {
+      const over = totalBubbleUnits - 128
+      bubbleBlocking = true
+      bubbleWarning = `⛔ บับเบิลเกิน — ลด ${over} ลูก 32.5`
     }
   }
 
