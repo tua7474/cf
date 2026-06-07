@@ -312,7 +312,22 @@ function Booking2Inner() {
     const foyAmt = Object.values(foyPending).reduce((s, d) => s + d.amount, 0)
     if (foyAmt > 0) hasOther = true
     const total = bt + otherTotal + foyAmt
-    if (hasOther && total >= 25000) {
+
+    // ตรวจบับเบิลล้วน
+    let bubbleUnits = 0, hasBubble = false, hasNonBubble = false
+    for (const p of products) {
+      const qty = pending[p.id] ?? 0
+      if (BUBBLE_GROUPS_SET.has(p.group_name)) {
+        bubbleUnits += qty * getBubbleUnits(p.product_name)
+        if (qty > 0) hasBubble = true
+      } else if (qty > 0) hasNonBubble = true
+    }
+    if (foyAmt > 0) hasNonBubble = true
+
+    if (hasBubble && !hasNonBubble && bubbleUnits >= 120 && bubbleUnits <= 128) {
+      setSourceType('โรงบับเบิล')
+      setVehicleType('รถโรงงาน')
+    } else if (hasOther && total >= 25000) {
       setSourceType('โกดัง')
     } else if (!hasOther && bt >= 20000) {
       setSourceType('โรงกล่อง')
@@ -504,7 +519,8 @@ function Booking2Inner() {
   if (Object.values(foyPending).some(d => d.amount > 0)) hasNonBoxItems = true
   const autoForceFactory   = !hasNonBoxItems && boxTotal >= 20000
   const autoForceWarehouse = hasNonBoxItems && (grayTotal + orangeTotal + foyTotal) >= 25000
-  const isAutoForced       = autoForceFactory || autoForceWarehouse
+  const autoForceBubble    = hasBubbleItems && !hasNonBubbleInOrder && totalBubbleUnits >= 120 && totalBubbleUnits <= 128
+  const isAutoForced       = autoForceFactory || autoForceWarehouse || autoForceBubble
 
   // ── Bubble unit validation ─────────────────────────────────────────────────
   let totalBubbleUnits = 0, hasBubbleItems = false, hasNonBubbleInOrder = false
