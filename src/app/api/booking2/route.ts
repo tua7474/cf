@@ -33,7 +33,8 @@ const GROUP_MAP: Record<string, SectionInfo> = {
   'ถุงหิ้วบริการ':                 { section_order: 6, section_name: 'ซองกันกระแทก',   is_vat_included: false, subgroup_order: 6,  subgroup_name: 'ถุงหิ้วบริการ' },
   // S4 บับเบิล
   'บับเบิล':                      { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 1,  subgroup_name: 'บับเบิล' },
-  'บับเบิลสี':                    { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 2,  subgroup_name: 'บับเบิลสี' },
+  'บับเบิลสี':                    { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 2,   subgroup_name: 'บับเบิลสี' },
+  'บับเบิลบาง 35g':              { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 2.5, subgroup_name: 'บับเบิลบาง 35g' },
   'โฟมบาง 2 มิล':                 { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 3,  subgroup_name: 'โฟมบาง 2 มิล' },
   'ตัวตัดเทป':                    { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 4,  subgroup_name: 'ตัวตัดเทป' },
   'สายรัด PP':                    { section_order: 4, section_name: 'บับเบิล',         is_vat_included: false, subgroup_order: 5,  subgroup_name: 'สายรัด PP' },
