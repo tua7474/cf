@@ -289,7 +289,7 @@ function Booking2Inner() {
   // Auto-force เบิกของ + รถ ตามเงื่อนไขยอด
   useEffect(() => {
     if (!products.length) return
-    const BOX_GROUPS = new Set(['กล่อง', 'กล่อง Thank You', 'กล่องผลไม้ 5 ชั้น'])
+    const BOX_GROUPS = new Set(['กล่อง', 'กล่อง Thank You', 'กล่องผลไม้ 5 ชั้น', 'กล่อง 5 ชั้น'])
     let bt = 0, otherTotal = 0
     let hasOther = false
     for (const p of products) {
@@ -481,7 +481,7 @@ function Booking2Inner() {
   const effectiveTotal  = manualTotal !== '' ? (parseFloat(manualTotal) || 0) : (grayTotal + orangeTotal + foyTotal)
   const cannotBook60k   = vehicleType === 'จองรถ60000' && effectiveTotal < 60000
 
-  const BOX_GROUPS_RENDER = new Set(['กล่อง', 'กล่อง Thank You', 'กล่องผลไม้ 5 ชั้น'])
+  const BOX_GROUPS_RENDER = new Set(['กล่อง', 'กล่อง Thank You', 'กล่องผลไม้ 5 ชั้น', 'กล่อง 5 ชั้น'])
   let boxTotal = 0, hasNonBoxItems = false
   for (const sec of sections) {
     for (const row of sec.rows) {
