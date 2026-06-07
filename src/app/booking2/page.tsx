@@ -123,6 +123,16 @@ function buildSections(products: CatalogProduct[]): Section[] {
   return Array.from(map.values()).sort((a, b) => a.order - b.order)
 }
 
+const BUBBLE_GROUPS_SET = new Set(['บับเบิล', 'บับเบิลสี', 'บับเบิลบาง 35g'])
+
+function getBubbleUnits(product_name: string): number {
+  const w = parseFloat(product_name)
+  if (w === 32.5) return 1
+  if (w === 65)   return 2
+  if (w === 130)  return 4
+  return 0
+}
+
 function fmt2(n: number) {
   if (!n) return ''
   return n.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -496,6 +506,44 @@ function Booking2Inner() {
   const autoForceWarehouse = hasNonBoxItems && (grayTotal + orangeTotal + foyTotal) >= 25000
   const isAutoForced       = autoForceFactory || autoForceWarehouse
 
+  // ── Bubble unit validation ─────────────────────────────────────────────────
+  let totalBubbleUnits = 0, hasBubbleItems = false, hasNonBubbleInOrder = false
+  for (const sec of sections) {
+    for (const row of sec.rows) {
+      if (row.type !== 'product') continue
+      const qty = pending[row.product.id] ?? 0
+      if (BUBBLE_GROUPS_SET.has(row.product.group_name)) {
+        totalBubbleUnits += qty * getBubbleUnits(row.product.product_name)
+        if (qty > 0) hasBubbleItems = true
+      } else if (qty > 0) {
+        hasNonBubbleInOrder = true
+      }
+    }
+  }
+  if (foyTotal > 0) hasNonBubbleInOrder = true
+
+  let bubbleWarning: string | null = null
+  let bubbleBlocking = false
+  if (hasBubbleItems) {
+    if (hasNonBubbleInOrder) {
+      if (totalBubbleUnits > 20) {
+        const over = totalBubbleUnits - 20
+        bubbleBlocking = true
+        bubbleWarning = `⛔ บับเบิลเกิน 20 หน่วย — ใส่รถไม่ได้ (ลด ${over} ลูก 32.5)`
+      }
+    } else {
+      if (totalBubbleUnits < 120) {
+        const need = 120 - totalBubbleUnits
+        bubbleBlocking = true
+        bubbleWarning = `⛔ บับเบิลล้วน ต้องสั่งอีก ${need} ลูก 32.5 (ครบ 120 หน่วย)`
+      } else if (totalBubbleUnits > 128) {
+        const over = totalBubbleUnits - 128
+        bubbleBlocking = true
+        bubbleWarning = `⛔ บับเบิลล้วน เกิน 128 หน่วย — ลด ${over} ลูก 32.5`
+      }
+    }
+  }
+
   const today = new Date().toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -603,12 +651,13 @@ function Booking2Inner() {
               )}
               <button
                 onClick={handleSave}
-                disabled={saving || cannotBook60k || vehicleType === '' || sourceType === ''}
+                disabled={saving || cannotBook60k || vehicleType === '' || sourceType === '' || bubbleBlocking}
                 className="px-4 py-1.5 text-sm rounded bg-[#F2E9D3] hover:bg-[#E8DFC9] text-[#2baf2b] font-semibold transition-colors disabled:opacity-50"
               >
                 {saving ? 'กำลังบันทึก...' : '💾 บันทึกการจอง'}
               </button>
               {cannotBook60k && <span className="text-red-400 text-sm font-semibold">⛔ ยอดไม่ถึง 60,000 — จองรถไม่ได้</span>}
+              {bubbleWarning && <span className="text-red-400 text-sm font-semibold">{bubbleWarning}</span>}
             </>
           )}
 
@@ -623,12 +672,13 @@ function Booking2Inner() {
               )}
               <button
                 onClick={handleSave}
-                disabled={saving || cannotBook60k || vehicleType === '' || sourceType === ''}
+                disabled={saving || cannotBook60k || vehicleType === '' || sourceType === '' || bubbleBlocking}
                 className="px-4 py-1.5 text-sm rounded bg-[#F2E9D3] hover:bg-[#E8DFC9] text-[#2baf2b] font-semibold transition-colors disabled:opacity-50"
               >
                 {saving ? 'กำลังบันทึก...' : '💾 อัพเดทการจอง'}
               </button>
               {cannotBook60k && <span className="text-red-400 text-sm font-semibold">⛔ ยอดไม่ถึง 60,000 — จองรถไม่ได้</span>}
+              {bubbleWarning && <span className="text-red-400 text-sm font-semibold">{bubbleWarning}</span>}
               {pendingCount === 0 && !hasFoyPending && (
                 <button
                   onClick={handleCancelOrder}
