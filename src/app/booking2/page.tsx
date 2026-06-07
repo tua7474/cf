@@ -519,8 +519,6 @@ function Booking2Inner() {
   if (Object.values(foyPending).some(d => d.amount > 0)) hasNonBoxItems = true
   const autoForceFactory   = !hasNonBoxItems && boxTotal >= 20000
   const autoForceWarehouse = hasNonBoxItems && (grayTotal + orangeTotal + foyTotal) >= 25000
-  const autoForceBubble    = hasBubbleItems && !hasNonBubbleInOrder && totalBubbleUnits >= 120 && totalBubbleUnits <= 128
-  const isAutoForced       = autoForceFactory || autoForceWarehouse || autoForceBubble
 
   // ── Bubble unit validation ─────────────────────────────────────────────────
   let totalBubbleUnits = 0, hasBubbleItems = false, hasNonBubbleInOrder = false
@@ -537,6 +535,9 @@ function Booking2Inner() {
     }
   }
   if (foyTotal > 0) hasNonBubbleInOrder = true
+
+  const autoForceBubble = hasBubbleItems && !hasNonBubbleInOrder && totalBubbleUnits >= 120 && totalBubbleUnits <= 128
+  const isAutoForced    = autoForceFactory || autoForceWarehouse || autoForceBubble
 
   let bubbleWarning: string | null = null
   let bubbleBlocking = false
