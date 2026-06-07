@@ -280,7 +280,7 @@ function Booking2Inner() {
   useEffect(() => { if (sourceType)  try { localStorage.setItem('cf_source_type',  sourceType)  } catch { /* ignore */ } }, [sourceType])
   useEffect(() => { if (vehicleType) try { localStorage.setItem('cf_vehicle_type', vehicleType) } catch { /* ignore */ } }, [vehicleType])
 
-  // Auto-reset vehicle if total drops below 60,000
+  // Auto-reset vehicle if total drops below 25,000
   useEffect(() => {
     if (vehicleType !== 'จองรถ60000') return
     let total = 0
@@ -293,7 +293,7 @@ function Booking2Inner() {
         total += (parseFloat(p.price ?? '0') || 0) * qty
       }
     }
-    if (total < 60000) setVehicleType('')
+    if (total < 25000) setVehicleType('')
   }, [pending, manualTotal, vehicleType, products])
 
   // Auto-force เบิกของ + รถ ตามเงื่อนไขยอด
@@ -503,7 +503,7 @@ function Booking2Inner() {
   }
   const foyTotal = Object.values(foyPending).reduce((s, d) => s + d.amount, 0)
   const effectiveTotal  = manualTotal !== '' ? (parseFloat(manualTotal) || 0) : (grayTotal + orangeTotal + foyTotal)
-  const cannotBook60k   = vehicleType === 'จองรถ60000' && effectiveTotal < 60000
+  const cannotBook25k   = vehicleType === 'จองรถ60000' && effectiveTotal < 25000
 
   const BOX_GROUPS_RENDER = new Set(['กล่อง', 'กล่อง Thank You', 'กล่องผลไม้ 5 ชั้น', 'กล่อง 5 ชั้น'])
   let boxTotal = 0, hasNonBoxItems = false
@@ -668,12 +668,12 @@ function Booking2Inner() {
               )}
               <button
                 onClick={handleSave}
-                disabled={saving || cannotBook60k || vehicleType === '' || sourceType === '' || bubbleBlocking}
+                disabled={saving || cannotBook25k || vehicleType === '' || sourceType === '' || bubbleBlocking}
                 className="px-4 py-1.5 text-sm rounded bg-[#F2E9D3] hover:bg-[#E8DFC9] text-[#2baf2b] font-semibold transition-colors disabled:opacity-50"
               >
                 {saving ? 'กำลังบันทึก...' : '💾 บันทึกการจอง'}
               </button>
-              {cannotBook60k && <span className="text-red-400 text-sm font-semibold">⛔ ยอดไม่ถึง 60,000 — จองรถไม่ได้</span>}
+              {cannotBook25k && <span className="text-red-400 text-sm font-semibold">⛔ ยอดไม่ถึง 25,000 — เลือกเต็มคันไม่ได้</span>}
               {bubbleWarning && <span className="text-red-400 text-sm font-semibold">{bubbleWarning}</span>}
             </>
           )}
@@ -689,12 +689,12 @@ function Booking2Inner() {
               )}
               <button
                 onClick={handleSave}
-                disabled={saving || cannotBook60k || vehicleType === '' || sourceType === '' || bubbleBlocking}
+                disabled={saving || cannotBook25k || vehicleType === '' || sourceType === '' || bubbleBlocking}
                 className="px-4 py-1.5 text-sm rounded bg-[#F2E9D3] hover:bg-[#E8DFC9] text-[#2baf2b] font-semibold transition-colors disabled:opacity-50"
               >
                 {saving ? 'กำลังบันทึก...' : '💾 อัพเดทการจอง'}
               </button>
-              {cannotBook60k && <span className="text-red-400 text-sm font-semibold">⛔ ยอดไม่ถึง 60,000 — จองรถไม่ได้</span>}
+              {cannotBook25k && <span className="text-red-400 text-sm font-semibold">⛔ ยอดไม่ถึง 25,000 — เลือกเต็มคันไม่ได้</span>}
               {bubbleWarning && <span className="text-red-400 text-sm font-semibold">{bubbleWarning}</span>}
               {pendingCount === 0 && !hasFoyPending && (
                 <button
@@ -868,13 +868,13 @@ function Booking2Inner() {
                                 )}
                               </td>,
                               <td key={`${si}-ip8b`} colSpan={2} rowSpan={3}
-                                className={`${base} p-1 align-middle ${(vehicleType === '' || cannotBook60k) ? 'bg-red-50' : 'bg-white'}`}>
+                                className={`${base} p-1 align-middle ${(vehicleType === '' || cannotBook25k) ? 'bg-red-50' : 'bg-white'}`}>
                                 <div className="flex flex-col justify-center h-full gap-0.5">
                                   <div className="text-[7px] text-gray-500 font-semibold leading-none">รถ</div>
                                   <select value={vehicleType}
                                     disabled={isAutoForced}
                                     onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | 'รถโรงงาน')}
-                                    className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 focus:outline-none ${isAutoForced ? 'bg-blue-50 border-blue-400 text-blue-700 opacity-90' : (vehicleType === '' || cannotBook60k) ? 'bg-white border-red-400 text-red-500' : 'bg-white border-gray-400 text-gray-500'}`}>
+                                    className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 focus:outline-none ${isAutoForced ? 'bg-blue-50 border-blue-400 text-blue-700 opacity-90' : (vehicleType === '' || cannotBook25k) ? 'bg-white border-red-400 text-red-500' : 'bg-white border-gray-400 text-gray-500'}`}>
                                     <option value="" disabled>— เลือก —</option>
                                     {(sourceType === 'โรงกล่อง' || sourceType === 'โรงบับเบิล') ? (
                                       <>
@@ -891,7 +891,7 @@ function Booking2Inner() {
                                   </select>
                                   {vehicleType === '' && <div className="text-[7px] text-red-500 leading-none">กรุณาเลือก</div>}
                                   {isAutoForced && <div className="text-[7px] text-blue-600 leading-none">ระบบกำหนดอัตโนมัติ</div>}
-                                  {cannotBook60k && (
+                                  {cannotBook25k && (
                                     <div className="text-[7px] text-red-600 font-bold leading-tight">
                                       จองไม่ได้ — ยอดไม่ถึง 60,000
                                     </div>
