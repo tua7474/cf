@@ -146,7 +146,7 @@ function Booking2Inner() {
   const [foyPending, setFoyPending]         = useState<Record<string, { qty: number; amount: number }>>({})
   const [foyItemPending, setFoyItemPending] = useState<Record<number, number>>({})
   const [sourceType, setSourceType]   = useState<'โกดัง' | 'หน้าร้าน' | 'โรงกล่อง' | 'โรงบับเบิล' | ''>('')
-  const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | 'รถโรงงาน' | ''>('')
+  const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | 'รถโรงงาน' | 'รถโกดัง25k' | ''>('')
   const [manualTotal, setManualTotal] = useState<string>('')
   const [branchInfo, setBranchInfo] = useState<{ name: string; phone: string } | null>(null)
   const [isAdmin, setIsAdmin]       = useState(true)   // false = non-admin branch (LINE group)
@@ -242,7 +242,7 @@ function Booking2Inner() {
           localStorage.setItem('cf_foy_items', JSON.stringify(order.foy_item_quantities))
         }
         if (order.source_type) setSourceType(order.source_type as 'โกดัง' | 'หน้าร้าน' | 'โรงกล่อง' | 'โรงบับเบิล')
-        if (order.vehicle_type) setVehicleType(order.vehicle_type as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | 'รถโรงงาน')
+        if (order.vehicle_type) setVehicleType(order.vehicle_type as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | 'รถโรงงาน' | 'รถโกดัง25k')
       })
       .catch(() => {})
   }, [editOrderNo])
@@ -262,7 +262,7 @@ function Booking2Inner() {
       const st = localStorage.getItem('cf_source_type')
       const vt = localStorage.getItem('cf_vehicle_type')
       if (st) setSourceType(st as 'โกดัง' | 'หน้าร้าน' | 'โรงกล่อง' | 'โรงบับเบิล')
-      if (vt) setVehicleType(vt as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | 'รถโรงงาน')
+      if (vt) setVehicleType(vt as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | 'รถโรงงาน' | 'รถโกดัง25k')
     } catch { /* ignore */ }
   }, [editOrderNo])
 
@@ -285,6 +285,30 @@ function Booking2Inner() {
     }
     if (total < 60000) setVehicleType('')
   }, [pending, manualTotal, vehicleType, products])
+
+  // Auto-force เบิกของ + รถ ตามเงื่อนไขยอด
+  useEffect(() => {
+    if (!products.length) return
+    let bt = 0, otherTotal = 0
+    let hasOther = false
+    for (const p of products) {
+      const qty = pending[p.id] ?? 0
+      const price = parseFloat(p.price ?? '0') || 0
+      const val = qty * price
+      if (p.section_name === 'กล่อง') bt += val
+      else { otherTotal += val; if (qty > 0) hasOther = true }
+    }
+    const foyAmt = Object.values(foyPending).reduce((s, d) => s + d.amount, 0)
+    if (foyAmt > 0) hasOther = true
+    const total = bt + otherTotal + foyAmt
+    if (hasOther && total >= 25000) {
+      setSourceType('โกดัง')
+      setVehicleType('รถโกดัง25k')
+    } else if (!hasOther && bt >= 20000) {
+      setSourceType('โรงกล่อง')
+      setVehicleType('รถโรงงาน')
+    }
+  }, [pending, foyPending, products])
 
   const handleQtyChange = useCallback((id: number, val: string) => {
     const qty = parseInt(val, 10) || 0
@@ -455,6 +479,22 @@ function Booking2Inner() {
   const foyTotal = Object.values(foyPending).reduce((s, d) => s + d.amount, 0)
   const effectiveTotal  = manualTotal !== '' ? (parseFloat(manualTotal) || 0) : (grayTotal + orangeTotal + foyTotal)
   const cannotBook60k   = vehicleType === 'จองรถ60000' && effectiveTotal < 60000
+
+  let boxTotal = 0, hasNonBoxItems = false
+  for (const sec of sections) {
+    for (const row of sec.rows) {
+      if (row.type !== 'product') continue
+      const qty = pending[row.product.id] ?? 0
+      const price = parseFloat(row.product.price ?? '0') || 0
+      if (sec.name === 'กล่อง') boxTotal += qty * price
+      else if (qty > 0) hasNonBoxItems = true
+    }
+  }
+  if (Object.values(foyPending).some(d => d.amount > 0)) hasNonBoxItems = true
+  const autoForceFactory   = !hasNonBoxItems && boxTotal >= 20000
+  const autoForceWarehouse = hasNonBoxItems && (grayTotal + orangeTotal + foyTotal) >= 25000
+  const isAutoForced       = autoForceFactory || autoForceWarehouse
+
   const today = new Date().toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' })
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -723,12 +763,13 @@ function Booking2Inner() {
                                 <div className="flex flex-col justify-center h-full gap-0.5">
                                   <div className="text-[7px] text-gray-500 font-semibold leading-none">เบิกของ</div>
                                   <select value={sourceType}
+                                    disabled={isAutoForced}
                                     onChange={e => {
                                       const val = e.target.value as 'โกดัง' | 'หน้าร้าน' | 'โรงกล่อง' | 'โรงบับเบิล'
                                       setSourceType(val)
                                       if ((val === 'โรงกล่อง' || val === 'โรงบับเบิล') && vehicleType !== 'รับเอง' && vehicleType !== 'รถโรงงาน') setVehicleType('')
                                     }}
-                                    className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 bg-white focus:outline-none ${sourceType === '' ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-500'}`}>
+                                    className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 focus:outline-none ${isAutoForced ? 'bg-blue-50 border-blue-400 text-blue-700 opacity-90' : sourceType === '' ? 'bg-white border-red-400 text-red-500' : 'bg-white border-gray-400 text-gray-500'}`}>
                                     <option value="" disabled>— เลือก —</option>
                                     <option value="โกดัง">โกดัง</option>
                                     <option value="หน้าร้าน">หน้าร้าน</option>
@@ -736,6 +777,7 @@ function Booking2Inner() {
                                     <option value="โรงบับเบิล">โรงบับเบิล</option>
                                   </select>
                                   {sourceType === '' && <div className="text-[7px] text-red-500 leading-none">กรุณาเลือก</div>}
+                                  {isAutoForced && <div className="text-[7px] text-blue-600 leading-none">ระบบกำหนดอัตโนมัติ</div>}
                                 </div>
                               </td>,
                             ]
@@ -762,8 +804,9 @@ function Booking2Inner() {
                                 <div className="flex flex-col justify-center h-full gap-0.5">
                                   <div className="text-[7px] text-gray-500 font-semibold leading-none">รถ</div>
                                   <select value={vehicleType}
-                                    onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | 'รถโรงงาน')}
-                                    className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 bg-white focus:outline-none ${(vehicleType === '' || cannotBook60k) ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-500'}`}>
+                                    disabled={isAutoForced}
+                                    onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | 'รถโรงงาน' | 'รถโกดัง25k')}
+                                    className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 focus:outline-none ${isAutoForced ? 'bg-blue-50 border-blue-400 text-blue-700 opacity-90' : (vehicleType === '' || cannotBook60k) ? 'bg-white border-red-400 text-red-500' : 'bg-white border-gray-400 text-gray-500'}`}>
                                     <option value="" disabled>— เลือก —</option>
                                     {(sourceType === 'โรงกล่อง' || sourceType === 'โรงบับเบิล') ? (
                                       <>
@@ -773,12 +816,14 @@ function Booking2Inner() {
                                     ) : (
                                       <>
                                         <option value="จองรถ60000">เต็มคัน20k</option>
+                                        <option value="รถโกดัง25k">รถโกดัง25k</option>
                                         <option value="รอพ่วง">รอพ่วง</option>
                                         <option value="รับเอง">รับเอง</option>
                                       </>
                                     )}
                                   </select>
                                   {vehicleType === '' && <div className="text-[7px] text-red-500 leading-none">กรุณาเลือก</div>}
+                                  {isAutoForced && <div className="text-[7px] text-blue-600 leading-none">ระบบกำหนดอัตโนมัติ</div>}
                                   {cannotBook60k && (
                                     <div className="text-[7px] text-red-600 font-bold leading-tight">
                                       จองไม่ได้ — ยอดไม่ถึง 60,000
