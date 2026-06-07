@@ -529,17 +529,17 @@ function Booking2Inner() {
       if (totalBubbleUnits > 20) {
         const over = totalBubbleUnits - 20
         bubbleBlocking = true
-        bubbleWarning = `⛔ บับเบิลเกิน 20 หน่วย — ใส่รถไม่ได้ (ลด ${over} ลูก 32.5)`
+        bubbleWarning = `⛔ บับเบิลเกิน (ลด ${over} ลูก 32.5)`
       }
     } else {
       if (totalBubbleUnits < 120) {
         const need = 120 - totalBubbleUnits
         bubbleBlocking = true
-        bubbleWarning = `⛔ บับเบิลล้วน ต้องสั่งอีก ${need} ลูก 32.5 (ครบ 120 หน่วย)`
+        bubbleWarning = `⛔ บับเบิลยังไม่ครบ (เพิ่ม ${need} ลูก 32.5)`
       } else if (totalBubbleUnits > 128) {
         const over = totalBubbleUnits - 128
         bubbleBlocking = true
-        bubbleWarning = `⛔ บับเบิลล้วน เกิน 128 หน่วย — ลด ${over} ลูก 32.5`
+        bubbleWarning = `⛔ บับเบิลเกิน (ลด ${over} ลูก 32.5)`
       }
     }
   }
