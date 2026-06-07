@@ -289,13 +289,14 @@ function Booking2Inner() {
   // Auto-force เบิกของ + รถ ตามเงื่อนไขยอด
   useEffect(() => {
     if (!products.length) return
+    const BOX_GROUPS = new Set(['กล่อง', 'กล่อง Thank You', 'กล่องผลไม้ 5 ชั้น'])
     let bt = 0, otherTotal = 0
     let hasOther = false
     for (const p of products) {
       const qty = pending[p.id] ?? 0
       const price = parseFloat(p.price ?? '0') || 0
       const val = qty * price
-      if (p.section_name === 'กล่อง') bt += val
+      if (BOX_GROUPS.has(p.group_name)) bt += val
       else { otherTotal += val; if (qty > 0) hasOther = true }
     }
     const foyAmt = Object.values(foyPending).reduce((s, d) => s + d.amount, 0)
@@ -480,13 +481,14 @@ function Booking2Inner() {
   const effectiveTotal  = manualTotal !== '' ? (parseFloat(manualTotal) || 0) : (grayTotal + orangeTotal + foyTotal)
   const cannotBook60k   = vehicleType === 'จองรถ60000' && effectiveTotal < 60000
 
+  const BOX_GROUPS_RENDER = new Set(['กล่อง', 'กล่อง Thank You', 'กล่องผลไม้ 5 ชั้น'])
   let boxTotal = 0, hasNonBoxItems = false
   for (const sec of sections) {
     for (const row of sec.rows) {
       if (row.type !== 'product') continue
       const qty = pending[row.product.id] ?? 0
       const price = parseFloat(row.product.price ?? '0') || 0
-      if (sec.name === 'กล่อง') boxTotal += qty * price
+      if (BOX_GROUPS_RENDER.has(row.product.group_name)) boxTotal += qty * price
       else if (qty > 0) hasNonBoxItems = true
     }
   }
