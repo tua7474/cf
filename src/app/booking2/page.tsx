@@ -145,8 +145,8 @@ function Booking2Inner() {
   const [pending, setPending]       = useState<Record<number, number>>({})
   const [foyPending, setFoyPending]         = useState<Record<string, { qty: number; amount: number }>>({})
   const [foyItemPending, setFoyItemPending] = useState<Record<number, number>>({})
-  const [sourceType, setSourceType]   = useState<'โกดัง' | 'หน้าร้าน' | ''>('')
-  const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | ''>('')
+  const [sourceType, setSourceType]   = useState<'โกดัง' | 'หน้าร้าน' | 'โรงกล่อง' | 'โรงบับเบิล' | ''>('')
+  const [vehicleType, setVehicleType] = useState<'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | 'รถโรงงาน' | ''>('')
   const [manualTotal, setManualTotal] = useState<string>('')
   const [branchInfo, setBranchInfo] = useState<{ name: string; phone: string } | null>(null)
   const [isAdmin, setIsAdmin]       = useState(true)   // false = non-admin branch (LINE group)
@@ -241,8 +241,8 @@ function Booking2Inner() {
           // Save to localStorage so booking-foy can read when editing
           localStorage.setItem('cf_foy_items', JSON.stringify(order.foy_item_quantities))
         }
-        if (order.source_type) setSourceType(order.source_type as 'โกดัง' | 'หน้าร้าน')
-        if (order.vehicle_type) setVehicleType(order.vehicle_type as 'จองรถ60000' | 'รอพ่วง')
+        if (order.source_type) setSourceType(order.source_type as 'โกดัง' | 'หน้าร้าน' | 'โรงกล่อง' | 'โรงบับเบิล')
+        if (order.vehicle_type) setVehicleType(order.vehicle_type as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | 'รถโรงงาน')
       })
       .catch(() => {})
   }, [editOrderNo])
@@ -261,8 +261,8 @@ function Booking2Inner() {
     try {
       const st = localStorage.getItem('cf_source_type')
       const vt = localStorage.getItem('cf_vehicle_type')
-      if (st) setSourceType(st as 'โกดัง' | 'หน้าร้าน')
-      if (vt) setVehicleType(vt as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง')
+      if (st) setSourceType(st as 'โกดัง' | 'หน้าร้าน' | 'โรงกล่อง' | 'โรงบับเบิล')
+      if (vt) setVehicleType(vt as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | 'รถโรงงาน')
     } catch { /* ignore */ }
   }, [editOrderNo])
 
@@ -710,11 +710,17 @@ function Booking2Inner() {
                                 <div className="flex flex-col justify-center h-full gap-0.5">
                                   <div className="text-[7px] text-gray-500 font-semibold leading-none">เบิกของ</div>
                                   <select value={sourceType}
-                                    onChange={e => setSourceType(e.target.value as 'โกดัง' | 'หน้าร้าน')}
+                                    onChange={e => {
+                                      const val = e.target.value as 'โกดัง' | 'หน้าร้าน' | 'โรงกล่อง' | 'โรงบับเบิล'
+                                      setSourceType(val)
+                                      if ((val === 'โรงกล่อง' || val === 'โรงบับเบิล') && vehicleType !== 'รับเอง' && vehicleType !== 'รถโรงงาน') setVehicleType('')
+                                    }}
                                     className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 bg-white focus:outline-none ${sourceType === '' ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-500'}`}>
                                     <option value="" disabled>— เลือก —</option>
                                     <option value="โกดัง">โกดัง</option>
                                     <option value="หน้าร้าน">หน้าร้าน</option>
+                                    <option value="โรงกล่อง">โรงกล่อง</option>
+                                    <option value="โรงบับเบิล">โรงบับเบิล</option>
                                   </select>
                                   {sourceType === '' && <div className="text-[7px] text-red-500 leading-none">กรุณาเลือก</div>}
                                 </div>
@@ -743,12 +749,21 @@ function Booking2Inner() {
                                 <div className="flex flex-col justify-center h-full gap-0.5">
                                   <div className="text-[7px] text-gray-500 font-semibold leading-none">รถ</div>
                                   <select value={vehicleType}
-                                    onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง')}
+                                    onChange={e => setVehicleType(e.target.value as 'จองรถ60000' | 'รอพ่วง' | 'รับเอง' | 'รถโรงงาน')}
                                     className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 bg-white focus:outline-none ${(vehicleType === '' || cannotBook60k) ? 'border-red-400 text-red-500' : 'border-gray-400 text-gray-500'}`}>
                                     <option value="" disabled>— เลือก —</option>
-                                    <option value="จองรถ60000">จองรถ 60,000</option>
-                                    <option value="รอพ่วง">รอพ่วง</option>
-                                    <option value="รับเอง">รับเอง</option>
+                                    {(sourceType === 'โรงกล่อง' || sourceType === 'โรงบับเบิล') ? (
+                                      <>
+                                        <option value="รถโรงงาน">รถโรงงาน</option>
+                                        <option value="รับเอง">รับเอง</option>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <option value="จองรถ60000">จองรถ 60,000</option>
+                                        <option value="รอพ่วง">รอพ่วง</option>
+                                        <option value="รับเอง">รับเอง</option>
+                                      </>
+                                    )}
                                   </select>
                                   {vehicleType === '' && <div className="text-[7px] text-red-500 leading-none">กรุณาเลือก</div>}
                                   {cannotBook60k && (

@@ -10,7 +10,7 @@ interface Branch { id: number; name: string; phones: BranchPhone[]; pending_coun
 
 // ── Color groups ──────────────────────────────────────────────────────────────
 
-const GREEN_BRANCHES  = ['โกดัง']
+const GREEN_BRANCHES  = ['โกดัง', 'โกดังCF']
 const YELLOW_BRANCHES = ['ท่าฉลอม', 'หนองแขม', 'ไทรม้า', 'อ้อมน้อย', 'นครชัยศรี']
 const RED_BRANCHES    = ['สนามบินน้ำ', 'ตลาดรังสิต']
 
