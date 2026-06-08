@@ -329,11 +329,16 @@ function Booking2Inner() {
       setVehicleType('รถโรงงาน')
     } else if (hasOther && total >= 25000) {
       setSourceType('โกดัง')
+      setVehicleType('จองรถ60000')
     } else if (!hasOther && bt >= 20000) {
       setSourceType('โรงกล่อง')
       setVehicleType('รถโรงงาน')
+    } else if (hasOther) {
+      // มิกซ์ แต่ยอด < 25,000 — reset ตัวเลือกที่ไม่รองรับในโหมดมิกซ์
+      if (sourceType === 'โรงกล่อง' || sourceType === 'โรงบับเบิล') setSourceType('')
+      if (vehicleType === 'จองรถ60000' || vehicleType === 'รถโรงงาน') setVehicleType('')
     }
-  }, [pending, foyPending, products])
+  }, [pending, foyPending, products, sourceType, vehicleType])
 
   const handleQtyChange = useCallback((id: number, val: string) => {
     const qty = parseInt(val, 10) || 0
@@ -517,6 +522,7 @@ function Booking2Inner() {
     }
   }
   if (Object.values(foyPending).some(d => d.amount > 0)) hasNonBoxItems = true
+  const hasMixItems        = hasNonBoxItems  // มีสินค้ามิกซ์ (ไม่ใช่กล่องล้วน)
   const autoForceFactory   = !hasNonBoxItems && boxTotal >= 20000
   const autoForceWarehouse = hasNonBoxItems && (grayTotal + orangeTotal + foyTotal) >= 25000
 
@@ -839,10 +845,19 @@ function Booking2Inner() {
                                     }}
                                     className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 focus:outline-none ${isAutoForced ? 'bg-blue-50 border-blue-400 text-blue-700 opacity-90' : sourceType === '' ? 'bg-white border-red-400 text-red-500' : 'bg-white border-gray-400 text-gray-500'}`}>
                                     <option value="" disabled>— เลือก —</option>
-                                    <option value="โกดัง">โกดัง</option>
-                                    <option value="หน้าร้าน">หน้าร้าน</option>
-                                    <option value="โรงกล่อง">โรงกล่อง</option>
-                                    <option value="โรงบับเบิล">โรงบับเบิล</option>
+                                    {hasMixItems ? (
+                                      <>
+                                        <option value="หน้าร้าน">หน้าร้าน</option>
+                                        <option value="โกดัง">โกดัง</option>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <option value="โกดัง">โกดัง</option>
+                                        <option value="หน้าร้าน">หน้าร้าน</option>
+                                        <option value="โรงกล่อง">โรงกล่อง</option>
+                                        <option value="โรงบับเบิล">โรงบับเบิล</option>
+                                      </>
+                                    )}
                                   </select>
                                   {sourceType === '' && <div className="text-[7px] text-red-500 leading-none">กรุณาเลือก</div>}
                                   {isAutoForced && <div className="text-[7px] text-blue-600 leading-none">ระบบกำหนดอัตโนมัติ</div>}
@@ -879,6 +894,11 @@ function Booking2Inner() {
                                     {(sourceType === 'โรงกล่อง' || sourceType === 'โรงบับเบิล') ? (
                                       <>
                                         <option value="รถโรงงาน">รถโรงงาน</option>
+                                        <option value="รับเอง">รับเอง</option>
+                                      </>
+                                    ) : hasMixItems ? (
+                                      <>
+                                        <option value="รอพ่วง">รอพ่วง</option>
                                         <option value="รับเอง">รับเอง</option>
                                       </>
                                     ) : (
