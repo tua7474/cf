@@ -845,7 +845,7 @@ function Booking2Inner() {
                                     }}
                                     className={`w-full border-2 rounded font-bold text-[13px] h-8 px-0.5 focus:outline-none ${isAutoForced ? 'bg-blue-50 border-blue-400 text-blue-700 opacity-90' : sourceType === '' ? 'bg-white border-red-400 text-red-500' : 'bg-white border-gray-400 text-gray-500'}`}>
                                     <option value="" disabled>— เลือก —</option>
-                                    {hasMixItems ? (
+                                    {hasMixItems && !isAutoForced ? (
                                       <>
                                         <option value="หน้าร้าน">หน้าร้าน</option>
                                         <option value="โกดัง">โกดัง</option>
@@ -896,7 +896,7 @@ function Booking2Inner() {
                                         <option value="รถโรงงาน">รถโรงงาน</option>
                                         <option value="รับเอง">รับเอง</option>
                                       </>
-                                    ) : hasMixItems ? (
+                                    ) : hasMixItems && !isAutoForced ? (
                                       <>
                                         <option value="รอพ่วง">รอพ่วง</option>
                                         <option value="รับเอง">รับเอง</option>
