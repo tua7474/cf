@@ -299,7 +299,7 @@ function Booking2Inner() {
   // Auto-force เบิกของ + รถ ตามเงื่อนไขยอด
   useEffect(() => {
     if (!products.length) return
-    const BOX_GROUPS = new Set(['กล่อง', 'กล่อง Thank You', 'กล่องผลไม้ 5 ชั้น'])
+    const BOX_GROUPS = new Set(['กล่อง', 'กล่อง Thank You', 'กล่องผลไม้ 5 ชั้น', 'กล่อง 5 ชั้น'])
     let bt = 0, otherTotal = 0
     let hasOther = false
     for (const p of products) {
@@ -330,7 +330,7 @@ function Booking2Inner() {
     } else if (hasOther && total >= 25000) {
       setSourceType('โกดัง')
       setVehicleType('จองรถ60000')
-    } else if (!hasOther && bt >= 25000) {
+    } else if (!hasOther && bt >= 20000) {
       setSourceType('โรงกล่อง')
       setVehicleType('รถโรงงาน')
     } else if (hasOther) {
@@ -510,7 +510,7 @@ function Booking2Inner() {
   const effectiveTotal  = manualTotal !== '' ? (parseFloat(manualTotal) || 0) : (grayTotal + orangeTotal + foyTotal)
   const cannotBook25k   = vehicleType === 'จองรถ60000' && effectiveTotal < 25000
 
-  const BOX_GROUPS_RENDER = new Set(['กล่อง', 'กล่อง Thank You', 'กล่องผลไม้ 5 ชั้น'])
+  const BOX_GROUPS_RENDER = new Set(['กล่อง', 'กล่อง Thank You', 'กล่องผลไม้ 5 ชั้น', 'กล่อง 5 ชั้น'])
   let boxTotal = 0, hasNonBoxItems = false
   for (const sec of sections) {
     for (const row of sec.rows) {
@@ -523,7 +523,7 @@ function Booking2Inner() {
   }
   if (Object.values(foyPending).some(d => d.amount > 0)) hasNonBoxItems = true
   const hasMixItems        = hasNonBoxItems  // มีสินค้ามิกซ์ (ไม่ใช่กล่องล้วน)
-  const autoForceFactory   = !hasNonBoxItems && boxTotal >= 25000
+  const autoForceFactory   = !hasNonBoxItems && boxTotal >= 20000
   const autoForceWarehouse = hasNonBoxItems && (grayTotal + orangeTotal + foyTotal) >= 25000
 
   // ── Bubble unit validation ─────────────────────────────────────────────────
